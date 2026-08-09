@@ -65,4 +65,5 @@ esta carpeta: viven en volumenes de Docker, por rendimiento. Se migran con
 ## Documentacion
 
 - [docs/OPERACIONES.md](docs/OPERACIONES.md) — runbook: operar, actualizar, migrar, recuperarse de un desastre.
+- [docs/MODS.md](docs/MODS.md) — procedimiento verificado para anadir mods sin arriesgar los guardados.
 - [docs/DECISIONES.md](docs/DECISIONES.md) — por que el montaje es asi.

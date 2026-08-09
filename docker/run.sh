@@ -27,7 +27,21 @@ source /docker/ops.sh
 : "${BACKUP_ON_START:=true}"
 : "${SHUTDOWN_TIMEOUT:=150}"
 
+# En staging, si hay una lista de mods propia definida, se usa en lugar de la
+# de produccion. Vacia = replicar produccion. Es lo que permite probar un mod
+# nuevo sobre una copia del mundo real sin que produccion se entere.
+if is_true "${PZ_USE_STAGING_MODS:-false}"; then
+    if [[ -n "${STAGING_WORKSHOP_ITEMS:-}" || -n "${STAGING_MODS:-}" ]]; then
+        PZ_WORKSHOP_ITEMS="${STAGING_WORKSHOP_ITEMS:-}"
+        PZ_MODS="${STAGING_MODS:-}"
+        log "STAGING: usando lista de mods propia (${PZ_WORKSHOP_ITEMS:-vacia})"
+    else
+        log "STAGING: sin lista propia; replico los mods de produccion."
+    fi
+fi
+
 export PZ_SERVER_NAME PZ_ADMIN_USERNAME PZ_RCON_PORT PZ_RCON_PASSWORD
+export PZ_WORKSHOP_ITEMS PZ_MODS
 
 STOPPING=0
 BACKUP_LOOP_PID=""
@@ -200,6 +214,44 @@ cmd_rcon() {
     rcon_cmd "$@"
 }
 
+# Inspecciona lo que Steam ha descargado de verdad y saca los Mod ID reales de
+# los mod.info. Los IDs NO se copian de guias: circula informacion contradictoria
+# sobre el formato en Build 42 (con o sin prefijo '\'), y un ID mal escrito hace
+# que el mod simplemente no cargue, sin error claro.
+cmd_mods() {
+    local wsdir="${PZ_DIR}/steamapps/workshop/content/380870"
+    [[ -d "$wsdir" ]] || wsdir="${PZ_DIR}/steamapps/workshop/content/108600"
+
+    if [[ ! -d "$wsdir" ]]; then
+        log "No hay nada descargado del Workshop todavia."
+        log "Anade IDs a PZ_WORKSHOP_ITEMS en .env y arranca el servidor."
+        return 0
+    fi
+
+    printf '\nDescargado en: %s\n\n' "$wsdir"
+
+    local wid info modid modname
+    for wid in "$wsdir"/*; do
+        [[ -d "$wid" ]] || continue
+        printf '=== Workshop ID %s ===\n' "$(basename "$wid")"
+
+        while IFS= read -r info; do
+            modid="$(grep -iE '^[[:space:]]*id[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r')"
+            modname="$(grep -iE '^[[:space:]]*name[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d '\r')"
+            printf '    Mod ID : %s\n' "${modid:-<sin id>}"
+            printf '    Nombre : %s\n' "${modname:- }"
+            printf '    Ruta   : %s\n\n' "${info#$wid/}"
+        done < <(find "$wid" -iname 'mod.info' 2>/dev/null | sort)
+    done
+
+    printf 'Estructura de carpetas (para deducir el formato correcto de Mods=):\n'
+    find "$wsdir" -maxdepth 4 -type d 2>/dev/null | sed "s|$wsdir|  .|" | head -40
+
+    printf '\nCargados ahora mismo segun la config:\n'
+    printf '    WorkshopItems = %s\n' "${PZ_WORKSHOP_ITEMS:-<vacio>}"
+    printf '    Mods          = %s\n' "${PZ_MODS:-<vacio>}"
+}
+
 cmd_status() {
     printf 'Servidor      : %s\n' "$PZ_SERVER_NAME"
     printf 'Instalado     : %s\n' "$(game_installed && echo si || echo no)"
@@ -220,6 +272,7 @@ case "${1:-serve}" in
     restore)    shift; validate_env; do_restore "${1:-}" ;;
     update)     cmd_update ;;
     rcon)       shift; cmd_rcon "$@" ;;
+    mods)       cmd_mods ;;
     status)     cmd_status ;;
     shell)      exec bash ;;
     *)          exec "$@" ;;

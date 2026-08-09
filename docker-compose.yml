@@ -95,6 +95,15 @@ services:
       # evitar. El aislamiento lo dan los volumenes separados, no el nombre.
       PZ_PUBLIC: "false"
 
+      # Staging comparte config/ y .env con produccion, asi que sin esto no
+      # habria forma de probar un mod aqui sin metérselo tambien a produccion,
+      # que es justo lo que staging existe para evitar.
+      #
+      # Con esto activo, staging usa STAGING_WORKSHOP_ITEMS y STAGING_MODS del
+      # .env si estan definidos. Si estan vacios, replica los de produccion:
+      # el comportamiento por defecto es ser una copia fiel.
+      PZ_USE_STAGING_MODS: "true"
+
       # Los backups de staging llevan otro prefijo para que no se confundan
       # nunca con los de produccion en la carpeta compartida ./backups.
       BACKUP_NAME_PREFIX: "staging"
