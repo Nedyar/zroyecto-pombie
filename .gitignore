@@ -9,3 +9,6 @@ backups/*
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Artefacto de diagnostico, solo aparece si el juego cambia ajustes por su cuenta.
+config/reference/server.ini.runtime

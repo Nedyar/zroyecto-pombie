@@ -290,16 +290,27 @@ render_config() {
 "No existe ${tmpl}.
 Ejecuta primero el bootstrap:  ./scripts/bootstrap.sh"
 
-    # Si el servidor toco el INI por su cuenta respecto a lo que renderizamos
-    # (tipicamente porque una actualizacion del juego anadio claves nuevas),
-    # queremos enterarnos antes de pisarlo. Perder ajustes en silencio es
-    # justo lo que este proyecto intenta evitar.
-    if [[ -f "$out" && -f "$last" ]] && ! diff -q "$out" "$last" >/dev/null 2>&1; then
-        warn "El INI en runtime difiere de lo que renderizamos la ultima vez."
-        warn "Suele significar que el juego anadio claves nuevas. Diferencias:"
-        diff "$last" "$out" | sed 's/^/    /' >&2 || true
-        warn "Incorpora lo que te interese a config/server.ini.tmpl."
-        cp "$out" "${CONFIG_DIR}/reference/server.ini.runtime" 2>/dev/null || true
+    # Si el servidor toco los AJUSTES por su cuenta respecto a lo que
+    # renderizamos (tipicamente porque una actualizacion del juego anadio
+    # claves nuevas), queremos enterarnos antes de pisarlo. Perder ajustes en
+    # silencio es justo lo que este proyecto intenta evitar.
+    #
+    # Se comparan solo las lineas clave=valor, no el fichero entero: el
+    # servidor reescribe el INI en cada arranque descartando nuestros
+    # comentarios de cabecera. Comparando el fichero completo, el aviso
+    # saltaria siempre por un cambio que no significa nada, y una alerta que
+    # grita en falso cada vez acaba ignorandose justo el dia que importa.
+    if [[ -f "$out" && -f "$last" ]]; then
+        local diff_out
+        diff_out="$(diff <(grep -E '^[A-Za-z0-9_]+=' "$last" | sort) \
+                         <(grep -E '^[A-Za-z0-9_]+=' "$out"  | sort) || true)"
+        if [[ -n "$diff_out" ]]; then
+            warn "Los ajustes del INI en runtime difieren de lo que renderizamos."
+            warn "Suele significar que el juego anadio claves nuevas:"
+            printf '%s\n' "$diff_out" | sed 's/^/    /' >&2
+            warn "Incorpora lo que te interese a config/server.ini.tmpl."
+            cp "$out" "${CONFIG_DIR}/reference/server.ini.runtime" 2>/dev/null || true
+        fi
     fi
 
     # Lista explicita de variables a sustituir, para que envsubst no toque
