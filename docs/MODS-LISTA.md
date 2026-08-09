@@ -57,6 +57,25 @@ añadirlo también a la suscripción de cada jugador.
 
 ---
 
+## Lista activa en produccion
+
+Copia versionada de lo que hay en `.env`, que esta fuera de git. Si se pierde
+el `.env` (o al migrar de maquina), esto es lo que hay que restaurar.
+
+```
+PZ_WORKSHOP_ITEMS=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782
+
+PZ_MODS=ATakeABathAndShowerDepthMap;NeatUI_Framework;SpnHairAPI;ProximityInventory;CleanUI;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;SplitItems;BetterSortCC;ComfySleeping;Buttstroke;TakeABathAndShowerNew;P4HasBeenRead;MapSymbolSizeSlider
+```
+
+Son 15 elementos del Workshop y 16 Mod ID: *Take A Bath And Shower* aporta dos
+(el mod y su arreglo de DepthMap, que va el primero de la lista).
+
+**Cada jugador debe estar suscrito a los 15.** Lo comodo es montar una
+coleccion de Steam con ellos y compartir el enlace: un boton y listo.
+
+---
+
 ## Lote A — confirmados y probados (15)
 
 Autor declara soporte hasta 42.20, o actualizados después de la estable.
