@@ -1,0 +1,13 @@
+# Los scripts se ejecutan dentro de un contenedor Linux: siempre LF.
+# Sin esto, Git en Windows los convertiria a CRLF y el shebang fallaria
+# dentro del contenedor con "bad interpreter: no such file or directory".
+*.sh    text eol=lf
+*.lua   text eol=lf
+*.tmpl  text eol=lf
+*.ini   text eol=lf
+Dockerfile text eol=lf
+*.yml   text eol=lf
+*.md    text eol=lf
+
+# Los backups son binarios, que Git no los toque.
+*.tar.zst binary

@@ -1,0 +1,117 @@
+name: zroyecto-pombie
+
+# ============================================================================
+# Zroyecto Pombie - servidor dedicado de Project Zomboid (Build 42)
+# ============================================================================
+#
+# Dos servicios con la MISMA imagen y configuracion, pero datos completamente
+# separados:
+#
+#   pz          produccion. El mundo de verdad.
+#   pz-staging  ensayo. Se levanta con una copia del mundo real, en otros
+#               puertos, para probar mods y ajustes de riesgo antes de tocar
+#               produccion. Perfil `staging`, asi que no arranca por defecto.
+#
+# Levantar produccion:   docker compose up -d
+# Levantar staging:      ./scripts/stage.sh
+# ============================================================================
+
+x-pz-common: &pz-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: zroyecto-pombie:latest
+  env_file:
+    - .env
+
+  # stdin abierto: el servidor lee comandos de consola por ahi. Con stdin
+  # cerrado algunas versiones se comen una CPU entera girando sobre EOF.
+  stdin_open: true
+  tty: false
+
+  # LA LINEA MAS IMPORTANTE DEL FICHERO.
+  # Por defecto Docker manda SIGKILL 10 segundos despues del SIGTERM. El
+  # guardado de un mundo poblado tarda bastante mas, asi que sin este margen
+  # todo el apagado seguro que implementa el contenedor se queda a medias y
+  # acabamos justo en el escenario que queriamos evitar.
+  stop_grace_period: 180s
+
+  restart: unless-stopped
+
+  healthcheck:
+    test: ["CMD-SHELL", "rcon -a 127.0.0.1:27015 -p \"$$PZ_RCON_PASSWORD\" -t rcon players >/dev/null 2>&1 || exit 1"]
+    interval: 60s
+    timeout: 10s
+    retries: 3
+    # El primer arranque descarga 8 GB y genera el mundo. Sin este margen el
+    # contenedor se marcaria como enfermo antes siquiera de empezar.
+    start_period: 900s
+
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  pz:
+    <<: *pz-common
+    container_name: pombie-pz
+    hostname: pombie
+
+    ports:
+      # UDP, no TCP. Es el error de configuracion mas comun al abrir puertos:
+      # una regla TCP se ve perfecta en el router y no sirve absolutamente de
+      # nada. Ambos puertos hacen falta: 16261 es el principal y 16262 el de
+      # conexion directa.
+      - "${HOST_GAME_PORT:-16261}:16261/udp"
+      - "${HOST_GAME_PORT_2:-16262}:16262/udp"
+      # RCON solo en loopback. Da control total del servidor: exponerlo a la
+      # red seria regalar la administracion a cualquiera que pruebe la clave.
+      - "127.0.0.1:${HOST_RCON_PORT:-27015}:27015/tcp"
+
+    volumes:
+      - pz-game:/opt/pz-server        # instalacion (~8 GB), desechable
+      - pz-data:/home/steam/Zomboid   # SAVES, db, config runtime: irremplazable
+      - ./config:/config              # fuente de verdad de la configuracion
+      - ./backups:/backups            # tarballs, y vehiculo de migracion
+
+  pz-staging:
+    <<: *pz-common
+    container_name: pombie-staging
+    hostname: pombie-staging
+    profiles: ["staging"]
+    restart: "no"
+
+    environment:
+      # Nombre distinto: sus ficheros de guardado y config nunca coinciden con
+      # los de produccion aunque alguien se equivoque de volumen.
+      PZ_SERVER_NAME: "${PZ_SERVER_NAME:-pombie}stage"
+      PZ_PUBLIC: "false"
+      # En staging no queremos backups automaticos ensuciando ./backups: los
+      # backups que importan son los de produccion.
+      BACKUP_INTERVAL_HOURS: "0"
+      BACKUP_ON_START: "false"
+      # Aqui si aceptamos cambios de version: es el sitio para probarlos.
+      ALLOW_BUILD_CHANGE: "true"
+
+    ports:
+      - "${STAGING_GAME_PORT:-16361}:16261/udp"
+      - "${STAGING_GAME_PORT_2:-16362}:16262/udp"
+      - "127.0.0.1:${STAGING_RCON_PORT:-27115}:27015/tcp"
+
+    volumes:
+      # Volumenes propios, incluido el del juego. Compartir la instalacion con
+      # produccion ahorraria 8 GB pero romperia el aislamiento justo donde mas
+      # importa: al descargar mods, Steam actualizaria tambien los que
+      # produccion esta usando ahora mismo. El disco es mas barato que eso.
+      - pz-game-staging:/opt/pz-server
+      - pz-data-staging:/home/steam/Zomboid
+      - ./config:/config
+      - ./backups:/backups
+
+volumes:
+  pz-game:
+  pz-data:
+  pz-game-staging:
+  pz-data-staging:

@@ -1,0 +1,11 @@
+# Secretos y ajustes propios de cada instancia.
+.env
+
+# Los backups son datos, no codigo. Se migran a mano, no por git.
+backups/*
+!backups/.gitkeep
+
+# Ruido del sistema
+Thumbs.db
+desktop.ini
+.DS_Store
