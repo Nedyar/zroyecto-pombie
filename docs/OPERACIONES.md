@@ -227,6 +227,7 @@ razonable.
 | --- | --- |
 | `docker compose kill` / `docker kill` | Salta el guardado. Es el camino directo a un mundo corrupto. |
 | `docker compose down -v` | La `-v` borra los volumenes. Ahi estan los guardados. |
+| `docker compose --profile staging down` | `down` derriba el proyecto ENTERO, produccion incluida. Para parar solo staging: `./scripts/stage.sh --down` |
 | Poner `UPDATE_ON_START=true` | Cualquier reinicio podria cambiar el motor bajo un mundo vivo. |
 | Editar `config/reference/` | Se regenera y pierdes los cambios. Edita `config/server.ini.tmpl`. |
 | Cambiar `PZ_SERVER_NAME` con el mundo en marcha | Da nombre a la carpeta de guardado: equivale a empezar de cero. |

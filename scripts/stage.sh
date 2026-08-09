@@ -15,9 +15,21 @@ MODE="${1:-fresh}"
 
 if [[ "$MODE" == "--down" ]]; then
     confirm "Vas a parar staging y BORRAR sus datos. Produccion no se toca."
-    "${DC[@]}" --profile staging down
+
+    # OJO: aqui NO vale `docker compose down`, ni siquiera con --profile.
+    # `down` derriba el proyecto ENTERO, produccion incluida, sin avisar. Se
+    # nombra el servicio explicitamente para tocar solo staging.
+    "${DC[@]}" --profile staging stop pz-staging
+    "${DC[@]}" --profile staging rm -f pz-staging
     docker volume rm zroyecto-pombie_pz-data-staging 2>/dev/null || true
+
     say "Staging eliminado. El volumen del juego se conserva para no redescargar 8 GB."
+
+    if service_running pz; then
+        say "Produccion sigue corriendo, como debe ser."
+    else
+        warn "Produccion NO esta corriendo. Arrancala con: docker compose up -d"
+    fi
     exit 0
 fi
 
