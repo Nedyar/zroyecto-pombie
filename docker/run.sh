@@ -240,7 +240,25 @@ cmd_mods() {
             modname="$(grep -iE '^[[:space:]]*name[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d '\r')"
             printf '    Mod ID : %s\n' "${modid:-<sin id>}"
             printf '    Nombre : %s\n' "${modname:- }"
-            printf '    Ruta   : %s\n\n' "${info#$wid/}"
+            printf '    Ruta   : %s\n' "${info#$wid/}"
+
+            # Dependencias declaradas por el autor. Es la fuente autoritativa
+            # cuando existe, pero muchos autores no la rellenan y solo mencionan
+            # las dependencias en la descripcion del Workshop: que esto salga
+            # vacio NO significa que el mod no dependa de nada.
+            local reqs
+            reqs="$(grep -iE '^[[:space:]]*require[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r')"
+            if [[ -n "$reqs" ]]; then
+                printf '    REQUIERE: %s   <- deben ir ANTES en Mods=\n' "$reqs"
+            else
+                printf '    Requiere: (sin declarar; comprobar en el Workshop)\n'
+            fi
+
+            # Cualquier otro campo que el autor haya puesto y que no mostremos
+            # ya: a veces avisan de incompatibilidades o de version minima.
+            grep -ivE '^[[:space:]]*(id|name|require|poster|icon|description)[[:space:]]*=' "$info" \
+                | grep -E '=' | sed 's/^/    · /' || true
+            printf '\n'
         done < <(find "$wid" -iname 'mod.info' 2>/dev/null | sort)
     done
 

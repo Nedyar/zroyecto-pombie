@@ -62,9 +62,24 @@ Ningún mod se prueba a ciegas. Para cada candidato se revisa:
 | **Fecha** | Última actualización posterior al 29/07/2026 | Ports abandonados a medias |
 | **Comentarios** | Últimas páginas de comentarios del Workshop: es donde aparecen los bugs reales antes que en ningún otro sitio | Mods que "funcionan" pero rompen cosas |
 | **Multijugador** | ¿Dice ser **MP friendly**? Muchos son solo para un jugador | Mods que fallan solo en servidor |
-| **Dependencias** | ¿Requiere alguna librería? | Fallos de carga por orden incorrecto |
-| **Solapamiento** | ¿Hace lo mismo que otro que ya tenemos, o toca las mismas mecánicas? | Conflictos y trabajo duplicado |
+| **Dependencias** | Campo `require=` del `mod.info` **y** la descripción del Workshop | Fallos de carga por falta de una librería |
+| **Incompatibilidades** | Mods que el autor declara incompatibles, y los que la comunidad reporta como conflictivos en los comentarios | Combinaciones que rompen el mundo |
+| **Solapamiento** | ¿Hace lo mismo que otro que ya tenemos, o toca las mismas mecánicas? | Conflictos silenciosos y trabajo duplicado |
 | **Orden de carga** | Dónde encaja según el bloque de más abajo | Sobrescrituras inesperadas |
+
+**Dependencias e incompatibilidades son cosas distintas, y ninguna es lo mismo
+que el solapamiento.** Dos mods pueden no compartir ni una mecánica y aun así
+pisarse. Y un mod puede solapar con otro sin que ninguno lo declare.
+
+Las dependencias son en parte automáticas: `/docker/run.sh mods` lee el campo
+`require=` de cada `mod.info` descargado y avisa de qué debe ir antes en
+`Mods=`. **Pero muchos autores no lo rellenan** — Common Sense, por ejemplo, no
+declara nada. Que salga vacío no significa que el mod no dependa de nada: hay
+que leer la descripción del Workshop igualmente.
+
+Las incompatibilidades casi nunca están en el `mod.info`. Viven en la
+descripción ("no usar junto a X") y sobre todo en los comentarios, que es donde
+la gente reporta las combinaciones que le reventaron la partida.
 
 Con una lista larga se investiga **entera** antes de tocar nada, y luego se
 prueba agrupando: primero todos los que la comunidad o el Workshop confirmen
