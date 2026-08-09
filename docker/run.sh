@@ -235,9 +235,13 @@ cmd_mods() {
         [[ -d "$wid" ]] || continue
         printf '=== Workshop ID %s ===\n' "$(basename "$wid")"
 
+        # El '|| true' de cada asignacion no es decorativo: con `set -e` y
+        # `pipefail`, un grep sin coincidencias hace fallar la asignacion entera
+        # y aborta la funcion en silencio. Y el caso de "este mod no declara
+        # dependencias" es exactamente el que queremos poder informar.
         while IFS= read -r info; do
-            modid="$(grep -iE '^[[:space:]]*id[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r')"
-            modname="$(grep -iE '^[[:space:]]*name[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d '\r')"
+            modid="$(grep -iE '^[[:space:]]*id[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r' || true)"
+            modname="$(grep -iE '^[[:space:]]*name[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d '\r' || true)"
             printf '    Mod ID : %s\n' "${modid:-<sin id>}"
             printf '    Nombre : %s\n' "${modname:- }"
             printf '    Ruta   : %s\n' "${info#$wid/}"
@@ -247,7 +251,7 @@ cmd_mods() {
             # las dependencias en la descripcion del Workshop: que esto salga
             # vacio NO significa que el mod no dependa de nada.
             local reqs
-            reqs="$(grep -iE '^[[:space:]]*require[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r')"
+            reqs="$(grep -iE '^[[:space:]]*require[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r' || true)"
             if [[ -n "$reqs" ]]; then
                 printf '    REQUIERE: %s   <- deben ir ANTES en Mods=\n' "$reqs"
             else
