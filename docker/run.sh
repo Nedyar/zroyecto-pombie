@@ -240,7 +240,11 @@ cmd_mods() {
         # y aborta la funcion en silencio. Y el caso de "este mod no declara
         # dependencias" es exactamente el que queremos poder informar.
         while IFS= read -r info; do
-            modid="$(grep -iE '^[[:space:]]*id[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r' || true)"
+            # Solo se quita el retorno de carro, NUNCA los espacios: hay Mod ID
+            # que los llevan dentro. 'Run and Reload' es literalmente su ID, y
+            # convertirlo en 'RunandReload' produce un mod que no carga y un
+            # 'required mod not found' que parece un problema del servidor.
+            modid="$(grep -iE '^[[:space:]]*id[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d '\r' || true)"
             modname="$(grep -iE '^[[:space:]]*name[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d '\r' || true)"
             printf '    Mod ID : %s\n' "${modid:-<sin id>}"
             printf '    Nombre : %s\n' "${modname:- }"
@@ -250,12 +254,26 @@ cmd_mods() {
             # cuando existe, pero muchos autores no la rellenan y solo mencionan
             # las dependencias en la descripcion del Workshop: que esto salga
             # vacio NO significa que el mod no dependa de nada.
+            # El require= puede estar en el mod.info de la raiz o SOLO dentro de
+            # la carpeta versionada (42/). Al mirar unicamente la raiz se
+            # escapan dependencias reales: asi se nos colo LuaDigitalWatchUI, que
+            # solo aparece en 42/mod.info de Realistic Temperature.
             local reqs
-            reqs="$(grep -iE '^[[:space:]]*require[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r' || true)"
+            reqs="$(grep -iE '^[[:space:]]*require[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d '\r' | sed 's/^[\\]//' || true)"
             if [[ -n "$reqs" ]]; then
                 printf '    REQUIERE: %s   <- deben ir ANTES en Mods=\n' "$reqs"
             else
-                printf '    Requiere: (sin declarar; comprobar en el Workshop)\n'
+                printf '    Requiere: (sin declarar en este fichero)\n'
+            fi
+
+            # Limites de version declarados por el autor. Son la razon mas
+            # silenciosa de que un mod no cargue: el juego lo descarta sin decir
+            # por que, y en el log solo aparece "required mod not found".
+            local vmin vmax
+            vmin="$(grep -iE '^[[:space:]]*versionMin[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r' || true)"
+            vmax="$(grep -iE '^[[:space:]]*versionMax[[:space:]]*=' "$info" | head -1 | cut -d= -f2- | tr -d ' \r' || true)"
+            if [[ -n "$vmin" || -n "$vmax" ]]; then
+                printf '    VERSIONES: min=%s max=%s\n' "${vmin:--}" "${vmax:--}"
             fi
 
             # Cualquier otro campo que el autor haya puesto y que no mostremos

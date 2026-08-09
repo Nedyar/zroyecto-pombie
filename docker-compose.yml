@@ -95,6 +95,17 @@ services:
       # evitar. El aislamiento lo dan los volumenes separados, no el nombre.
       PZ_PUBLIC: "false"
 
+      # Los puertos INTERNOS de staging tienen que coincidir con los que
+      # publicamos, no valen los de produccion.
+      #
+      # El servidor le anuncia al cliente los puertos que tiene configurados en
+      # su propio INI. Si dentro dice 16261/16262 pero fuera esta publicado en
+      # 16361/16362, el cliente conecta bien al 16361, y acto seguido el
+      # servidor le manda seguir por el 16262... que en la maquina del host es
+      # PRODUCCION. El handshake empieza y se pierde por el camino, sin error.
+      PZ_PORT: "${STAGING_GAME_PORT:-16361}"
+      PZ_UDP_PORT: "${STAGING_GAME_PORT_2:-16362}"
+
       # Staging comparte config/ y .env con produccion, asi que sin esto no
       # habria forma de probar un mod aqui sin metérselo tambien a produccion,
       # que es justo lo que staging existe para evitar.
@@ -114,8 +125,11 @@ services:
       ALLOW_BUILD_CHANGE: "true"
 
     ports:
-      - "${STAGING_GAME_PORT:-16361}:16261/udp"
-      - "${STAGING_GAME_PORT_2:-16362}:16262/udp"
+      # Mapeo 1:1 a proposito. Traducir puertos aqui rompe la conexion, porque
+      # el servidor anuncia los suyos internos y el cliente acaba hablando al
+      # puerto equivocado del host.
+      - "${STAGING_GAME_PORT:-16361}:${STAGING_GAME_PORT:-16361}/udp"
+      - "${STAGING_GAME_PORT_2:-16362}:${STAGING_GAME_PORT_2:-16362}/udp"
       - "127.0.0.1:${STAGING_RCON_PORT:-27115}:27015/tcp"
 
     volumes:

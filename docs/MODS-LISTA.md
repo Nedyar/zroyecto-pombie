@@ -245,3 +245,49 @@ Al inspeccionar los mods descargados aparecen entradas como *Neat Building
 [B42.12]* o *Project Cook [Legacy]*. **No son variantes que haya que elegir**:
 son las carpetas versionadas de Build 42, y el juego escoge sola la que
 corresponde a la versión instalada. Comparten Mod ID con la principal.
+
+---
+
+## Resultado del lote B
+
+**37 mods cargando, 0 errores criticos, servidor arrancado.**
+
+### Cuatro dependencias mas que faltaban
+
+Ninguna estaba en la lista y sin ellas su mod no carga:
+
+| Workshop ID | Mod ID | Lo exige |
+| --- | --- | --- |
+| 3171167894 | `damnlib` | Trailers! (`KI5trailers`) |
+| 2969455858 | `TargetSquareOnLoad` | Beds Have Blankets (`blankets`) |
+| 2447729538 | `FH` (Fluffy Hair) | Spongie's Hair (`SpnHair`) |
+| 3676456221 | `LuaDigitalWatchUI` | Realistic Temperature (`RC_RealisticColdMod`) |
+
+### Descartado: I Might Need A Lighter (2883633728)
+
+Su `mod.info` declara **`versionMax=42.12`**. Estamos en 42.20, asi que el juego
+lo rechaza por diseno. No hay arreglo por nuestra parte; hace falta que el autor
+lo actualice. El titulo del propio mod ya lo avisaba ("42.12").
+
+### Correcciones de IDs
+
+- **Run and Reload**: su Mod ID real es `Run and Reload`, **con espacios**. La
+  descripcion del Workshop lo decia bien.
+- **Right Click To Wear**: `DELRAN_CLICK_TO_WEAR`.
+- **Beds Have Blankets**: `blankets` es la version actual; `BeddingCovers-*` son
+  las *Legacy*.
+- **Starving Zombies**: `StarvingZombies` (la `WIP` es la de desarrollo).
+
+### Hipotesis que se probaron y resultaron FALSAS
+
+Se anotan para no volver a perder tiempo con ellas:
+
+- *"Un mod sin `mod.info` en la raiz no carga"*: falso. Hay 20 asi (CleanUI,
+  NeatUI_Framework, Neat_Crafting, Reading+...) y cargan sin problema.
+- *"Las carpetas con espacios en el nombre no cargan"*: falso. Take A Bath And
+  Shower New, Map Symbol Size Slider y Spongie Hair las tienen y funcionan.
+- *"Es una carrera entre la descarga de Steam y el indexado"*: falso. Fallaban
+  igual tras reiniciar.
+
+La causa real siempre estuvo en el `mod.info`: un ID mal leido, una dependencia
+declarada solo dentro de `42/`, y un limite de version.
