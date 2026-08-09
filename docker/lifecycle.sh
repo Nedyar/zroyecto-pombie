@@ -28,6 +28,18 @@ launch_server() {
     mkfifo "$PZ_STDIN_FIFO"
     exec 3<> "$PZ_STDIN_FIFO"
 
+    # El start-server.sh que trae el juego busca las librerias del JRE en
+    # jre64/lib/amd64, que es la distribucion del Java 8 antiguo. En el JRE que
+    # empaqueta Build 42 estan directamente en jre64/lib, asi que su LD_PRELOAD
+    # de libjsig.so falla y escupe cuatro ERROR en cada arranque. Como su script
+    # concatena el LD_LIBRARY_PATH que reciba, basta con anadir la ruta buena
+    # aqui en vez de parchear un fichero que Steam sobrescribira al actualizar.
+    export LD_LIBRARY_PATH="${PZ_DIR}/jre64/lib:${LD_LIBRARY_PATH:-}"
+
+    # El servidor vigila esta carpeta para detectar mods; si no existe, lanza
+    # una excepcion en el arranque. Hara falta de verdad en la fase 3.
+    mkdir -p "${DATA_DIR}/mods" "${DATA_DIR}/Logs"
+
     log "Arrancando servidor '${servername}' (RAM maxima ${PZ_MEMORY})"
 
     cd "$PZ_DIR"

@@ -64,7 +64,7 @@ SandboxVars = {
     -- 25 = 22 Hours
     -- 26 = 23 Hours
     -- 27 = Real-time
-    DayLength = 4,
+    DayLength = 5,
     StartYear = 1,
     -- Month in which the game starts. Default = July
     -- 1 = January
@@ -148,47 +148,47 @@ SandboxVars = {
     -- How long alarm batteries can last for after the power shuts off. Min: -1 Max: 2147483647 Default: 14
     AlarmDecayModifier = 14,
     -- Any food that can rot or spoil. Min: 0.00 Max: 4.00 Default: 0.80
-    FoodLootNew = 0.8,
+    FoodLootNew = 0.74,
     -- All other items that can be read, including books, fliers, and newspapers. Min: 0.00 Max: 4.00 Default: 0.60
-    LiteratureLootNew = 0.6,
+    LiteratureLootNew = 0.56,
     -- Books that provide skill XP multipliers. Min: 0.00 Max: 4.00 Default: 0.60
-    SkillBookLoot = 0.6,
+    SkillBookLoot = 0.56,
     -- Items that teach recipes. Min: 0.00 Max: 4.00 Default: 0.60
-    RecipeResourceLoot = 0.6,
+    RecipeResourceLoot = 0.56,
     -- Medicine, bandages and first aid tools. Min: 0.00 Max: 4.00 Default: 0.60
-    MedicalLootNew = 0.6,
+    MedicalLootNew = 0.56,
     -- Fishing Rods, Tents, camping gear etc. Min: 0.00 Max: 4.00 Default: 0.60
-    SurvivalGearsLootNew = 0.6,
+    SurvivalGearsLootNew = 0.56,
     -- Canned and dried food, beverages. Min: 0.00 Max: 4.00 Default: 0.60
-    CannedFoodLootNew = 0.6,
+    CannedFoodLootNew = 0.56,
     -- Weapons that are not tools in other categories. Min: 0.00 Max: 4.00 Default: 0.60
-    WeaponLootNew = 0.6,
+    WeaponLootNew = 0.56,
     -- Also includes weapon attachments. Min: 0.00 Max: 4.00 Default: 1.20
-    RangedWeaponLootNew = 1.2,
+    RangedWeaponLootNew = 1.11,
     -- Loose ammo, boxes and magazines. Min: 0.00 Max: 4.00 Default: 0.60
-    AmmoLootNew = 0.6,
+    AmmoLootNew = 0.56,
     -- Vehicle parts and the tools needed to install them. Min: 0.00 Max: 4.00 Default: 0.60
-    MechanicsLootNew = 0.6,
+    MechanicsLootNew = 0.56,
     -- Everything else. Also affects foraging for all items in Town/Road zones. Min: 0.00 Max: 4.00 Default: 0.80
-    OtherLootNew = 0.8,
+    OtherLootNew = 0.74,
     -- All wearable items that are not containers. Min: 0.00 Max: 4.00 Default: 0.60
-    ClothingLootNew = 0.6,
+    ClothingLootNew = 0.56,
     -- Backpacks and other wearable/equippable containers, eg. cases. Min: 0.00 Max: 4.00 Default: 0.60
-    ContainerLootNew = 0.6,
+    ContainerLootNew = 0.56,
     -- Keys for buildings/cars, key rings, and locks. Min: 0.00 Max: 4.00 Default: 0.40
-    KeyLootNew = 0.4,
+    KeyLootNew = 0.37,
     -- VHS tapes and CDs. Min: 0.00 Max: 4.00 Default: 0.60
-    MediaLootNew = 0.6,
+    MediaLootNew = 0.56,
     -- Spiffo items, plushies, and other collectible keepsake items eg. Photos. Min: 0.00 Max: 4.00 Default: 0.60
-    MementoLootNew = 0.6,
+    MementoLootNew = 0.56,
     -- Items that are used in cooking, including those (eg. knives) which can be weapons. Does not include food. Includes both usable and unusable items. Min: 0.00 Max: 4.00 Default: 0.60
-    CookwareLootNew = 0.6,
+    CookwareLootNew = 0.56,
     -- Items and weapons that are used as ingredients for crafting or building. This is a general category that does not include items belonging to other categories such as Cookware or Medical. Does not include Tools. Min: 0.00 Max: 4.00 Default: 0.60
-    MaterialLootNew = 0.6,
+    MaterialLootNew = 0.56,
     -- Items and weapons which are used in both animal and plant agriculture, such as Seeds, Trowels, or Shovels. Min: 0.00 Max: 4.00 Default: 0.60
-    FarmingLootNew = 0.6,
+    FarmingLootNew = 0.56,
     -- Items and weapons which are Tools but don't fit in other categories such as Mechanics or Farming. Min: 0.00 Max: 4.00 Default: 0.60
-    ToolLootNew = 0.6,
+    ToolLootNew = 0.56,
     -- <BHC> [!] It is recommended that you DO NOT change this. [!] <RGB:1,1,1>   Can be used to adjust the number of rolls made on loot tables when spawning loot. Will not reduce the number of rolls below 1. Can negatively affect performance if set to high values. It is highly recommended that this not be changed. Min: 0.10 Max: 100.00 Default: 1.00
     RollsMultiplier = 1.0,
     -- A comma-separated list of item types that won't spawn as ordinary loot.
@@ -231,7 +231,7 @@ SandboxVars = {
     -- 3 = Normal (100 Days)
     -- 4 = Slow (200 Days)
     -- 5 = Very Slow (500 Days)
-    ErosionSpeed = 4,
+    ErosionSpeed = 3,
     -- For a custom Erosion Speed. Zero means use the Erosion Speed option. Maximum is 36,500 days (approximately 100 years). Min: -1 Max: 36500 Default: 0
     ErosionDays = 0,
     -- The speed of plant growth. Default = Normal
@@ -803,7 +803,7 @@ SandboxVars = {
         -- 2 = Fast Shamblers
         -- 3 = Shamblers
         -- 4 = Random
-        Speed = 4,
+        Speed = 2,
         -- If Random Speed is enabled, this controls what percentage of zombies are Sprinters. Check the "Advanced" box below to use a custom percentage. Min: 0 Max: 100 Default: 0
         SprinterPercentage = 0,
         -- The damage zombies inflict per attack. Default = Normal
@@ -890,7 +890,7 @@ SandboxVars = {
         -- 1 = Both
         -- 2 = Night
         -- 3 = Day
-        ActiveOnly = 1,
+        ActiveOnly = 2,
         -- If zombies trigger house alarms when breaking through windows or doors.
         TriggerHouseAlarm = true,
         -- If multiple attacking zombies can drag you down and kill you.  Dependent on zombie strength.
@@ -925,7 +925,7 @@ SandboxVars = {
     },
     ZombieConfig = {
         -- Set by the "Zombie Count" population option, or by a custom number here. Insane = 2.5, Very High = 1.6, High = 1.2, Normal = 0.65, Low = 0.15, None = 0.0. Min: 0.00 Max: 4.00 Default: 0.65
-        PopulationMultiplier = 0.65,
+        PopulationMultiplier = 0.74,
         -- A multiplier for the desired zombie population at the start of the game. Insane = 3.0, Very High = 2.0, High = 1.5, Normal = 1.0, Low = 0.5, None = 0.0. Min: 0.00 Max: 4.00 Default: 1.00
         PopulationStartMultiplier = 1.0,
         -- A multiplier for the desired zombie population on the peak day. Insane = 3.0, Very High = 2.0, High = 1.5, Normal = 1.0, Low = 0.5, None = 0.0. Min: 0.00 Max: 4.00 Default: 1.50
@@ -933,23 +933,23 @@ SandboxVars = {
         -- The day when the population reaches its peak. Min: 1 Max: 365 Default: 28
         PopulationPeakDay = 28,
         -- The number of hours that must pass before zombies may respawn in a cell. If 0, spawning is disabled. Min: 0.00 Max: 8760.00 Default: 0.00
-        RespawnHours = 0.0,
+        RespawnHours = 672.0,
         -- The number of hours that a chunk must be unseen before zombies may respawn in it. Min: 0.00 Max: 8760.00 Default: 0.00
-        RespawnUnseenHours = 0.0,
+        RespawnUnseenHours = 288.0,
         -- The fraction of a cell's desired population that may respawn every RespawnHours. Min: 0.00 Max: 1.00 Default: 0.00
-        RespawnMultiplier = 0.0,
+        RespawnMultiplier = 0.025,
         -- The number of hours that must pass before zombies migrate  to empty parts of the same cell. If 0, migration is disabled. Min: 0.00 Max: 8760.00 Default: 12.00
-        RedistributeHours = 12.0,
+        RedistributeHours = 216.0,
         -- The distance a zombie will try to walk towards the last sound it heard. Min: 10 Max: 1000 Default: 100
         FollowSoundDistance = 100,
         -- The size of groups real zombies form when idle. 0 means zombies don't form groups. Groups don't form inside buildings or forest zones. Min: 0 Max: 1000 Default: 20
-        RallyGroupSize = 20,
+        RallyGroupSize = 17,
         -- The amount, as a percentage, that zombie groups can vary in size from the default (both larger and smaller).   For example, at 50% variance with a default group size of 20, groups will vary in size from 10-30. Min: 0 Max: 100 Default: 50
         RallyGroupSizeVariance = 50,
         -- The distance real zombies travel to form groups when idle. Min: 5 Max: 50 Default: 20
-        RallyTravelDistance = 20,
+        RallyTravelDistance = 18,
         -- The distance between zombie groups. Min: 5 Max: 25 Default: 15
-        RallyGroupSeparation = 15,
+        RallyGroupSeparation = 8,
         -- How close members of a zombie group stay to the group's "leader". Min: 1 Max: 10 Default: 3
         RallyGroupRadius = 3,
         -- Controls the maximum number of zombies tracked before cleanup occurs. 0 means zombies will not be cleaned up. The default value (300) is strongly recommended. Increasing this value or setting to 0 may cause severe performance problems. For troubleshooting and bug-report purposes, please reproduce any issue with the default setting before submitting a report. Min: 0 Max: 5000 Default: 300
@@ -957,7 +957,7 @@ SandboxVars = {
     },
     MultiplierConfig = {
         -- The rate at which all skills level up. Min: 0.00 Max: 1000.00 Default: 1.00
-        Global = 1.0,
+        Global = 1.75,
         -- When enabled, all skills will use the Global Multiplier.
         GlobalToggle = true,
         -- Rate at which Fitness skill levels up. Min: 0.00 Max: 1000.00 Default: 1.00
