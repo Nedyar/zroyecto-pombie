@@ -12,3 +12,7 @@ desktop.ini
 
 # Artefacto de diagnostico, solo aparece si el juego cambia ajustes por su cuenta.
 config/reference/server.ini.runtime
+
+# Banco de trabajo: contiene assets de terceros pendientes de permiso.
+# NO se versiona.
+workbench/

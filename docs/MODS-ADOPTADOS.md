@@ -1,10 +1,10 @@
 # Mods del servidor
 
-Esto es lo que llevamos puesto ahora mismo. **36 mods**, todos probados y
+Esto es lo que llevamos puesto ahora mismo. **37 mods**, todos probados y
 funcionando en la versión actual del juego (Build 42.20).
 
 No tenéis que hacer nada para instalarlos: al entrar al servidor, el juego los
-descarga automáticamente y podéis jugar de inmediato.
+descarga automáticamente.
 
 ---
 
@@ -32,7 +32,7 @@ descarga automáticamente y podéis jugar de inmediato.
 - **[Take A Bath And Shower](https://steamcommunity.com/sharedfiles/filedetails/?id=3592172476)** — Bañarse y ducharse de verdad, con su papel en el día a día.
 - **[Beds Have Blankets](https://steamcommunity.com/sharedfiles/filedetails/?id=3028528478)** — Las camas del mundo aparecen con mantas.
 - **[Replace Bandage](https://steamcommunity.com/sharedfiles/filedetails/?id=2944344655)** — Cambiar un vendaje sucio por uno limpio de una vez, sin quitar y volver a poner.
-- **[Cat's eye in the Dark](https://steamcommunity.com/sharedfiles/filedetails/?id=3402513620)** — El rasgo *Cat's Eye* ahora sí deja ver algo en la oscuridad.
+- **[Cat's eye in the Dark](https://steamcommunity.com/sharedfiles/filedetails/?id=3402513620)** — El rasgo _Cat's Eye_ ahora sí deja ver algo en la oscuridad.
 
 ## Combate y moverse por el mapa
 
@@ -49,6 +49,7 @@ descarga automáticamente y podéis jugar de inmediato.
 - **[Spongie's Hairstyle Unlocker](https://steamcommunity.com/sharedfiles/filedetails/?id=3041733782)** — Al cortarte el pelo puedes elegir cualquier peinado de la misma longitud.
 - **[Right Click To Wear](https://steamcommunity.com/sharedfiles/filedetails/?id=3453580134)** — Ponerte ropa del suelo con clic derecho, sin recogerla antes.
 - **[Equip Clothing While Moving](https://steamcommunity.com/sharedfiles/filedetails/?id=3446510982)** — Vestirte andando o apuntando.
+- **Tariq's Beards** — 47 barbas y bigotes, con las largas incluidas: Thor, Kratos, Bandholz, vikingas y trenzadas. **Este se instala a mano**, mira más abajo.
 
 ## Libros y mapa
 
@@ -66,6 +67,29 @@ Estos no añaden nada por sí solos: hacen funcionar a los de arriba.
 - **[Fluffy Hair](https://steamcommunity.com/sharedfiles/filedetails/?id=2447729538)** — este además hace que el peinado no se deforme al llevar sombrero
 - **[Target Square: On Load Commands](https://steamcommunity.com/sharedfiles/filedetails/?id=2969455858)**
 - **[Lua Digital Watch Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=3676456221)**
+
+---
+
+## El único que hay que instalar a mano: Tariq's Beards
+
+Este no está en el Workshop en versión compatible. El original lleva sin
+actualizarse desde 2023 y ya no funciona con la versión actual del juego, así
+que lo hemos arreglado nosotros. Son las mismas 47 barbas del original, sin
+tocar nada del contenido.
+
+Como no viene de Steam, hay que copiarlo a mano una vez:
+
+1. Descarga **`TariqsBeardsB42.zip`**.
+2. Abre la carpeta `Zomboid\mods` de tu usuario. La forma rápida: pulsa
+   `Win + R`, pega `%USERPROFILE%\Zomboid\mods` y dale a Aceptar.
+3. Descomprime el zip ahí dentro. Te debe quedar una carpeta nueva con un
+   fichero `mod.info` dentro.
+4. Abre el juego. Listo, no hay que activar nada más.
+
+Si al entrar al servidor no te salen las barbas nuevas en la creación de
+personaje, lo más probable es que la carpeta esté un nivel de más adentro:
+tiene que quedar `Zomboid\mods\<carpeta>\mod.info`, no
+`Zomboid\mods\<carpeta>\<otra carpeta>\mod.info`.
 
 ---
 
