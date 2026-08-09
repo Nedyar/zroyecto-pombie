@@ -17,6 +17,18 @@ die_loud() {
     while IFS= read -r line; do printf '  # %s\n' "$line" >&2; done <<< "$1"
     printf '  ##############################################################\n' >&2
     printf '\n' >&2
+
+    # Con `restart: unless-stopped`, salir de inmediato ante un error de
+    # configuracion mete al contenedor en un bucle de reinicio que inunda el
+    # log y entierra el mensaje que explica el problema. Esta pausa lo
+    # convierte en un latido lento y legible. Solo se aplica al servir; los
+    # comandos puntuales (backup, restore) salen al momento.
+    local pause="${FATAL_PAUSE_SECONDS:-0}"
+    if (( pause > 0 )); then
+        printf '  (pausa de %ss para no entrar en bucle de reinicio)\n\n' "$pause" >&2
+        sleep "$pause"
+    fi
+
     exit 1
 }
 
@@ -59,8 +71,13 @@ rcon_ready() {
          "players" >/dev/null 2>&1
 }
 
+# Manda UN comando. Todos los argumentos se unen en una sola cadena a
+# proposito: rcon-cli interpreta cada argumento suelto como un comando
+# independiente, asi que `rcon_cmd servermsg "hola"` mandaria dos comandos
+# ("servermsg" y "hola") en vez de uno. El servidor responderia con dos
+# "Unknown command" y el aviso a los jugadores nunca llegaria.
 rcon_cmd() {
-    rcon -a "127.0.0.1:${PZ_RCON_PORT}" -p "${PZ_RCON_PASSWORD}" -t rcon "$@" 2>&1
+    rcon -a "127.0.0.1:${PZ_RCON_PORT}" -p "${PZ_RCON_PASSWORD}" -t rcon "$*" 2>&1
 }
 
 # Manda un comando por la consola del servidor a traves del FIFO de stdin.

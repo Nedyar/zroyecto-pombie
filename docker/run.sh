@@ -59,12 +59,18 @@ Editala en el fichero .env antes de arrancar."
 # ================================================================== BACKUP ===
 
 periodic_backup_loop() {
-    local hours="${BACKUP_INTERVAL_HOURS}"
-    (( hours > 0 )) || { log "Backups periodicos desactivados."; return 0; }
+    local secs=$(( BACKUP_INTERVAL_HOURS * 3600 ))
 
-    log "Backups periodicos cada ${hours}h (conservando ${BACKUP_KEEP})."
+    # Gancho para poder verificar el bucle sin esperar horas. En operacion
+    # normal no se usa: un mecanismo de seguridad que nunca se ha visto
+    # funcionar es una suposicion, no una salvaguarda.
+    [[ -n "${BACKUP_INTERVAL_SECONDS:-}" ]] && secs="$BACKUP_INTERVAL_SECONDS"
+
+    (( secs > 0 )) || { log "Backups periodicos desactivados."; return 0; }
+
+    log "Backups periodicos cada ${secs}s (conservando ${BACKUP_KEEP})."
     while true; do
-        sleep $(( hours * 3600 ))
+        sleep "$secs"
         (( STOPPING )) && break
         do_backup "periodic" || warn "El backup periodico fallo; sigo."
     done
@@ -92,6 +98,11 @@ on_signal() {
 # =================================================================== SERVE ===
 
 cmd_serve() {
+    # Al servir, un error fatal debe pausar antes de salir: si no, la politica
+    # de reinicio de Docker relanza el contenedor sin parar y el mensaje de
+    # error se pierde entre miles de lineas repetidas.
+    export FATAL_PAUSE_SECONDS="${FATAL_PAUSE_SECONDS:-30}"
+
     validate_env
 
     if ! game_installed; then

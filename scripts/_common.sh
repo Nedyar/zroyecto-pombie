@@ -8,6 +8,13 @@
 
 set -Eeuo pipefail
 
+# En Git Bash (Windows), MSYS reescribe cualquier argumento que parezca una
+# ruta absoluta de Unix. Sin esto, `/docker/run.sh` le llega a Docker como
+# 'C:/Program Files/Git/docker/run.sh' y todos los comandos fallan con un
+# "no such file or directory" bastante desconcertante. En Linux es inocuo.
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL='*'
+
 # Trabajar siempre desde la raiz del proyecto, se llame al script desde donde
 # se llame.
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

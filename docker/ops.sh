@@ -354,10 +354,14 @@ patch_memory() {
 # quieres tener cuando algo ha salido mal.
 ROTATABLE_LABELS="prestart periodic"
 
+backup_prefix() {
+    printf '%s' "${BACKUP_NAME_PREFIX:-pz-${PZ_SERVER_NAME}}"
+}
+
 do_backup() {
     local label="${1:-manual}"
     local stamp; stamp="$(date -u +%Y%m%d-%H%M%S)"
-    local out="${BACKUP_DIR}/pz-${PZ_SERVER_NAME}-${stamp}-${label}.tar.zst"
+    local out="${BACKUP_DIR}/$(backup_prefix)-${stamp}-${label}.tar.zst"
 
     mkdir -p "$BACKUP_DIR"
 
@@ -395,7 +399,9 @@ rotate_backups() {
 
     for label in $ROTATABLE_LABELS; do
         local -a files
-        mapfile -t files < <(ls -1t "${BACKUP_DIR}"/pz-*-"${label}".tar.zst 2>/dev/null || true)
+        # Solo rotamos los backups de ESTA instancia: staging no debe poder
+        # borrar backups de produccion ni al reves.
+        mapfile -t files < <(ls -1t "${BACKUP_DIR}/$(backup_prefix)"-*-"${label}".tar.zst 2>/dev/null || true)
         (( ${#files[@]} > keep )) || continue
         local i
         for (( i = keep; i < ${#files[@]}; i++ )); do

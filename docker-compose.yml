@@ -84,14 +84,23 @@ services:
     restart: "no"
 
     environment:
-      # Nombre distinto: sus ficheros de guardado y config nunca coinciden con
-      # los de produccion aunque alguien se equivoque de volumen.
-      PZ_SERVER_NAME: "${PZ_SERVER_NAME:-pombie}stage"
+      # OJO: staging usa EL MISMO PZ_SERVER_NAME que produccion, a proposito.
+      #
+      # El nombre del servidor da nombre a la carpeta de guardado
+      # (Saves/Multiplayer/<nombre>) y a la base de datos. Si aqui pusieramos un
+      # nombre distinto, staging restauraria la copia de produccion y luego
+      # generaria un mundo nuevo y vacio a su lado, ignorandola. Es decir,
+      # estariamos probando los mods sobre un mundo recien creado en vez de
+      # sobre el mundo real, que es exactamente lo que staging existe para
+      # evitar. El aislamiento lo dan los volumenes separados, no el nombre.
       PZ_PUBLIC: "false"
-      # En staging no queremos backups automaticos ensuciando ./backups: los
-      # backups que importan son los de produccion.
+
+      # Los backups de staging llevan otro prefijo para que no se confundan
+      # nunca con los de produccion en la carpeta compartida ./backups.
+      BACKUP_NAME_PREFIX: "staging"
       BACKUP_INTERVAL_HOURS: "0"
       BACKUP_ON_START: "false"
+
       # Aqui si aceptamos cambios de version: es el sitio para probarlos.
       ALLOW_BUILD_CHANGE: "true"
 
