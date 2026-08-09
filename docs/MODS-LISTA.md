@@ -151,13 +151,78 @@ problema, se anotan por si alguien los propone más adelante):
 - Bicycle! ↔ *Gael's Gun Store* y otros mods de armas que alteran las mejoras
 - Neat Building ↔ *Stairs East & South* (hay una variante de compatibilidad)
 
-**Elementos del Workshop con varios Mod ID.** Hay que elegir cuáles activar, no
-valen todos a la vez:
+---
 
-- Neat Building: `Neat_Building`, `Neat_Building_UIOnly`,
-  `Neat_Building_Railings`, `Neat_Building_Buildables_SESCompat`
-- Project Cook: `Project_Cook`, `Project_Cook_Pixel_Icon_Pack`
-- Take A Bath: `TakeABathAndShowerNew`, `ATakeABathAndShowerDepthMap`
-- Beds Have Blankets: `blankets`, `Bedding Covers-With Pillows`,
+## Variantes dentro de un mismo elemento del Workshop
+
+Varios elementos traen más de un Mod ID. **No se activan todos**: son
+alternativas o complementos, y elegir mal tiene consecuencias.
+
+### Neat Building (3536052310) — 4 variantes, decisión de una sola dirección
+
+| Mod ID | Qué es |
+| --- | --- |
+| `Neat_Building` | Completa (legacy): la interfaz **más** todos los construibles **y** las barandillas metálicas |
+| `Neat_Building_UIOnly` | **Solo la interfaz.** No añade ninguna entidad construible |
+| `Neat_Building_Buildables_SESCompat` | Los construibles **sin** las barandillas metálicas que chocan con *Stairs East & South* |
+| `Neat_Building_Railings` | Solo las barandillas metálicas |
+
+La completa **no** se combina con las modulares: o una o las otras.
+
+**Esto es lo importante.** El autor avisa de que en servidores multijugador,
+quitar una variante con construibles de un mundo existente puede provocar
+errores de `WorldDictionary` **que impiden cargar el mundo**. Existe incluso un
+mod aparte de "Safe Uninstall Support" para mundos que la quitaron. Su
+recomendación es mantener la misma variante una vez que el mundo la ha usado.
+
+Es exactamente el escenario de corrupción que este proyecto intenta evitar, así
+que la variante se elige **antes** de crear el mundo definitivo y no se toca.
+
+`Neat_Building_UIOnly` es la opción segura: al no añadir entidades, quitarla
+más adelante no puede romper el `WorldDictionary`. El propio autor dice que esta
+variante no necesita el Safe Uninstall Support. Las que traen construibles son
+un compromiso deliberado a cambio de más piezas de construcción.
+
+No tenemos *Stairs East & South*, así que la variante SESCompat no aporta nada.
+
+### Take A Bath And Shower (3592172476) — 2, complementarias
+
+| Mod ID | Qué es |
+| --- | --- |
+| `TakeABathAndShowerNew` | El mod principal |
+| `ATakeABathAndShowerDepthMap` | Arreglo de mapas de profundidad de bañeras y duchas. **Debe ir el primero de toda la lista** (por eso la `A` inicial: es para que ordene alfabéticamente arriba) |
+
+Se activan las dos.
+
+### Project Cook (3490188370) — 1 principal + 1 opcional estético
+
+| Mod ID | Qué es |
+| --- | --- |
+| `Project_Cook` | El mod principal |
+| `Project_Cook_Pixel_Icon_Pack` | Opcional: sustituye algunos iconos del panel de cocina por versiones en pixel-art. Debe cargar **después** de Project Cook |
+
+### Buttstroke (3394044313) — ojo, una de ellas no se toca
+
+| Mod ID | Qué es |
+| --- | --- |
+| `Buttstroke` | El mod |
+| `Buttstroke42.12.3` | Versión antigua para builds 42.12.x. Su propio nombre interno es **"42.12.3 Buttstroke (DO NOT ENABLE)"** |
+
+### Pendientes de determinar
+
+El autor no explica las variantes y aún no están descargadas. Se resolverán al
+probar el lote B, mirando los `mod.info`:
+
+- Starving Zombies (3396867685): `StarvingZombies`, `StarvingZombiesWIP`
+- Beds Have Blankets (3028528478): `blankets`, `Bedding Covers-With Pillows`,
   `Bedding Covers-no pillows`
-- Starving Zombies: `StarvingZombies`, `StarvingZombiesWIP`
+
+Better Sorting (2313387159) repite `BetterSortCC` dos veces en su descripción,
+pero es un único mod: no hay variante que elegir.
+
+### Nota sobre las etiquetas `[B42.12]`, `[B42.13]`, `[Legacy]`
+
+Al inspeccionar los mods descargados aparecen entradas como *Neat Building
+[B42.12]* o *Project Cook [Legacy]*. **No son variantes que haya que elegir**:
+son las carpetas versionadas de Build 42, y el juego escoge sola la que
+corresponde a la versión instalada. Comparten Mod ID con la principal.
