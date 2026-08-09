@@ -205,8 +205,48 @@ para que el mensaje sea legible.
    problema es de red.
 3. Comprueba que las reglas del router son **UDP**. Una regla TCP se ve
    perfecta y no sirve de nada.
-4. `PZ_PUBLIC=false` significa que no sale en la lista de servidores; hay que
+4. **Conectate al 16261, nunca al 16262.** El 16262 tiene que estar abierto
+   pero no se teclea: lo usa el motor por su cuenta.
+5. `PZ_PUBLIC=false` significa que no sale en la lista de servidores; hay que
    entrar por IP directa.
+
+**"Conexion erronea" y el log no da ningun motivo**
+
+Sintoma exacto: el log registra `Steam client ... is initiating a connection`
+y despues **nada**. Ni rechazo, ni contrasena incorrecta, ni aviso de mods. Al
+cliente tampoco le llega la lista de mods, asi que ni siquiera sale el aviso de
+suscribirse.
+
+Casi siempre es que falta `~/.steam/sdk64/steamclient.so`. Sin ese enlace,
+`SteamAPI_Init` no termina de inicializar: el servidor arranca, responde a RCON
+y se marca `healthy`, pero **no puede autenticar a los clientes**.
+
+```bash
+docker compose exec pz bash -c 'ls -la ~/.steam/sdk64/'
+```
+
+Debe aparecer `steamclient.so -> /opt/pz-server/steamclient.so`. El entrypoint
+lo rehace en cada arranque, asi que si falta, algo va mal con la instalacion.
+
+Una conexion que SI completa deja esta linea en el log:
+
+```
+LOG  : Network > Connected new client <numero> ID # 0
+```
+
+Si aparece `is initiating a connection` pero nunca `Connected new client`, el
+handshake se esta muriendo por el camino.
+
+Nota: `[S_API FAIL] Tried to access Steam interface SteamNetworkingUtils004
+before SteamAPI_Init succeeded` aparece **siempre**, incluso con todo
+funcionando. No es sintoma de nada.
+
+**Que NO tocar cuando falla una conexion**
+
+Circulan guias que recomiendan `DisableSteamRelay` o fijar `SteamPort=8766` en
+el `.ini`. Estan **obsoletas** para Build 42: ahora se gestiona con la casilla
+*Use Steam Relay* del propio juego y los puertos publicados. Esa casilla es un
+recurso para redes que bloquean UDP entrante; en local y en LAN no hace falta.
 
 **Va a tirones con varios jugadores**
 
