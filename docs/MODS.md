@@ -160,6 +160,7 @@ ver la lista actual en el formato que hace falta:
 
 ```bash
 grep PZ_WORKSHOP_ITEMS .env
+```
 
 ---
 
