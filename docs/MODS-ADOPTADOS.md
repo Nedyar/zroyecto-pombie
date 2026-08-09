@@ -3,11 +3,8 @@
 Esto es lo que llevamos puesto ahora mismo. **36 mods**, todos probados y
 funcionando en la versión actual del juego (Build 42.20).
 
-Hay que estar suscrito a todos en Steam **antes** de entrar. Podéis ir uno a uno
-por los enlaces de abajo, o suscribiros a todos de golpe desde la colección.
-
-Después de suscribiros, dejad que Steam termine de descargarlos y abrid el juego
-de nuevo.
+No tenéis que hacer nada para instalarlos: al entrar al servidor, el juego los
+descarga automáticamente y podéis jugar de inmediato.
 
 ---
 
