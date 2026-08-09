@@ -3,9 +3,11 @@
 Esto es lo que llevamos puesto ahora mismo. **36 mods**, todos probados y
 funcionando en la versión actual del juego (Build 42.20).
 
-No hace falta que os los bajéis a mano: al intentar entrar, el juego detecta los
-que os faltan y los descarga solo. Cuando termine, cerrad el juego y volved a
-abrirlo, y ya podréis conectaros.
+Hay que estar suscrito a todos en Steam **antes** de entrar. Podéis ir uno a uno
+por los enlaces de abajo, o suscribiros a todos de golpe desde la colección.
+
+Después de suscribiros, dejad que Steam termine de descargarlos y abrid el juego
+de nuevo.
 
 ---
 
