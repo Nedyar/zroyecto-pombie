@@ -3,14 +3,13 @@
 Esto es lo que llevamos puesto ahora mismo. **36 mods**, todos probados y
 funcionando en la versión actual del juego (Build 42.20).
 
-Para entrar hay que estar suscrito a todos. Lo más cómodo es la colección de
-Steam: un botón de *Suscribirse a todo* y listo.
+No hace falta que os los bajéis a mano: al intentar entrar, el juego detecta los
+que os faltan y los descarga solo. Cuando termine, cerrad el juego y volved a
+abrirlo, y ya podréis conectaros.
 
 ---
 
 ## Inventario y saqueo
-
-Es donde más se nota el cambio respecto al juego base.
 
 - **[Proximity Inventory](https://steamcommunity.com/sharedfiles/filedetails/?id=2847184718)** — Saquea de golpe todo lo que tengas alrededor, en vez de ir contenedor por contenedor y cadáver por cadáver.
 - **[CleanUI](https://steamcommunity.com/sharedfiles/filedetails/?id=3437629766)** — Rehace los paneles de inventario y saqueo: más compactos, rápidos y fáciles de leer.
@@ -61,8 +60,7 @@ Es donde más se nota el cambio respecto al juego base.
 
 ## Y cinco más que no vais a notar
 
-Estos no añaden nada por sí solos: hacen funcionar a los de arriba. Hay que
-suscribirse igualmente.
+Estos no añaden nada por sí solos: hacen funcionar a los de arriba.
 
 - **[NeatUI Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=3508537032)**
 - **[that DAMN Library](https://steamcommunity.com/sharedfiles/filedetails/?id=3171167894)**
@@ -80,7 +78,3 @@ Avisa y lo ponemos al día.
 
 **Si os apetece algún mod más**, decidlo. Antes de meterlo se prueba en un
 servidor aparte, así que no hay riesgo de romper la partida.
-
-Se quedaron fuera unos cuantos que propusisteis porque son de Build 41 y ya no
-funcionan, o porque sus autores los abandonaron. Entre ellos las barbas de
-Tariq, True Actions, The Only Cure y Water Dispenser.
