@@ -40,6 +40,24 @@ launch_server() {
     # una excepcion en el arranque. Hara falta de verdad en la fase 3.
     mkdir -p "${DATA_DIR}/mods" "${DATA_DIR}/Logs"
 
+    # La Steam API busca steamclient.so en ~/.steam/sdk64 ademas de en el
+    # directorio de instalacion. Sin el enlace, SteamAPI_Init no termina de
+    # inicializar y el servidor arranca aparentemente bien pero NO puede
+    # completar la autenticacion de los clientes: el jugador ve "conexion
+    # erronea", el log solo dice "is initiating a connection" y no aparece
+    # ningun motivo de rechazo.
+    #
+    # Se rehace en CADA arranque, no solo al instalar: si solo se hace en la
+    # instalacion, una instalacion anterior a este codigo se queda sin enlace
+    # para siempre y el fallo es invisible hasta que alguien intenta entrar.
+    mkdir -p "${HOME}/.steam/sdk64" "${HOME}/.steam/sdk32"
+    if [[ -f "${PZ_DIR}/steamclient.so" ]]; then
+        ln -sf "${PZ_DIR}/steamclient.so" "${HOME}/.steam/sdk64/steamclient.so"
+        ln -sf "${PZ_DIR}/steamclient.so" "${HOME}/.steam/sdk32/steamclient.so"
+    else
+        warn "No encuentro ${PZ_DIR}/steamclient.so; la autenticacion de clientes puede fallar."
+    fi
+
     log "Arrancando servidor '${servername}' (RAM maxima ${PZ_MEMORY})"
 
     cd "$PZ_DIR"
