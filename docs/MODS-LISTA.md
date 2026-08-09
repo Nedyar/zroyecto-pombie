@@ -291,3 +291,15 @@ Se anotan para no volver a perder tiempo con ellas:
 
 La causa real siempre estuvo en el `mod.info`: un ID mal leido, una dependencia
 declarada solo dentro de `42/`, y un limite de version.
+
+---
+
+## Correccion pendiente en el orden de carga
+
+**`SpnHairAPI` (Spongie's Hairstyle Unlocker) debe cargar DESPUES de
+`improvedhairmenubuild42` (Improved Hair Menu).** Su autor lo dice en
+mayusculas: *"LOAD THIS MOD AFTER IMPROVED HAIR MENU OR IT WON'T WORK"*.
+
+En la lista validada va en la posicion 7 y Improved Hair Menu en la 35, o sea
+al reves. El servidor arranca igual —por eso no salio en las pruebas— pero el
+desbloqueo de peinados no funcionara.
