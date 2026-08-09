@@ -52,13 +52,30 @@ persistente. Por eso el procedimiento es el que es.
 **Regla: de uno en uno, y siempre primero en staging.** Añadir cinco mods a la
 vez y que el mundo falle no te dice cuál fue.
 
-### 1. Valorar el candidato antes de descargar nada
+### 1. Investigación previa — antes de descargar nada
 
-- ¿La página del Workshop dice explícitamente **42 stable** o **42.20**?
-  "Build 42" a secas puede referirse a una unstable antigua.
-- ¿Fecha de última actualización posterior al 29/07/2026?
-- ¿Tiene dependencias? Van antes en el orden de carga.
-- ¿Dice ser **MP friendly**? Muchos mods son solo para un jugador.
+Ningún mod se prueba a ciegas. Para cada candidato se revisa:
+
+| Qué | Dónde | Qué descarta |
+| --- | --- | --- |
+| **Versión** | ¿La página dice **42 stable** o **42.20** explícitamente? "Build 42" a secas puede referirse a una unstable antigua | Mods de B41 disfrazados |
+| **Fecha** | Última actualización posterior al 29/07/2026 | Ports abandonados a medias |
+| **Comentarios** | Últimas páginas de comentarios del Workshop: es donde aparecen los bugs reales antes que en ningún otro sitio | Mods que "funcionan" pero rompen cosas |
+| **Multijugador** | ¿Dice ser **MP friendly**? Muchos son solo para un jugador | Mods que fallan solo en servidor |
+| **Dependencias** | ¿Requiere alguna librería? | Fallos de carga por orden incorrecto |
+| **Solapamiento** | ¿Hace lo mismo que otro que ya tenemos, o toca las mismas mecánicas? | Conflictos y trabajo duplicado |
+| **Orden de carga** | Dónde encaja según el bloque de más abajo | Sobrescrituras inesperadas |
+
+Con una lista larga se investiga **entera** antes de tocar nada, y luego se
+prueba agrupando: primero todos los que la comunidad o el Workshop confirmen
+que funcionan, después los dudosos. Los que se sepa rotos o solapados se
+descartan antes de gastar tiempo en ellos.
+
+Aviso: las guías y los resultados de búsqueda sobre compatibilidad con B42 son
+**poco fiables**. Common Sense (`2875848298`) aparecía como compatible con
+42.20 en varias fuentes y tumba el servidor. La investigación previa sirve para
+priorizar y descartar, no para dar nada por bueno: la única prueba que cuenta
+es levantarlo en staging.
 
 ### 2. Probar en staging
 
@@ -118,9 +135,31 @@ se vacían los de staging, y:
 docker compose up -d --force-recreate pz
 ```
 
-**Cada jugador tiene que estar suscrito al mod en Steam**, o no podrá conectar.
-
 Commitear el cambio explicando qué mod, qué ID y por qué.
+
+---
+
+## Cómo se suscriben los jugadores
+
+Cada jugador necesita exactamente los mismos mods que el servidor. Hay dos
+mecanismos y conviene usar los dos:
+
+**1. Aviso automático al conectar (no requiere hacer nada).** Al entrar al
+servidor, el juego compara su lista con la del cliente y ofrece suscribirse a
+los que falten. Después hay que reiniciar el juego. Funciona solo, pero
+interrumpe a mitad de conexión y el primer intento siempre falla.
+
+**2. Colección del Workshop (recomendado).** Se crea una colección de Steam con
+todos los mods del servidor y se comparte el enlace. Un botón, *Suscribirse a
+todo*, y Steam los descarga antes de entrar al juego. Es lo que conviene para
+una lista larga: la gente llega ya con todo listo en vez de descubrirlo a mitad
+de la primera conexión.
+
+La colección hay que mantenerla al día cuando cambie `PZ_WORKSHOP_ITEMS`. Para
+ver la lista actual en el formato que hace falta:
+
+```bash
+grep PZ_WORKSHOP_ITEMS .env
 
 ---
 
