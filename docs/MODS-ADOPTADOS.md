@@ -49,7 +49,7 @@ descarga automáticamente.
 - **[Spongie's Hairstyle Unlocker](https://steamcommunity.com/sharedfiles/filedetails/?id=3041733782)** — Al cortarte el pelo puedes elegir cualquier peinado de la misma longitud.
 - **[Right Click To Wear](https://steamcommunity.com/sharedfiles/filedetails/?id=3453580134)** — Ponerte ropa del suelo con clic derecho, sin recogerla antes.
 - **[Equip Clothing While Moving](https://steamcommunity.com/sharedfiles/filedetails/?id=3446510982)** — Vestirte andando o apuntando.
-- **Tariq's Beards** — 47 barbas y bigotes, con las largas incluidas: Thor, Kratos, Bandholz, vikingas y trenzadas. **Este se instala a mano**, mira más abajo.
+- **[Tariq's Beards](https://steamcommunity.com/sharedfiles/filedetails/?id=2962908954)** — 47 barbas y bigotes, con las largas incluidas: Thor, Kratos, Bandholz, vikingas y trenzadas. **Este se instala a mano**, mira más abajo.
 
 ## Libros y mapa
 
@@ -72,10 +72,10 @@ Estos no añaden nada por sí solos: hacen funcionar a los de arriba.
 
 ## El único que hay que instalar a mano: Tariq's Beards
 
-Este no está en el Workshop en versión compatible. El original lleva sin
-actualizarse desde 2023 y ya no funciona con la versión actual del juego, así
-que lo hemos arreglado nosotros. Son las mismas 47 barbas del original, sin
-tocar nada del contenido.
+El [original del Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2962908954)
+lleva sin actualizarse desde 2023 y ya no funciona con la versión actual del
+juego, así que lo hemos arreglado nosotros. Son las mismas 47 barbas del
+original, sin tocar nada del contenido.
 
 Como no viene de Steam, hay que copiarlo a mano una vez:
 
