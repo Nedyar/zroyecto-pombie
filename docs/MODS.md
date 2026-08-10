@@ -92,6 +92,26 @@ Aviso: las guías y los resultados de búsqueda sobre compatibilidad con B42 son
 priorizar y descartar, no para dar nada por bueno: la única prueba que cuenta
 es levantarlo en staging.
 
+### Lo que NO sirve para diagnosticar
+
+**Los avisos `require ... failed` del log.** Parecen delatar una función rota y
+no delatan nada. Se dedujeron cuatro fallos a partir de ellos —la cesta de la
+bicicleta, seis de los siete remolques, la fabricación de mantas y un análisis
+comparando carpetas de versión— y **los cuatro resultaron falsos** al probarlos
+en juego. El mod de la bicicleta escupe tres de esos avisos y su cesta funciona
+perfectamente.
+
+**Comparar las carpetas de versión de un mod.** No son excluyentes: `42.13/` es
+una capa *encima* de `media/`, sobrescribe lo que redefine y hereda el resto.
+Concluir que algo falta porque no está en la carpeta versionada es un error.
+
+Lo que sí vale del log: `required mod "X" not found` (el mod no carga en
+absoluto), `no such function "X.new"` (la acción existe en el menú pero su
+código no) y los errores de script que impiden cargar el mundo. Esos tres se
+confirmaron todos.
+
+Para el resto, hay que entrar y mirarlo.
+
 ### 2. Probar en staging
 
 ```bash
