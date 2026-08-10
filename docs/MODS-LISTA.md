@@ -14,7 +14,8 @@ Referencia temporal: **Build 42 estable (42.20) salió el 29/07/2026.**
 # 1. Lo que está activo ahora
 
 **Corriendo en staging.** Producción está parada y con el mundo borrado, a la
-espera de cerrar las votaciones pendientes.
+espera de crearse en la maquina definitiva. Las votaciones estan cerradas y la
+configuracion es la definitiva.
 
 **35 elementos del Workshop · 37 Mod ID.** La diferencia sale de que *Take A
 Bath And Shower* aporta dos IDs, y de que *Tariq's Beards* no viene del Workshop
@@ -68,7 +69,7 @@ y solo circula entre el grupo.
 
 # 2. Lo que se descartó
 
-## Solo Build 41 (13)
+## Solo Build 41 (13, uno de ellos rescatado)
 
 Sin etiqueta *Build 42*, o el autor los marca como exclusivos de B41.
 
