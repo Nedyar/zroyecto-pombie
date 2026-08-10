@@ -169,6 +169,64 @@ la restauracion resulta ser el error, sigue habiendo marcha atras.
 
 ---
 
+## 8. Docker rootless en vez del grupo `docker`
+
+Meter al usuario en el grupo `docker` es lo que hace todo el mundo y es
+equivalente a darle root sin contrasena: con acceso al socket, un
+`docker run -v /:/host` te entrega la maquina entera. Para un servidor de juego
+expuesto a amigos, esa concesion no compensa.
+
+Docker rootless levanta un daemon propio del usuario, sin privilegios. Es la
+alternativa que la propia documentacion de Docker propone, y aqui encaja
+especialmente bien porque **no obliga a cambiar ni una linea del repo**: los
+scripts llaman a `docker compose` a secas y un `docker context` activo los
+redirige al daemon correcto.
+
+El precio son tres cosas: un daemon mas (e imagenes duplicadas en disco si ya
+habia otro), `PUID=0` en el `.env` por el mapeo de UID, y que el reenvio de
+puertos UDP no conserva la IP de origen. Las tres estan explicadas en
+[OPERACIONES.md](OPERACIONES.md).
+
+---
+
+## 9. Endurecimiento del contenedor
+
+Cinco cambios, todos con el mismo criterio: que el fallo sea imposible o
+ruidoso, nunca silencioso.
+
+**La imagen base va por digest, no por tag.** `ubuntu-22` es mutable. Todo este
+proyecto existe para que nada cambie bajo el servidor sin decision humana, y la
+imagen se reconstruye justo al migrar de maquina — el peor momento posible para
+encontrarse una base distinta.
+
+**Se verifica el sha256 de `rcon-cli`.** Ese binario recibe la clave de RCON en
+cada healthcheck. Es de lo ultimo que interesa descargar y ejecutar a ciegas.
+
+**`cap_drop: ALL` y solo cinco capabilities.** El contenedor arrancaba con las
+~14 por defecto, incluidas `NET_RAW` y `MKNOD`, cuando solo usa `CHOWN`,
+`DAC_OVERRIDE`, `FOWNER`, `SETUID` y `SETGID`. Mas `no-new-privileges`, que no
+estorba a `gosu` porque gosu deja privilegios en vez de cogerlos.
+
+**`mem_limit`.** Sin techo declarado, quedarse sin RAM deja al OOM killer del
+kernel eligiendo victima. Si le toca al JVM en mitad de un guardado, sale justo
+el mundo corrupto que todo esto evita: un SIGKILL del kernel no espera al
+apagado seguro. Con techo, al menos muere el proceso correcto y de forma
+predecible.
+
+**`HOST_BIND_IP`.** Decide en que interfaz se publica el juego. Con la IP de
+Tailscale, el servidor no existe fuera del tailnet y las ACL pasan a ser el
+unico control de acceso. En `0.0.0.0` seguiria accesible desde la red local,
+donde ninguna ACL de Tailscale interviene — y conviene saber que los puertos
+publicados por Docker **se saltan UFW**, asi que el bind es el control real, no
+el cortafuegos.
+
+Y un sexto, mas prosaico: **hay `.dockerignore`**. Sin el, el contexto de build
+era el repositorio entero, incluido el `.env` con las contrasenas y una carpeta
+`backups/` que con el tiempo son decenas de GB. Es lista blanca, no negra: con
+lista negra, cualquier carpeta futura vuelve a colarse sola.
+
+---
+
 ## Cosas que costaron una tarde y conviene no redescubrir
 
 **SteamCMD: `validate` sobre un directorio vacio falla.** Da el error
@@ -196,3 +254,28 @@ en `scripts/_common.sh`; en Linux es inocuo.
 
 **Los puertos de juego son UDP.** 16261 y 16262. Una regla TCP en el router se
 ve perfecta y no hace absolutamente nada.
+
+**Los scripts venian de git sin bit de ejecucion.** Estaban como `100644`
+porque el proyecto nacio en Windows, donde da igual. En Linux fallan todos los
+comandos del README con un `permission denied` antes de leer una sola linea. En
+`docker/` no se notaba porque el Dockerfile hace `chmod +x` al construir.
+
+**Editar `docker/*.sh` no surte efecto hasta reconstruir.** Se hornean en la
+imagen. Se pierde un rato largo relanzando algo y viendo el comportamiento
+antiguo, convencido de que el cambio no funciona.
+
+**Tailnet Lock bloquea a los invitados en silencio.** Si esta activo, cada
+dispositivo compartido necesita firma manual. Hasta entonces el invitado ve la
+maquina como `active` y su contador `tx` sube, pero `rx` se queda en 0 y al
+servidor no llega ni un paquete. Ademas la nodekey **rota** en cada reintento,
+asi que hay que mirar y firmar seguido o dara `node not found`.
+
+**Un nodo compartido tiene una IP distinta para el invitado.** El dueno lo ve
+como `.39` y los invitados como `.38`. Darles la IP propia en vez de la suya
+produce un "no conecta" sin ningun error por ninguna parte.
+
+**`tailscale serve` exige el nombre DNS; un puerto normal exige la IP.** Serve
+termina TLS con un certificado emitido para el nombre, asi que por IP falla. El
+juego es un socket UDP crudo y solo escucha en IPv4, asi que por nombre puede
+irse a IPv6 y morir en silencio. Dos reglas opuestas en la misma maquina: no
+extrapolar de un servicio al otro.

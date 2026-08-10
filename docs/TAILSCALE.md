@@ -49,25 +49,106 @@ Debe aparecer `IP-TAILSCALE:16261`, **no** `0.0.0.0:16261`.
 
 ## Dar acceso a un jugador nuevo
 
-1. **Que se cree una cuenta de Tailscale** (el plan gratuito le sirve) e instale
-   el cliente.
-2. **Compartir la maquina**: consola de Tailscale > Machines > `SERVIDOR` > menu
-   `...` > Share. Sale un enlace de invitacion que se le pasa.
-3. **Anadir su email** a la lista `src` del grant de jugadores en la politica.
-4. Que acepte la invitacion y conecte el cliente.
+Son **tres** pasos independientes, y los tres hacen falta. Saltarse cualquiera
+produce un fallo distinto y ninguno da un mensaje de error util:
 
-Los pasos 2 y 3 son ambos necesarios y hacen cosas distintas: el share hace que
-la maquina exista para el, la ACL decide a que puerto puede hablar. Con solo el
-share no llega a ningun sitio; con solo la ACL no ve la maquina.
+| Paso | Donde | Si falta |
+| --- | --- | --- |
+| 1. Compartir el nodo | Consola > Machines > `SERVIDOR` > `...` > Share | No ve la maquina en su `tailscale status` |
+| 2. Anadir su email a la ACL | Politica, lista `src` del grant | La ve, pero no alcanza ningun puerto |
+| 3. Firmar su nodo | `tailscale lock sign` (solo si hay Tailnet Lock) | Envia y no recibe: `tx` sube, `rx` se queda en 0 |
+
+Antes de todo eso, el jugador necesita **una cuenta de Tailscale** (el plan
+gratuito le sirve), el cliente instalado, y aceptar la invitacion del paso 1.
+
+El paso 3 solo aplica si la tailnet tiene Tailnet Lock activado. Comprobarlo:
+
+```bash
+tailscale lock status
+```
+
+Si dice `Tailnet Lock is ENABLED`, lee la seccion siguiente: **no es opcional**.
+
+## Tailnet Lock: el paso que nadie espera
+
+Tailnet Lock impide que el servidor de coordinacion de Tailscale meta nodos
+nuevos en tu red sin tu firma. Es una proteccion real, pero tiene una
+consecuencia que no se anuncia por ningun lado: **cada dispositivo invitado
+tiene que firmarse a mano**, y hasta entonces no puede hablar con nadie.
+
+El sintoma es de los peores que hay, porque parece que funciona:
+
+- El invitado ve el servidor en su `tailscale status`, incluso como `active`.
+- Su contador `tx` sube: esta enviando paquetes.
+- Su contador **`rx` se queda clavado en 0**: no recibe absolutamente nada.
+- En el servidor no aparece ni un paquete, ni un intento, ni un rechazo.
+
+Ese `tx` subiendo con `rx` a 0 es la firma inconfundible del problema.
+
+### Como firmarlo
+
+Los nodos bloqueados solo los ve **la maquina compartida**, porque el share es
+por maquina: los demas nodos de tu tailnet no tienen ninguna relacion con los
+dispositivos del invitado y por eso no los listan.
+
+```bash
+# EN EL SERVIDOR: ver quien esta bloqueado y con que clave
+tailscale lock status
+```
+
+Al final sale la seccion de bloqueados, con una `nodekey:` por dispositivo.
+
+```bash
+# EN EL NODO FIRMANTE: firmar cada una
+tailscale lock sign nodekey:<la-que-salio>
+```
+
+El nodo firmante es el que tiene una clave de confianza: en su `tailscale lock
+status`, la linea `This node's tailnet-lock key` coincide con una de las
+`Trusted signing keys` y aparece marcada como `(self)`. Firmar no requiere que
+ese nodo conozca al invitado; la peticion va al servidor de coordinacion.
+
+### Dos trampas al firmar
+
+**La nodekey rota.** Un cliente rechazado reintenta y regenera su clave. Si
+tardas entre mirar y firmar, obtendras `node not found` y habra que repetirlo
+con la nueva. Haz los dos comandos seguidos.
+
+**No le digas al invitado que reinicie Tailscale.** Un `down`/`up`, un cierre de
+sesion o una reinstalacion generan clave nueva e invalidan la firma que acabas
+de hacer. Mientras firmas, que no toque nada.
 
 ## Como se conecta el jugador
 
-En el juego: **Join > Add server**, y ahi como direccion la `IP-TAILSCALE` del
-servidor, con puerto **16261**. El 16262 tiene que estar permitido en la ACL
-pero no se teclea nunca: lo usa el motor por su cuenta.
+En el juego: **Join > Add server**, con puerto **16261**. El 16262 tiene que
+estar permitido en la ACL pero no se teclea nunca: lo usa el motor por su
+cuenta, y apuntar ahi produce una conexion que no llega a ningun sitio.
+
+**La direccion NO es la que ves tu.** Un nodo compartido aparece en el tailnet
+del invitado con una direccion propia, distinta de la que tiene en el tuyo. Cada
+jugador tiene que mirar la suya:
+
+```bash
+tailscale status     # en la maquina del jugador
+```
+
+La linea del servidor lleva su IP y su nombre completo. Esa IP es la que va en
+el juego. Es un detalle que cuesta horas de diagnostico si no se sabe, porque el
+sintoma es "no conecta" sin ningun error.
 
 Con `PZ_PUBLIC=false` el servidor no sale en la lista publica, asi que hay que
 anadirlo a mano. Si hay `PZ_SERVER_PASSWORD`, se la tienes que pasar aparte.
+
+### Por IP, no por nombre
+
+Para el juego se usa la **IP**, no el nombre DNS. Motivo: el juego escucha solo
+en IPv4, mientras que otros servicios de la maquina pueden escuchar tambien en
+IPv6. Si el nombre resuelve a IPv6, el juego no responde y no hay ningun aviso.
+
+Esto explica una asimetria que despista: un servicio publicado con `tailscale
+serve` (Calibre, por ejemplo) exige **el nombre** y falla por IP, porque Serve
+termina TLS con un certificado emitido para ese nombre. Son dos cosas distintas
+con reglas opuestas, y conviene no extrapolar de una a la otra.
 
 ## Quitarle el acceso a alguien
 
@@ -76,6 +157,27 @@ lo primero deja de poder hablar con el juego; con lo segundo deja de ver la
 maquina.
 
 ## Diagnostico
+
+Antes de nada, la tabla de sintomas. Cada fallo de los tres pasos tiene una
+firma propia, y distinguirlas ahorra horas:
+
+| Sintoma en la maquina del jugador | Causa |
+| --- | --- |
+| El servidor no sale en `tailscale status` | Falta el share, o no acepto la invitacion |
+| Sale, `tx` sube y **`rx` a 0** | Tailnet Lock: su nodo no esta firmado |
+| Conecta a otros puertos pero no al juego | ACL: falta su email, o la regla es tcp en vez de udp |
+| Todo bien pero el juego no entra | Direccion equivocada: esta usando tu IP y no la suya |
+
+En el servidor, la comprobacion que separa "no llega nada" de "llega y se
+rechaza":
+
+```bash
+docker compose logs pz | grep "initiating a connection"
+```
+
+Si no aparece **ni una linea**, el problema es de red o de acceso y no del
+juego: los paquetes no estan llegando. Si aparece pero nunca le sigue
+`Connected new client`, entonces si es el handshake del juego.
 
 **"No me aparece la maquina"** — o no ha aceptado la invitacion de share, o se
 revoco. Que ejecute `tailscale status` y compruebe si el servidor sale en su
