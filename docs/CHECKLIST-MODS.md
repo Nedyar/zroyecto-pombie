@@ -90,7 +90,10 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 - [x] **Bicycle!** — Consigue una bicicleta y móntala. **Se conduce**, no se lleva
       equipada. Debes ir más rápido.
       *Verificado. Pendiente la cesta (`Bicycle.Bicycle_Basket`), que es donde
-      esperamos el fallo del `BicycleContainerManager`.*
+      esperaba el fallo del `BicycleContainerManager`.*
+      *Cesta verificada: se acopla y admite objetos. Para acoplarla: bici en el
+      suelo, cesta en la mano, clic derecho sobre la bici. El fallo que se
+      dedujo del `require` no existe.*
 - [x] **Trailers!** — Engancha un remolque a un coche. **El menú es la tecla `V`**,
       el radial del vehículo, no el clic derecho. Prueba a quitar y colocar
       sus piezas 3D.
@@ -176,8 +179,7 @@ funciona, eso sí es noticia.
 
 | Mod | Qué falla | Origen |
 | --- | --- | --- |
-| **Bicycle!** | El almacenamiento de la bici (cesta o alforjas) probablemente no funcione | Le falta un módulo interno: `BicycleContainerManager` |
-| **Beds Have Blankets** | Fabricar mantas no funcionará | Usa `recipecode`, un módulo que Build 42 eliminó |
+| **Beds Have Blankets** | Fabricar mantas no funcionará — **SIN CONFIRMAR EN JUEGO**, es una deduccion del mismo tipo que ya fallo dos veces | Usa `recipecode`, un módulo que Build 42 eliminó |
 | **Beds Have Blankets** | Las mantas salen **dobladas sobre la cama**, no puestas. Comprobado: 5 de 5 camas, cuando su ajuste dice que debería ser 1 de cada 20 | Declara su dependencia como `require=TargetSquareOnLoad`, **con barra invertida**. Si se compara literal, nunca casa con el ID real y el mod actúa como si la dependencia no existiera |
 | **Throw your bag across** | **ROTO Y PELIGROSO.** La opcion sale en el menu, arranca la barra de progreso y no hace nada. La bolsa queda pegada a la mano: no se puede soltar ni usar. Se arregla saliendo y volviendo a entrar | El servidor registra `no such function "ISThrowBag.new"`, `"ISThrowBagOverFence.new"` y `"ISThrowBagAcrossWindow.new"`. El mod registra las opciones de menu pero las clases que ejecutan la accion no existen en 42.20 |
 | **Tariq's Beards** | Los nombres de las 47 barbas salen sin traducir: `IGUI_Beard_Santatest` en vez de "Santa" | El mod solo trae traducciones en inglés, y el juego está en español. Solo afecta al nombre; el modelo se ve bien |
