@@ -26,11 +26,11 @@ sino de una carpeta local.
 hay que restaurar.
 
 ```
-WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782;3028528478;3461415167;3600401184;3397207461;2650547917;3589548354;3396867685;2463184726;3641697417;3330403100;2944344655;3402513620;3410947298;3446510982;3391902125;3453580134;3399645148;3171167894;2969455858;2447729538;3676456221
+WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782;3028528478;3461415167;3600401184;3397207461;2650547917;3589548354;3396867685;2463184726;3641697417;3330403100;2944344655;3402513620;3410947298;3446510982;3391902125;3399645148;3171167894;2969455858;2447729538;3676456221;3717968421
 ```
 
 ```
-Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;TargetSquareOnLoad;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;blankets;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;DELRAN_CLICK_TO_WEAR;throw-your-bag-across;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand
+Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;TargetSquareOnLoad;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;BB_CommonSenseFix;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;blankets;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;throw-your-bag-across;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand
 ```
 
 El orden **es** el orden de carga. Los ID van sin prefijo `\` y respetando los
@@ -88,6 +88,12 @@ Sin etiqueta *Build 42*, o el autor los marca como exclusivos de B41.
 | --- | --- | --- |
 | 2883633728 | I Might Need A Lighter | Su `mod.info` declara **`versionMax=42.12`** y estamos en 42.20. El juego lo rechaza por diseño |
 
+## Retirado por solapamiento (1)
+
+| ID | Nombre | Motivo |
+| --- | --- | --- |
+| 3453580134 | Right Click To Wear | Funcionaba, pero Common Sense hace lo mismo con más alcance (armas y mochilas, no solo ropa). Ver sección 3bis |
+
 ---
 
 # 3. Dependencias que hubo que añadir
@@ -104,6 +110,47 @@ Ninguna estaba entre los 47 candidatos. Sin ellas, su mod no carga.
 
 ---
 
+# 3bis. Common Sense
+
+Nunca estuvo entre los 47 candidatos: se uso como cobaya para probar el circuito
+de mods y luego se adopto.
+
+**Adoptado: `3717968421` — Common Sense B42.20 Community Compatibility Fix —
+Mod ID `BB_CommonSenseFix`.** Actualizado el 09/08/2026, hecho para la 42.20
+estable, **standalone** (no necesita el original) y etiquetado Multiplayer.
+
+## Por que ese fork y no otro
+
+| Fork | Descartado porque |
+| --- | --- |
+| `2875848298` original | Comprobado por nosotros: tumba el servidor en 42.20 con `require("recipecode") failed` |
+| `3750253491` Common Sense [B42.20+] | 134k subs pero recalca *"FOR SINGLE PLAYER it works flawlessly"*. Mala senal para un servidor |
+| `3667553980` Patch [B42.13+] | Parche sobre el original, no standalone. Va por 42.13 |
+| `3586053117` Common Sense B42 Patch | Igual, parche sobre el original. Octubre 2025 |
+| `3770106656` | Ya no existe; la API no devuelve nada |
+
+## Consecuencias en la lista
+
+**Se quito `DELRAN_CLICK_TO_WEAR` (Right Click To Wear, `3453580134`).** Common
+Sense trae *"equip weapons, clothing and backpacks from the ground through the
+context menu"*, que hace lo mismo con mas alcance.
+
+**Recupera una funcion que se habia perdido.** Su interfaz de arma muestra
+municion, estado y condicion, que es lo que hacia *Weapon Condition Indicator*,
+descartado por ser solo Build 41.
+
+## Orden de carga: antes de CleanUI
+
+Se probo primero **despues** de CleanUI, razonando que el ultimo sobrescribe y
+asi sus opciones de menu contextual quedarian encima. **Rompio la interfaz en
+juego**: desaparecieron los botones y el menu.
+
+Va **antes**, para que CleanUI reconstruya los paneles por encima. Ambos
+reemplazan ficheros de interfaz, y el que debe ganar es el que de verdad los
+dibuja.
+
+---
+
 # 4. Reglas de orden de carga
 
 Declaradas por los autores. Todas respetadas salvo la última.
@@ -113,6 +160,8 @@ Declaradas por los autores. Todas respetadas salvo la última.
   Cook y Modern Status.
 - `nm_nested_containers` antes que `ProximityInventory`, o no detecta los
   contenedores anidados.
+- `BB_CommonSenseFix` **antes** que `CleanUI`. No lo declara ningún autor: se
+  descubrió rompiendo la interfaz en juego. Ver sección 3bis.
 - `damnlib` antes que `KI5trailers`.
 - `TargetSquareOnLoad` antes que `blankets`; `FH` antes que `SpnHair`;
   `LuaDigitalWatchUI` antes que `RC_RealisticColdMod`.
