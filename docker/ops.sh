@@ -176,8 +176,15 @@ EOF
 
     graceful_shutdown 240
 
-    # Capturamos lo que el juego escribio de verdad.
-    [[ -f "${sdir}/${bname}.ini" ]] && cp "${sdir}/${bname}.ini" "${ref}/server.ini"
+    # Capturamos lo que el juego escribio de verdad, pero SIN secretos.
+    #
+    # config/reference/ se versiona en git, y el INI que genera el servidor
+    # incluye la clave de RCON que sembramos para poder hablar con el. Sin este
+    # filtro acaba en el repositorio, y el historial de git es permanente.
+    if [[ -f "${sdir}/${bname}.ini" ]]; then
+        sed -E 's/^(RCONPassword|Password|ServerPassword|DiscordToken)=.*/\1=<REDACTADO>/' \
+            "${sdir}/${bname}.ini" > "${ref}/server.ini"
+    fi
     [[ -f "${sdir}/${bname}_SandboxVars.lua" ]] && cp "${sdir}/${bname}_SandboxVars.lua" "${ref}/SandboxVars.lua"
     [[ -f "${sdir}/${bname}_spawnregions.lua" ]] && cp "${sdir}/${bname}_spawnregions.lua" "${ref}/spawnregions.lua"
     installed_buildid > "${ref}/buildid"
@@ -309,7 +316,8 @@ Ejecuta primero el bootstrap:  ./scripts/bootstrap.sh"
             warn "Suele significar que el juego anadio claves nuevas:"
             printf '%s\n' "$diff_out" | sed 's/^/    /' >&2
             warn "Incorpora lo que te interese a config/server.ini.tmpl."
-            cp "$out" "${CONFIG_DIR}/reference/server.ini.runtime" 2>/dev/null || true
+            sed -E 's/^(RCONPassword|Password|ServerPassword|DiscordToken)=.*/\1=<REDACTADO>/' \
+                "$out" > "${CONFIG_DIR}/reference/server.ini.runtime" 2>/dev/null || true
         fi
     fi
 
