@@ -49,7 +49,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       iconos y filtros. **Importante:** no debe añadir objetos construibles
       nuevos. Llevamos la variante *solo interfaz* a propósito; si aparecen
       piezas nuevas, algo va mal.
-- [ ] **Neat Crafting** — Menú de artesanía reorganizado. Prueba la lupa para
+- [x] **Neat Crafting** — Menú de artesanía reorganizado. Prueba la lupa para
       buscar la receta de un ingrediente que te falte.
 - [ ] **Project Cook** — Ponte en un fogón o con una olla. Debe salir el panel de
       cocina, sobre todo con recetas evolutivas: sopas, guisos, ensaladas.
@@ -58,7 +58,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 
 - [ ] **Realistic Temperature** — La temperatura dentro de un edificio debe
       diferir de la de fuera. Cierra puertas y ventanas y comprueba que cambia.
-- [ ] **Starving Zombies** — Deja un cadáver a la vista y espera. Los zombis
+- [x] **Starving Zombies** — Deja un cadáver a la vista y espera. Los zombis
       deben acercarse a comérselo. Ve manchado de sangre y comprueba que te
       detectan desde más lejos.
 - [ ] **Comfy Sleeping** — Duerme con la mochila puesta y luego sin ella. La
@@ -68,16 +68,16 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 - [ ] **Beds Have Blankets** — Explora una zona **nueva**. Algunas camas deben
       tener mantas. En zonas ya visitadas no aparecerán: solo se aplica al
       generar el terreno.
-- [ ] **Replace Bandage** — Con una venda sucia puesta, cámbiala por una limpia
+- [x] **Replace Bandage** — Con una venda sucia puesta, cámbiala por una limpia
       en una sola acción.
 - [ ] **Cat's eye in the Dark** — Crea un personaje con el rasgo *Cat's Eye* y
       comprueba que ves algo de noche.
 
 ## Combate y movilidad
 
-- [ ] **Buttstroke** — Con un arma de fuego equipada, ataca cuerpo a cuerpo. Debe
+- [x] **Buttstroke** — Con un arma de fuego equipada, ataca cuerpo a cuerpo. Debe
       dar un culatazo.
-- [ ] **Run and Reload** — Recarga mientras corres.
+- [x] **Run and Reload** — Recarga mientras corres.
 - [ ] **Bicycle!** — Consigue una bicicleta y móntala. Debes ir más rápido.
 - [ ] **Trailers!** — Engancha un remolque a un coche. Prueba a quitar y colocar
       sus piezas 3D.
@@ -104,14 +104,14 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       apunta a que funciona, pero falta confirmar que alguno sea de la MISMA
       longitud que el que se lleva puesto. Ojo: las barbas no cuentan — el mod
       habla de* hairstyles*, y afeitar solo va hacia menos pelo por diseño.*
-- [ ] **Equip Clothing While Moving** — Ponte una prenda mientras caminas o
+- [x] **Equip Clothing While Moving** — Ponte una prenda mientras caminas o
       apuntas.
 
 ## Common Sense
 
 Es el que más funciones trae, así que va aparte.
 
-- [ ] Forzar con palanca: puertas de edificio, de garaje, reforzadas, ventanas y
+- [x] Forzar con palanca: puertas de edificio, de garaje, reforzadas, ventanas y
       puertas de vehículo.
 - [ ] Interfaz de arma: con un arma equipada debe verse munición, estado y
       condición.
@@ -119,10 +119,10 @@ Es el que más funciones trae, así que va aparte.
       **Esta sustituye a Right Click To Wear, que quitamos.** Si no funciona,
       nos hemos quedado sin las dos.
       *Verificado, funciona.*
-- [ ] Linterna de mano enganchada al cinturón.
-- [ ] Abrir latas con cuchillo, destornillador, tenedor o cuchara.
+- [x] Linterna de mano enganchada al cinturón.
+- [x] Abrir latas con cuchillo, destornillador, tenedor o cuchara.
 - [ ] Desinfectar una venda sucia con alcohol.
-- [ ] Fabricar sábanas a partir de ropa.
+- [x] Fabricar sábanas a partir de ropa.
 - [ ] Sus opciones aparecen en los ajustes de sandbox.
 
 ## Libros y mapa
