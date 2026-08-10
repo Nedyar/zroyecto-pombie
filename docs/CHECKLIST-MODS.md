@@ -35,9 +35,9 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       que exige su autor.*
 - [ ] **Manage Containers** — Asigna una categoría a un armario de la base y
       descarga el botín. Debe repartirse solo.
-- [ ] **Better Sorting** — Las categorías de objetos están reorganizadas y los
+- [x] **Better Sorting** — Las categorías de objetos están reorganizadas y los
       nombres son más claros que en el juego base.
-- [ ] **Split Items** — Divide una pila de objetos en dos.
+- [x] **Split Items** — Divide una pila de objetos en dos.
 - [x] **Modern Status** — Clic derecho en el botón del corazón abre el menú de
       Modern Status. Carga un preset. Deben estar los 33 indicadores.
       *Verificado: los 33 salen, y aparece* Mugre corporal *de la integración con
@@ -63,7 +63,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       detectan desde más lejos.
 - [ ] **Comfy Sleeping** — Duerme con la mochila puesta y luego sin ella. La
       calidad del descanso debe ser distinta.
-- [ ] **Take A Bath And Shower** — Úsate una bañera o una ducha. El indicador
+- [x] **Take A Bath And Shower** — Úsate una bañera o una ducha. El indicador
       *Mugre corporal* debe bajar.
 - [ ] **Beds Have Blankets** — Explora una zona **nueva**. Algunas camas deben
       tener mantas. En zonas ya visitadas no aparecerán: solo se aplica al
@@ -127,9 +127,9 @@ Es el que más funciones trae, así que va aparte.
 
 ## Libros y mapa
 
-- [ ] **Reading+** — Lee mientras caminas. Siéntate en un buen sofá y comprueba
+- [x] **Reading+** — Lee mientras caminas. Siéntate en un buen sofá y comprueba
       que lees más rápido. Encola varios libros de una vez.
-- [ ] **Has Been Read** — Los libros sin leer o a medias salen marcados de forma
+- [x] **Has Been Read** — Los libros sin leer o a medias salen marcados de forma
       distinta.
 - [ ] **Map Symbol Size Slider** — Hay un control de tamaño en el menú de
       símbolos del mapa.
