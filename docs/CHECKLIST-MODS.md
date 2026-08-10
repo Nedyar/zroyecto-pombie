@@ -70,7 +70,11 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 - [x] **Starving Zombies** — Deja un cadáver a la vista y espera. Los zombis
       deben acercarse a comérselo. Ve manchado de sangre y comprueba que te
       detectan desde más lejos.
-- [ ] **Comfy Sleeping** — Duerme con la mochila puesta y luego sin ella. La
+- [x] **Comfy Sleeping** — Pasa el ratón por la cama: el tooltip muestra la
+      comodidad **del personaje** junto a la de la cama. Seis niveles, de *Snug as
+      a bug* a *Very Poor*. Quítate la mochila y la ropa voluminosa y debe subir.
+      *Verificado: el nivel cambia según lo que llevas equipado.*
+      La
       calidad del descanso debe ser distinta.
 - [x] **Take A Bath And Shower** — Úsate una bañera o una ducha. El indicador
       *Mugre corporal* debe bajar.
