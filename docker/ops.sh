@@ -284,6 +284,51 @@ EOF
     log "Plantilla creada. Revisala y commiteala."
 }
 
+# Nombres de los ajustes de primer nivel y de los bloques de un SandboxVars.lua.
+# Sirve para comparar dos ficheros sin que importe el orden ni los valores: lo
+# que queremos saber es si a uno le FALTAN opciones que el otro tiene.
+sandbox_keys() {
+    grep -oE '^[[:space:]]{4}[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=' "$1" 2>/dev/null \
+        | tr -d ' =' | sort -u
+}
+
+# Trae al repo los ajustes que el servidor ha generado por su cuenta.
+#
+# Cuando se anade un mod, el juego le agrega su bloque de opciones al
+# SandboxVars en tiempo de ejecucion. Como nuestro render sobrescribe ese
+# fichero en cada arranque, esos bloques vuelven a sus valores por defecto una y
+# otra vez. Capturarlos los convierte en configuracion versionada, editable y
+# transmisible por commits, como el resto.
+capture_sandbox() {
+    local sbox="${DATA_DIR}/Server/${PZ_SERVER_NAME}_SandboxVars.lua"
+    local dst="${CONFIG_DIR}/SandboxVars.lua"
+
+    [[ -f "$sbox" ]] || die_loud \
+"No existe ${sbox}.
+El servidor tiene que haber arrancado al menos una vez con los mods cargados
+para que haya algo que capturar."
+
+    [[ -w "$CONFIG_DIR" ]] || die_loud "El directorio /config esta montado de solo lectura."
+
+    local antes despues nuevas
+    antes="$(sandbox_keys "$dst" | wc -l)"
+    nuevas="$(comm -13 <(sandbox_keys "$dst") <(sandbox_keys "$sbox") | tr '\n' ' ')"
+
+    # La cabecera con la explicacion es nuestra y el servidor no la conserva, asi
+    # que se vuelve a poner delante del contenido capturado.
+    {
+        sed -n '1,/^$/p' "$dst" | grep -E '^--' || true
+        printf '\n'
+        cat "$sbox"
+    } > "${dst}.tmp" && mv "${dst}.tmp" "$dst"
+
+    despues="$(sandbox_keys "$dst" | wc -l)"
+
+    log "Sandbox capturado: ${antes} -> ${despues} ajustes"
+    [[ -n "${nuevas// /}" ]] && log "Nuevos: ${nuevas}"
+    log "Revisa el diff y commitealo."
+}
+
 # Renderiza repo -> runtime. Idempotente y unidireccional.
 render_config() {
     local sdir="${DATA_DIR}/Server"
@@ -331,6 +376,27 @@ Ejecuta primero el bootstrap:  ./scripts/bootstrap.sh"
     cp "$out" "$last"
 
     # SandboxVars y spawnregions son Lua: se copian tal cual.
+    #
+    # Antes de pisar el sandbox, avisamos si el servidor tiene ajustes que
+    # nosotros no. Pasa siempre que se anade un mod: el juego le agrega su
+    # propio bloque de opciones al fichero en tiempo de ejecucion. Si nadie lo
+    # captura, cada arranque los regenera con los valores por defecto y
+    # cualquier cambio se pierde en silencio.
+    local sbox="${sdir}/${PZ_SERVER_NAME}_SandboxVars.lua"
+    if [[ -f "$sbox" && -f "${CONFIG_DIR}/SandboxVars.lua" ]]; then
+        local faltan
+        faltan="$(comm -13 \
+            <(sandbox_keys "${CONFIG_DIR}/SandboxVars.lua") \
+            <(sandbox_keys "$sbox") | tr '\n' ' ')"
+        if [[ -n "${faltan// /}" ]]; then
+            warn "El sandbox del servidor tiene ajustes que config/SandboxVars.lua no:"
+            warn "    ${faltan}"
+            warn "Son opciones que anaden los mods. Para versionarlas:"
+            warn "    ./scripts/capture-sandbox.sh [pz|pz-staging]"
+            warn "Mientras no se capturen, se regeneran por defecto en cada arranque."
+        fi
+    fi
+
     if [[ -f "${CONFIG_DIR}/SandboxVars.lua" ]]; then
         cp "${CONFIG_DIR}/SandboxVars.lua" "${sdir}/${PZ_SERVER_NAME}_SandboxVars.lua"
     fi

@@ -313,6 +313,7 @@ case "${1:-serve}" in
     update)     cmd_update ;;
     rcon)       shift; cmd_rcon "$@" ;;
     mods)       cmd_mods ;;
+    capture-sandbox) validate_env; capture_sandbox ;;
     status)     cmd_status ;;
     shell)      exec bash ;;
     *)          exec "$@" ;;

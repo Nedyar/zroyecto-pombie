@@ -1031,4 +1031,379 @@ SandboxVars = {
         -- Rate at which Glassmaking skill levels up. Min: 0.00 Max: 1000.00 Default: 1.00
         Glassmaking = 1.0,
     },
+    LuaDigitalWatchUI = {
+        MinuteResolution = 1,
+    },
+    ProximityInventory = {
+        ZombieOnly = false,
+    },
+    CommonSense = {
+        PryingMechanic = true,
+        GunStats = true,
+        ColorFilter = false,
+        PryBuildingDoors = true,
+        PryGarageDoors = true,
+        PrySafeDoors = false,
+        PryWindows = true,
+        PryVehicleDoors = true,
+        ShatterVehicleWindows = true,
+        -- Min: 0 Max: 10 Default: 8
+        ReinforcedDoorLevel = 8,
+        -- Min: 0 Max: 100 Default: 20
+        WindowShatterChance = 20,
+        -- Min: 0.00 Max: 5.00 Default: 1.00
+        PryingChanceMultiplier = 1.0,
+        PartsHighlighter = true,
+        -- Min: 0 Max: 100 Default: 10
+        CanWoundChance = 10,
+        -- Min: 0.00 Max: 10.00 Default: 1.00
+        CanWoundIntensity = 1.0,
+        RemoveBulletsByHand = false,
+        RemoveBulletsByHandAnimation = false,
+    },
+    Bicycle = {
+        -- Min: 0 Max: 100 Default: 30
+        SpawnRate = 30,
+        -- Min: 0 Max: 100 Default: 30
+        SidecarSpawnRate = 30,
+        -- Min: 0.10 Max: 5.00 Default: 2.20
+        WalkSpeedMultiplier = 2.2,
+        -- Min: 0.10 Max: 5.00 Default: 3.10
+        RunSpeedMultiplier = 3.1,
+        ImmersiveMode = true,
+        LoadPenaltyEnabled = true,
+        -- Min: 0 Max: 75 Default: 50
+        MaxTurnPenalty = 50,
+        -- Min: 0 Max: 75 Default: 35
+        MaxSpeedPenalty = 35,
+        ZombieSlowdownEnabled = true,
+        -- Min: 0 Max: 150 Default: 100
+        ZombieSlowdownStrength = 100,
+        -- Min: 0 Max: 100 Default: 30
+        ZombieContactSensitivity = 30,
+    },
+    RealisticCold = {
+        -- Min: 0.10 Max: 10.00 Default: 4.00
+        ClothingInsulationScale = 4.0,
+        EnableFoodFreezingExperimental = false,
+        -- Min: 0.10 Max: 3.00 Default: 1.00
+        SweatRateMultiplier = 1.0,
+        -- Min: 0.00 Max: 3.00 Default: 1.00
+        EvapCoolingStrength = 1.0,
+        -- Min: 0.00 Max: 1.00 Default: 0.30
+        InsulationSpreadBias = 0.3,
+        -- Min: 0.00 Max: 3.00 Default: 1.00
+        ConvectiveBridgeStrength = 1.0,
+        -- Min: 0.10 Max: 2.00 Default: 0.50
+        WarmingRateCapCPM = 0.5,
+        -- Min: 0.10 Max: 5.00 Default: 1.00
+        ColdSicknessMultiplier = 1.0,
+        -- Min: 1 Max: 4 Default: 2
+        CatchColdThreshold = 2,
+        -- Min: 0.10 Max: 5.00 Default: 1.75
+        CatchColdRateMultiplier = 1.75,
+        -- Min: 1 Max: 200 Default: 45
+        ColdWorsenPerHour = 45,
+        -- Min: 1 Max: 200 Default: 24
+        ColdRecoverPerHour = 24,
+        -- Min: 1 Max: 200 Default: 36
+        ColdMedicineDecayPerHour = 36,
+        -- Min: 0.10 Max: 10.00 Default: 0.20
+        HypothermiaDamageIntervalMin = 0.2,
+        -- Min: 0.10 Max: 5.00 Default: 0.20
+        HypothermiaDamagePerTick = 0.2,
+        -- Min: -30.00 Max: 25.00 Default: 16.00
+        ChillyAirThreshold = 16.0,
+        -- Min: 0.00 Max: 2.00 Default: 0.90
+        ChillyCoolingMultiplierThreshold = 0.9,
+        -- Min: 0.00 Max: 2.00 Default: 1.50
+        ChillyInsulationThreshold = 1.5,
+        -- Min: 5.00 Max: 60.00 Default: 26.00
+        HeatTargetMaximum = 26.0,
+        -- Min: 0.10 Max: 3.00 Default: 1.00
+        HeatDistanceExponent = 1.0,
+        -- Min: 0.00 Max: 60.00 Default: 25.00
+        VehicleHeaterMaxDelta = 25.0,
+        -- Min: 0 Max: 100 Default: 20
+        IndustrialHeaterSpawnRate = 20,
+        -- Min: 1.00 Max: 10.00 Default: 6.00
+        ExposureCap = 6.0,
+        -- Min: 0.10 Max: 5.00 Default: 0.80
+        BreachWeightWindow = 0.8,
+        -- Min: 0.10 Max: 5.00 Default: 1.20
+        BreachWeightDoor = 1.2,
+        -- Min: 0.10 Max: 5.00 Default: 1.40
+        BreachWeightGap = 1.4,
+        -- Min: 0.10 Max: 5.00 Default: 0.30
+        BreachWeightCurtain = 0.3,
+        -- Min: 0.00 Max: 5.00 Default: 1.00
+        SealedPassiveTransferStrength = 1.0,
+    },
+    StarvingZombies = {
+        BodySizeImpactsSmell = true,
+        BodyIndoorCheck = false,
+        AllowWornAttachedItems = false,
+        -- Min: 0 Max: 100 Default: 50
+        ItemDestroyChance = 50,
+        -- Min: 60 Max: 2147483647 Default: 1200
+        BaseEatTime = 1200,
+        -- Min: 0 Max: 20 Default: 3
+        BodyStartDistance = 3,
+        -- Min: 20 Max: 200 Default: 100
+        BodyMaxDistance = 100,
+        -- Min: 0.00 Max: 2.00 Default: 0.35
+        BodyAgeMultiplier = 0.35,
+        -- Min: 0.00 Max: 2.00 Default: 0.75
+        BodyWindSpeedMultiplier = 0.75,
+        -- Min: 0 Max: 90 Default: 55
+        BodyDispersionAngle = 55,
+        -- Min: 0.00 Max: 50.00 Default: 26.00
+        BodyTemperaturePeak = 26.0,
+        CanSmellPlayer = true,
+        -- Min: 0 Max: 20 Default: 0
+        PlayerStartDistance = 0,
+        -- Min: 0 Max: 200 Default: 50
+        PlayerMaxDistance = 50,
+        -- Min: -1.00 Max: 2.00 Default: 0.75
+        PlayerBloodMultiplier = 0.75,
+        -- Min: 0.00 Max: 2.00 Default: 0.25
+        PlayerWindSpeedMultiplier = 0.25,
+        -- Min: 0 Max: 90 Default: 35
+        PlayerDispersionAngle = 35,
+    },
+    GunsBlankets = {
+        DisablePatterns = false,
+        -- Min: 0 Max: 100 Default: 95
+        BlanketSpawnrate = 95,
+        -- Min: 0 Max: 100 Default: 40
+        patternSpawnrate = 40,
+        -- Min: 0 Max: 100 Default: 5
+        chanceOfNotCovering = 5,
+    },
+    TakeABathAndShower = {
+        GeneralSection = false,
+        WaterTemperatureConcept = true,
+        -- Min: 0 Max: 1000 Default: 100
+        RemainTubFaucetWater = 100,
+        -- Min: 0 Max: 1000 Default: 20
+        RemainShowerFaucetWater = 20,
+        BathItemSpawnChance = 3,
+        BathSaltSpawnChance = 2,
+        TubFluidContainerSection = false,
+        -- Min: 100 Max: 1000 Default: 200
+        TubWaterCapacity = 200,
+        TubRainCollect = true,
+        TubWaterGetDirty = true,
+        EnableReheat = true,
+        AvailableAllFluid = false,
+        BathAndShowerSection = false,
+        -- Min: 0.00 Max: 1.00 Default: 0.80
+        WashInBathConsumeWater = 0.8,
+        -- Min: 0 Max: 200 Default: 80
+        ShowerConsumeWater = 80,
+        DisableNegativeEffectsOfBathing = false,
+        DisableFeelingStressByGaze = false,
+        BodyGrimeSection = false,
+        EnableBodyGrime = true,
+        EnableBodyGrimeMoodle = true,
+        -- Min: 0.00 Max: 100.00 Default: 0.80
+        BodyGrimeIncreasedBase = 0.8,
+        -- Min: 0 Max: 100 Default: 30
+        BloodToGrimeThreshold = 30,
+        -- Min: 0 Max: 100 Default: 30
+        DirtToGrimeThreshold = 30,
+        -- Min: 0.00 Max: 100.00 Default: 1.00
+        BloodAndDirtMultiplier = 1.0,
+        GrimeDiscomfort = true,
+        GrimeNoxiousSmell = true,
+        -- Min: 0 Max: 10 Default: 2
+        WashSelfRemoveGrimeAmount = 2,
+    },
+    ComfySleeping = {
+        -- Min: 0 Max: 100 Default: 100
+        defaultComfort = 100,
+        showNumericComfortValue = false,
+        -- Min: 0 Max: 100 Default: 10
+        pillowComfortBonus = 10,
+        showPillowStatus = true,
+        -- Min: -100 Max: 100 Default: 5
+        cottonComfyMod = 5,
+        -- Min: -100 Max: 100 Default: -5
+        denimComfyMod = -5,
+        -- Min: -100 Max: 100 Default: -10
+        leatherComfyMod = -10,
+        forceAwakeIfVeryUncomfy = true,
+        forceAwakeIfSnug = true,
+        weaponsAffectComfort = true,
+        -- Min: -100 Max: 100 Default: -10
+        backWeaponComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -5
+        beltWeaponComfyMod = -5,
+        dirtAndBloodAffectComfort = true,
+        -- Min: -100 Max: 100 Default: -5
+        bloodComfyMod = -5,
+        -- Min: 0 Max: 100 Default: 40
+        bloodThreshold = 40,
+        -- Min: -100 Max: 100 Default: -5
+        dirtComfyMod = -5,
+        -- Min: 0 Max: 100 Default: 40
+        dirtThreshold = 40,
+        -- Min: 0 Max: 100 Default: 30
+        painChance = 30,
+        -- Min: 0 Max: 100 Default: 20
+        painLowerBound = 20,
+        -- Min: 0 Max: 100 Default: 50
+        painUpperBound = 50,
+        -- Min: 0 Max: 100 Default: 90
+        uncomfy1Endurance = 90,
+        -- Min: 0 Max: 100 Default: 80
+        uncomfy2Endurance = 80,
+        -- Min: 0 Max: 100 Default: 30
+        uncomfy2Fatigue = 30,
+        -- Min: 0 Max: 100 Default: 70
+        uncomfy3Endurance = 70,
+        -- Min: 0 Max: 100 Default: 50
+        uncomfy3Fatigue = 50,
+        -- Min: 0 Max: 100 Default: 40
+        uncomfy4Endurance = 40,
+        -- Min: 0 Max: 100 Default: 70
+        uncomfy4Fatigue = 70,
+        clothingReadMe = true,
+        -- Min: -100 Max: 100 Default: -15
+        hatComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -10
+        maskComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -15
+        fullSuitComfyMod = -15,
+        -- Min: -100 Max: 100 Default: 5
+        fullJohnsComfyMod = 5,
+        -- Min: -100 Max: 100 Default: -3
+        eyesComfyMod = -3,
+        -- Min: -100 Max: 100 Default: 5
+        scarfComfyMod = 5,
+        -- Min: -100 Max: 100 Default: 5
+        shirtComfyMod = 5,
+        -- Min: -100 Max: 100 Default: -10
+        jacketComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -10
+        ponchoComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -10
+        jacketBulkyComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -10
+        boilerSuitComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -10
+        dressComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -20
+        fullTopComfyMod = -20,
+        -- Min: -100 Max: 100 Default: -10
+        torsoExtraComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -10
+        vestComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -10
+        handComfyMod = -10,
+        -- Min: -100 Max: 100 Default: -5
+        beltExtraComfyMod = -5,
+        -- Min: -100 Max: 100 Default: -5
+        ammoStrapComfyMod = -5,
+        -- Min: -100 Max: 100 Default: -5
+        beltComfyMod = -5,
+        -- Min: -100 Max: 100 Default: -10
+        pantsComfyMod = -10,
+        -- Min: -100 Max: 100 Default: 5
+        halfJohnsComfyMod = 5,
+        -- Min: -100 Max: 100 Default: -10
+        shoesComfyMod = -10,
+        -- Min: -100 Max: 100 Default: 3
+        underComfyMod = 3,
+        -- Min: -100 Max: 100 Default: 0
+        tailComfyMod = 0,
+        -- Min: -100 Max: 100 Default: -20
+        bagComfyMod = -20,
+        -- Min: -100 Max: 100 Default: 0
+        bellyRingComfyMod = 0,
+        -- Min: -100 Max: 100 Default: -2
+        wristComfyMod = -2,
+        -- Min: -100 Max: 100 Default: 0
+        handRingComfyMod = 0,
+        -- Min: -100 Max: 100 Default: 0
+        neckComfyMod = 0,
+        -- Min: -100 Max: 100 Default: 0
+        necklaceComfyMod = 0,
+        -- Min: -100 Max: 100 Default: 0
+        necklaceLongComfyMod = 0,
+        -- Min: -100 Max: 100 Default: 0
+        noseComfyMod = 0,
+        -- Min: -100 Max: 100 Default: 0
+        earsComfyMod = 0,
+        moodlesAffectComfort = true,
+        -- Min: -100 Max: 100 Default: -2
+        hungerComfyMod = -2,
+        -- Min: -100 Max: 100 Default: -2
+        thirstComfyMod = -2,
+        -- Min: -100 Max: 100 Default: -2
+        sickComfyMod = -2,
+        -- Min: -100 Max: 100 Default: -2
+        hasColdComfyMod = -2,
+        -- Min: -100 Max: 100 Default: -2
+        wetComfyMod = -2,
+        -- Min: -100 Max: 100 Default: -2
+        stressComfyMod = -2,
+        -- Min: -100 Max: 100 Default: -2
+        heavyLoadComfyMod = -2,
+        -- Min: -100 Max: 100 Default: -2
+        hyperthermiaComfyMod = -2,
+        -- Min: -100 Max: 100 Default: -2
+        hypothermiaComfyMod = -2,
+        -- Min: -100 Max: 100 Default: 2
+        foodComfyMod = 2,
+        scrapArmorReadMe = true,
+        -- Min: -100 Max: 100 Default: -5
+        swordSheathComfyMod = -5,
+        -- Min: -100 Max: 100 Default: -25
+        shieldSlotComfyMod = -25,
+        -- Min: -100 Max: 100 Default: -15
+        torsoRigComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        torsoRig2ComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        waistBagsComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        upperArmLeftComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        upperArmRightComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        thighLeftComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        thighRightComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        lowerBodyComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        pauldronsComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        handPlateLeftComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        handPlateRightComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        shinPlateLeftComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -15
+        shinPlateRightComfyMod = -15,
+        -- Min: -100 Max: 100 Default: -10
+        specialMaskComfyMod = -10,
+    },
+    ButtstrokeOption = {
+        -- Min: 0.00 Max: 200.00 Default: 5.00
+        Damage = 5.0,
+        -- Min: 0.00 Max: 100.00 Default: 0.01
+        EnduranceLost = 0.005,
+        -- Min: 0 Max: 100 Default: 1
+        WeaponConditionLost = 1,
+    },
+    ReadingPlus = {
+        -- Min: 0.01 Max: 1.00 Default: 0.80
+        SittingSpeedMultiplier = 0.8,
+        EnableWhileWalking = true,
+        EnableConfirmationDialog = true,
+        FilterAlreadyReadBooks = true,
+        FilterAboveLevelBooks = true,
+    },
 }

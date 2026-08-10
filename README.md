@@ -44,6 +44,7 @@ UDP** (no TCP: es el error mas comun).
 | Actualizar el juego | `./scripts/update-server.sh` |
 | Probar cambios sin riesgo | `./scripts/stage.sh` |
 | Instalar un mod que no viene del Workshop | `./scripts/install-local-mods.sh <zip>` |
+| Traer al repo los ajustes de sandbox de los mods | `./scripts/capture-sandbox.sh` |
 
 **Nunca** uses `docker compose kill` ni `docker kill`. Saltan el apagado seguro.
 
