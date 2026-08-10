@@ -117,14 +117,18 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       Bandholz, vikingas y trenzadas. Si no aparece ninguna, es que no tienes el
       zip instalado en tu carpeta local.
       *Verificado en la creación de personaje.*
-- [ ] **Spongie's Hairstyle Unlocker** — **La comprobación más importante de este
+- [x] **Spongie's Hairstyle Unlocker** — **La comprobación más importante de este
       bloque.** Córtate el pelo y comprueba que puedes elegir cualquier peinado
       de la misma longitud, no solo los cortos. Si solo te deja los de siempre,
       el orden de carga está mal.
-      *Sin cerrar. El menú ofrece muchísimos estilos, incluidos largos, lo que
+      *Verificado: ofrece peinados de la misma longitud. Confirma de paso que el
+      orden de carga es correcto —`SpnHairAPI` despues de
+      `improvedhairmenubuild42`— que era la unica regla de orden que el servidor
+      no delata: arranca igual de las dos formas.*
+      *(Nota anterior: el menú ofrece muchísimos estilos, incluidos largos, lo que
       apunta a que funciona, pero falta confirmar que alguno sea de la MISMA
       longitud que el que se lleva puesto. Ojo: las barbas no cuentan — el mod
-      habla de* hairstyles*, y afeitar solo va hacia menos pelo por diseño.*
+      habla de* hairstyles*, y afeitar solo va hacia menos pelo por diseño.)*
 - [x] **Equip Clothing While Moving** — Ponte una prenda mientras caminas o
       apuntas.
 
