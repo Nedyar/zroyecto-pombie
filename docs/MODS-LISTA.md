@@ -41,10 +41,23 @@ espacios cuando los llevan dentro (`Run and Reload`, `Tariq's Beards`).
 No sale del Workshop. Vive en `Zomboid/mods/` dentro del volumen del servidor, y
 cada jugador necesita una copia en su propia carpeta `Zomboid/mods`.
 
-Los ficheros de trabajo están en `workbench/`, que **no se versiona**: son assets
-de un tercero. El original (`2962908954`) no tiene licencia declarada ni
-repositorio, y su autor menciona que parte de los modelos derivan de *Yaki's
-Barbershop*.
+**No está en el repositorio, y es deliberado.** Son assets de un tercero sin
+licencia declarada ni respuesta del autor, y el historial de git es permanente:
+si se commitean y luego Tariq dice que no, quitarlos del último commit no los
+saca del historial. Viven en `workbench/`, que está en `.gitignore`.
+
+Para instalarlos en cualquier máquina:
+
+```bash
+./scripts/install-local-mods.sh <ruta-al-zip> [pz|pz-staging]
+```
+
+Acepta un `.zip` o una carpeta, encuentra solo dónde está el `mod.info` y
+resuelve los zips hechos con `Compress-Archive` de PowerShell, que usan barras
+invertidas y no se descomprimen bien en Linux.
+
+El fichero se distribuye por el canal privado del grupo, el mismo por el que los
+jugadores reciben su copia.
 
 ## Pendiente
 

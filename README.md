@@ -43,6 +43,7 @@ UDP** (no TCP: es el error mas comun).
 | Restaurar | `./scripts/restore.sh [fichero]` |
 | Actualizar el juego | `./scripts/update-server.sh` |
 | Probar cambios sin riesgo | `./scripts/stage.sh` |
+| Instalar un mod que no viene del Workshop | `./scripts/install-local-mods.sh <zip>` |
 
 **Nunca** uses `docker compose kill` ni `docker kill`. Saltan el apagado seguro.
 

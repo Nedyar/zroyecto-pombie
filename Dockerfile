@@ -26,6 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         jq \
         procps \
         tzdata \
+        unzip \
+        zip \
         zstd \
     && rm -rf /var/lib/apt/lists/*
 
