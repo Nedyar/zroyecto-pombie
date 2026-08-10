@@ -1,0 +1,76 @@
+// =====================================================================
+//  FRAGMENTO de la politica de acceso de Tailscale para Zroyecto Pombie.
+//
+//  ESTO NO ES UNA ACL COMPLETA. No se pega encima de la politica de la
+//  tailnet: se FUSIONAN estas dos piezas con lo que ya haya. Pegarlo tal
+//  cual dejaria la tailnet sin el resto de sus reglas.
+//
+//  Se versiona solo este fragmento, y no la politica entera, por dos
+//  motivos: la politica es personal de cada tailnet y contiene reglas
+//  que no tienen nada que ver con el juego, y ademas quien monte esto
+//  por su cuenta necesita saber exactamente esto y nada mas: que puerto,
+//  hacia que maquina, y para quien.
+//
+//  TODOS los valores en MAYUSCULAS son marcadores: hay que sustituirlos.
+//  Se dejan asi a proposito para que la consola de Tailscale rechace el
+//  fichero si se te olvida alguno, en vez de aceptarlo apuntando a un
+//  sitio equivocado.
+//
+//  Se edita en:  https://login.tailscale.com/admin/acls
+// =====================================================================
+{
+  // -------------------------------------------------------------------
+  //  PIEZA 1 - alias de la maquina que aloja el servidor.
+  //
+  //  El alias es un nombre libre: sirve para que las reglas se lean bien
+  //  en vez de repetir la IP. Si en tu politica ya tienes un alias para
+  //  esta maquina, usa ese y saltate esta pieza.
+  //
+  //  La IP es la de Tailscale (rango 100.64.0.0/10), no la de la LAN:
+  //      tailscale ip -4
+  // -------------------------------------------------------------------
+  "hosts": {
+    "servidor-pz": "IP-TAILSCALE-DEL-SERVIDOR",
+  },
+
+  // -------------------------------------------------------------------
+  //  PIEZA 2 - el grant de los jugadores.
+  //
+  //  Los jugadores NO son miembros de la tailnet: entran por "node
+  //  sharing", asi que se les nombra por su email directamente. Por eso
+  //  no valdria meterlos en un "group": los grupos de Tailscale solo
+  //  admiten usuarios miembros de la tailnet, no invitados externos.
+  //
+  //  Alcance: SOLO la maquina del servidor y SOLO los dos puertos UDP
+  //  del juego. No ven RCON (que ademas escucha en loopback), ni SSH,
+  //  ni ninguna otra maquina de la tailnet.
+  //
+  //  REQUISITO PREVIO: compartir el nodo con cada jugador desde la
+  //  consola (Machines > la maquina > ... > Share). La ACL por si sola
+  //  no basta: sin el share, la maquina no existe para ellos.
+  //
+  //  Para dar o quitar acceso a alguien se toca UNICAMENTE esta lista.
+  // -------------------------------------------------------------------
+  "grants": [
+    {
+      "src": [
+        "CORREO-JUGADOR-1@example.com",
+        "CORREO-JUGADOR-2@example.com",
+        "CORREO-JUGADOR-3@example.com",
+      ],
+      "dst": ["servidor-pz"],
+
+      // UDP, no TCP: una regla TCP se ve perfecta y no sirve de nada.
+      // 16261 es el puerto al que se conecta el jugador; 16262 no se
+      // teclea nunca pero lo usa el motor por su cuenta, y sin el la
+      // conexion se queda a medias sin dar ningun error claro.
+      //
+      // Si cambias HOST_GAME_PORT en el .env, cambia tambien esto.
+      "ip": ["udp:16261", "udp:16262"],
+
+      // Si algun dia se invita a alguien a probar en staging, se anaden
+      // aqui sus puertos. Por defecto staging no se comparte con nadie.
+      // "ip": ["udp:16261", "udp:16262", "udp:16361", "udp:16362"],
+    },
+  ],
+}

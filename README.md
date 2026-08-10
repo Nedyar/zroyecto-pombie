@@ -27,8 +27,11 @@ docker compose up -d
 docker compose logs -f pz
 ```
 
-Conexion: `<ip-del-host>:16261`. En el router hay que abrir **16261 y 16262 en
-UDP** (no TCP: es el error mas comun).
+Conexion: `<ip-del-host>:16261`, siempre **UDP** (no TCP: es el error mas comun).
+
+Si se expone por Internet, hay que abrir 16261 y 16262 en el router. Si se
+expone por **Tailscale**, que es como esta desplegado ahora, no se abre nada:
+ver [docs/TAILSCALE.md](docs/TAILSCALE.md).
 
 ## Comandos
 
@@ -57,6 +60,7 @@ config/          fuente de verdad de la configuracion (versionada en git)
 docker/          scripts que corren dentro del contenedor (toda la logica)
 scripts/         envoltorios finos para el dia a dia desde el host
 backups/         tarballs; tambien el vehiculo para migrar de maquina
+tailscale/       fragmento de ACL para dar acceso a los jugadores
 docs/            runbook y decisiones de diseno
 ```
 
@@ -67,6 +71,7 @@ esta carpeta: viven en volumenes de Docker, por rendimiento. Se migran con
 ## Documentacion
 
 - [docs/OPERACIONES.md](docs/OPERACIONES.md) — runbook: operar, actualizar, migrar, recuperarse de un desastre.
+- [docs/TAILSCALE.md](docs/TAILSCALE.md) — como entran los jugadores: node sharing, ACL y diagnostico de red.
 - [docs/MODS.md](docs/MODS.md) — procedimiento verificado para anadir mods sin arriesgar los guardados.
 - [docs/MODS-ADOPTADOS.md](docs/MODS-ADOPTADOS.md) — que mods llevamos, en lenguaje llano. Pensado para pasarselo a los jugadores.
 - [docs/CHECKLIST-MODS.md](docs/CHECKLIST-MODS.md) — que comprobar en juego, mod por mod, para saber si funcionan de verdad.
