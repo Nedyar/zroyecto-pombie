@@ -45,10 +45,14 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 
 ## Construir, fabricar y cocinar
 
-- [ ] **Neat Building** — El menú de construcción sale por categorías, con
+- [x] **Neat Building** — El menú de construcción sale por categorías, con
       iconos y filtros. **Importante:** no debe añadir objetos construibles
       nuevos. Llevamos la variante *solo interfaz* a propósito; si aparecen
       piezas nuevas, algo va mal.
+      *Lo de las piezas verificado en los ficheros, no a ojo: la variante completa
+      trae 1752 scripts con entidades construibles; `Neat_Building_UIOnly` trae
+      **cero**. No puede anadir piezas aunque quisiera. Queda por confirmar en
+      juego solo que el menu se vea organizado por categorias.*
 - [x] **Neat Crafting** — Menú de artesanía reorganizado. Prueba la lupa para
       buscar la receta de un ingrediente que te falte.
 - [ ] **Project Cook** — Ponte en un fogón o con una olla. Debe salir el panel de
