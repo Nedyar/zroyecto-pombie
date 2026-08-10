@@ -176,13 +176,30 @@ EOF
 
     graceful_shutdown 240
 
-    # Capturamos lo que el juego escribio de verdad, pero SIN secretos.
+    # Capturamos lo que el juego escribio de verdad, filtrando dos clases de
+    # cosas que no deben acabar en el repositorio:
     #
-    # config/reference/ se versiona en git, y el INI que genera el servidor
-    # incluye la clave de RCON que sembramos para poder hablar con el. Sin este
-    # filtro acaba en el repositorio, y el historial de git es permanente.
+    # 1. SECRETOS. El INI que genera el servidor incluye la clave de RCON que
+    #    sembramos para poder hablar con el. Sin este filtro acaba en git, y el
+    #    historial es permanente.
+    #
+    # 2. VALORES ALEATORIOS DEL MUNDO. ResetID, ServerPlayerID y Seed los genera
+    #    el juego al crear el mundo desechable del bootstrap, asi que cambian en
+    #    CADA ejecucion. Sin normalizarlos, `git diff config/reference/` muestra
+    #    siempre las mismas lineas cambiadas aunque la version del juego sea
+    #    identica, y entonces deja de significar lo unico que tiene que
+    #    significar: "esto es lo que trae la version nueva". Un diff que grita en
+    #    falso cada vez se acaba hojeando en vez de leyendo, justo el dia que
+    #    trae algo importante.
+    #
+    #    El comentario de ResetID lleva ADEMAS otro numero aleatorio dentro
+    #    ("Default: N"), de ahi que haga falta la tercera expresion: sin ella se
+    #    normalizaria el valor y el ruido seguiria colandose por el comentario.
     if [[ -f "${sdir}/${bname}.ini" ]]; then
-        sed -E 's/^(RCONPassword|Password|ServerPassword|DiscordToken)=.*/\1=<REDACTADO>/' \
+        sed -E \
+            -e 's/^(RCONPassword|Password|ServerPassword|DiscordToken)=.*/\1=<REDACTADO>/' \
+            -e 's/^(ResetID|ServerPlayerID|Seed)=.*/\1=<GENERADO>/' \
+            -e 's/^(# Reset ID determines.*Default: )[0-9]+/\1<GENERADO>/' \
             "${sdir}/${bname}.ini" > "${ref}/server.ini"
     fi
     [[ -f "${sdir}/${bname}_SandboxVars.lua" ]] && cp "${sdir}/${bname}_SandboxVars.lua" "${ref}/SandboxVars.lua"
