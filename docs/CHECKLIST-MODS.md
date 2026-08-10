@@ -13,9 +13,12 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 
 ## Inventario y saqueo
 
-- [ ] **Proximity Inventory** — Mata unos zombis y quédate entre varios
+- [x] **Proximity Inventory** — Mata unos zombis y quédate entre varios
       contenedores. Al abrir el inventario debes poder saquearlo todo de golpe
       sin ir uno por uno. Mira también los atajos de teclado en las opciones.
+      *Verificado: muestra el contenido de contenedores cercanos, incluidas las
+      bolsas anidadas dentro de ellos. Pendiente probarlo sobre un montón de
+      cadáveres, que es su otro caso de uso.*
 - [ ] **CleanUI** — Los paneles se ven compactos. Prueba: buscar por nombre y por
       categoría (clic derecho en la lupa cambia el modo), *Transfer All* / *Take
       All*, reordenar contenedores arrastrando sus iconos, y el botón de ordenar.
@@ -23,8 +26,10 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       lo que hay dentro **sin sacarla**. Comprueba además que esas bolsas
       anidadas aparecen en el saqueo por proximidad: es lo que depende de que el
       orden de carga sea correcto.
-      *Verificado: se ve dentro de la bolsa anidada. Falta la segunda mitad —
-      que esos objetos salgan también en el saqueo por proximidad.*
+      *Verificado por completo: se ve dentro de una bolsa anidada en el propio
+      inventario y también dentro de un contenedor del mundo. Esto confirma que
+      `nm_nested_containers` carga antes que `ProximityInventory`, que es lo
+      que exige su autor.*
 - [ ] **Manage Containers** — Asigna una categoría a un armario de la base y
       descarga el botín. Debe repartirse solo.
 - [ ] **Better Sorting** — Las categorías de objetos están reorganizadas y los
