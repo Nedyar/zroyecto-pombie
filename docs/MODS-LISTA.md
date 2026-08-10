@@ -30,7 +30,7 @@ WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;
 ```
 
 ```
-Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;TargetSquareOnLoad;FH;LuaDigitalWatchUI;SpnHairAPI;SpnHair;nm_nested_containers;ProximityInventory;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;blankets;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;DELRAN_CLICK_TO_WEAR;throw-your-bag-across;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;MapSymbolSizeSlider;MapSymbolsPlusDeonHand;Tariq's Beards
+Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;TargetSquareOnLoad;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;blankets;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;DELRAN_CLICK_TO_WEAR;throw-your-bag-across;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand
 ```
 
 El orden **es** el orden de carga. Los ID van sin prefijo `\` y respetando los
@@ -48,17 +48,8 @@ Barbershop*.
 
 ## Pendiente
 
-**Corrección de orden de carga.** `SpnHairAPI` debe ir **después** de
-`improvedhairmenubuild42`; su autor lo dice en mayúsculas. Ahora está en la
-posición 7 y el otro en la 35, o sea al revés. El servidor arranca igual —por eso
-no lo detectaron las pruebas— pero el desbloqueo de peinados no funcionará.
-
 **Permiso de Tariq.** Se le ha escrito. Hasta que responda, el port no se publica
 y solo circula entre el grupo.
-
-**Verificación en juego de Tariq's Beards.** El servidor lo carga sin errores,
-pero los modelos son de 2023 y B42 rehizo el modelado de personajes. Que cargue
-no garantiza que se vean bien.
 
 ---
 
@@ -125,7 +116,14 @@ Declaradas por los autores. Todas respetadas salvo la última.
 - `damnlib` antes que `KI5trailers`.
 - `TargetSquareOnLoad` antes que `blankets`; `FH` antes que `SpnHair`;
   `LuaDigitalWatchUI` antes que `RC_RealisticColdMod`.
-- ⚠️ `improvedhairmenubuild42` antes que `SpnHairAPI` — **sin aplicar**.
+- `improvedhairmenubuild42` antes que `SpnHairAPI`. Su autor lo dice en
+  mayúsculas: *"LOAD THIS MOD AFTER IMPROVED HAIR MENU OR IT WON'T WORK"*. Es la
+  única regla que el servidor **no** delata: arranca igual, y lo que falla en
+  silencio es el desbloqueo de peinados.
+
+El bloque de pelo y barba queda entonces así: `FH` y el contenido (`SpnHair`,
+`Tariq's Beards`) al principio, el menú `improvedhairmenubuild42` casi al final,
+y `SpnHairAPI` justo detrás de él.
 
 ## Zona de riesgo
 
@@ -217,6 +215,10 @@ carpeta de versión** (`42/`, `42.13/`…).
 Los tres primeros están etiquetados como Build 41 igual que Tariq y funcionan
 porque su autor los reempaquetó. Esto es lo que permitió arreglar Tariq's Beards:
 añadir una carpeta `42/` con copia de `mod.info` y `media/`, sin tocar contenido.
+
+**Verificado en juego:** las 47 barbas aparecen y se ven correctamente. Los
+modelos de 2023 encajan sin problema con el personaje de Build 42, así que el
+arreglo era efectivamente solo de empaquetado.
 
 ## Hipótesis que se probaron y resultaron falsas
 
