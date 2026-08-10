@@ -28,8 +28,10 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 - [ ] **Better Sorting** — Las categorías de objetos están reorganizadas y los
       nombres son más claros que en el juego base.
 - [ ] **Split Items** — Divide una pila de objetos en dos.
-- [ ] **Modern Status** — Clic derecho en el botón del corazón abre el menú de
+- [x] **Modern Status** — Clic derecho en el botón del corazón abre el menú de
       Modern Status. Carga un preset. Deben estar los 33 indicadores.
+      *Verificado: los 33 salen, y aparece* Mugre corporal *de la integración con
+      Take A Bath And Shower.*
 
 ## Construir, fabricar y cocinar
 
@@ -74,16 +76,24 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 
 ## Ropa y aspecto
 
-- [ ] **Improved Hair Menu** — El menú de peinados y barbas se navega bien, en la
+- [x] **Improved Hair Menu** — El menú de peinados y barbas se navega bien, en la
       creación de personaje y en la pantalla de personaje.
-- [ ] **Spongie's Hair** — Hay peinados nuevos disponibles.
-- [ ] **Tariq's Beards** — Deben salir 47 barbas, con las largas: Thor, Kratos,
+      *Verificado: sale la rejilla con vistas previas 3D.*
+- [x] **Spongie's Hair** — Hay peinados nuevos disponibles.
+      *Verificado: el menú de cortar pelo ofrece 2 páginas con más de 150
+      estilos; el juego base tiene unos 30.*
+- [x] **Tariq's Beards** — Deben salir 47 barbas, con las largas: Thor, Kratos,
       Bandholz, vikingas y trenzadas. Si no aparece ninguna, es que no tienes el
       zip instalado en tu carpeta local.
+      *Verificado en la creación de personaje.*
 - [ ] **Spongie's Hairstyle Unlocker** — **La comprobación más importante de este
       bloque.** Córtate el pelo y comprueba que puedes elegir cualquier peinado
       de la misma longitud, no solo los cortos. Si solo te deja los de siempre,
       el orden de carga está mal.
+      *Sin cerrar. El menú ofrece muchísimos estilos, incluidos largos, lo que
+      apunta a que funciona, pero falta confirmar que alguno sea de la MISMA
+      longitud que el que se lleva puesto. Ojo: las barbas no cuentan — el mod
+      habla de* hairstyles*, y afeitar solo va hacia menos pelo por diseño.*
 - [ ] **Equip Clothing While Moving** — Ponte una prenda mientras caminas o
       apuntas.
 
@@ -95,9 +105,10 @@ Es el que más funciones trae, así que va aparte.
       puertas de vehículo.
 - [ ] Interfaz de arma: con un arma equipada debe verse munición, estado y
       condición.
-- [ ] Equipar desde el suelo por menú contextual — armas, ropa y mochilas.
+- [x] Equipar desde el suelo por menú contextual — armas, ropa y mochilas.
       **Esta sustituye a Right Click To Wear, que quitamos.** Si no funciona,
       nos hemos quedado sin las dos.
+      *Verificado, funciona.*
 - [ ] Linterna de mano enganchada al cinturón.
 - [ ] Abrir latas con cuchillo, destornillador, tenedor o cuchara.
 - [ ] Desinfectar una venda sucia con alcohol.
@@ -138,8 +149,12 @@ funciona, eso sí es noticia.
 | --- | --- | --- |
 | **Bicycle!** | El almacenamiento de la bici (cesta o alforjas) probablemente no funcione | Le falta un módulo interno: `BicycleContainerManager` |
 | **Beds Have Blankets** | Fabricar mantas no funcionará. Que aparezcan en las camas sí | Usa `recipecode`, un módulo que Build 42 eliminó |
+| **Tariq's Beards** | Los nombres de las 47 barbas salen sin traducir: `IGUI_Beard_Santatest` en vez de "Santa" | El mod solo trae traducciones en inglés, y el juego está en español. Solo afecta al nombre; el modelo se ve bien |
 
-Ninguno de los dos tumba el servidor. Son funciones que no están, no errores.
+Ninguno de los tres tumba el servidor. Son funciones que no están, no errores.
+
+El de las traducciones lo podemos arreglar nosotros añadiendo un `Translate/ES/`
+al port, si acabamos publicándolo.
 
 ---
 
