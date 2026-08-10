@@ -123,7 +123,11 @@ Es el que más funciones trae, así que va aparte.
 - [x] Abrir latas con cuchillo, destornillador, tenedor o cuchara.
 - [ ] Desinfectar una venda sucia con alcohol.
 - [x] Fabricar sábanas a partir de ropa.
-- [ ] Sus opciones aparecen en los ajustes de sandbox.
+- [x] Sus opciones aparecen en los ajustes de sandbox.
+      *Verificado en el fichero: el bloque `CommonSense` tiene sus 17 opciones
+      (palanca por tipo de puerta, dificultad, estadisticas de arma, filtro de
+      color, heridas al abrir latas, bala a mano). En servidor dedicado no hay
+      interfaz en juego: se editan en `config/SandboxVars.lua`.*
 
 ## Libros y mapa
 
