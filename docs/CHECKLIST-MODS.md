@@ -33,7 +33,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       inventario y también dentro de un contenedor del mundo. Esto confirma que
       `nm_nested_containers` carga antes que `ProximityInventory`, que es lo
       que exige su autor.*
-- [ ] **Manage Containers** — Asigna una categoría a un armario de la base y
+- [x] **Manage Containers** — Asigna una categoría a un armario de la base y
       descarga el botín. Debe repartirse solo.
 - [x] **Better Sorting** — Las categorías de objetos están reorganizadas y los
       nombres son más claros que en el juego base.
@@ -135,7 +135,7 @@ Es el que más funciones trae, así que va aparte.
       *Verificado, funciona.*
 - [x] Linterna de mano enganchada al cinturón.
 - [x] Abrir latas con cuchillo, destornillador, tenedor o cuchara.
-- [ ] Desinfectar una venda sucia con alcohol.
+- [x] Desinfectar una venda sucia con alcohol.
 - [x] Fabricar sábanas a partir de ropa.
 - [x] Sus opciones aparecen en los ajustes de sandbox.
       *Verificado en el fichero: el bloque `CommonSense` tiene sus 17 opciones
