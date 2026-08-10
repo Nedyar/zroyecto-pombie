@@ -60,8 +60,13 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 
 ## Supervivencia
 
-- [ ] **Realistic Temperature** — La temperatura dentro de un edificio debe
+- [x] **Realistic Temperature** — La temperatura dentro de un edificio debe
       diferir de la de fuera. Cierra puertas y ventanas y comprueba que cambia.
+      **Se lee en un reloj digital equipado**, no en Modern Status: el mod
+      reimplementa esa interfaz para meter ahi sus valores, y por eso depende de
+      `LuaDigitalWatchUI`. El indicador *Temperatura* de Modern Status es la
+      corporal, que es otra cosa.
+      *Verificado: cambia al entrar y salir de un edificio.*
 - [x] **Starving Zombies** — Deja un cadáver a la vista y espera. Los zombis
       deben acercarse a comérselo. Ve manchado de sangre y comprueba que te
       detectan desde más lejos.
