@@ -1,0 +1,14 @@
+# Contexto de build: lista BLANCA, no negra.
+#
+# Lo unico que el Dockerfile necesita es `docker/` (un solo COPY). Sin este
+# fichero el contexto es el repositorio entero, y eso significa mandarle al
+# daemon en cada build:
+#
+#   .env      las contrasenas, que ademas quedan en la cache de BuildKit
+#   backups/  los tarballs del mundo; hoy vacio, manana decenas de GB
+#   .git/     el historial completo
+#
+# Se hace con lista blanca a proposito: con lista negra, cualquier carpeta que
+# se anada en el futuro vuelve a colarse en el contexto sin que nadie se entere.
+*
+!docker/
