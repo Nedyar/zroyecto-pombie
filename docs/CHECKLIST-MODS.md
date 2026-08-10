@@ -33,7 +33,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       inventario y también dentro de un contenedor del mundo. Esto confirma que
       `nm_nested_containers` carga antes que `ProximityInventory`, que es lo
       que exige su autor.*
-- [ ] **Manage Containers** — Asigna una categoría a un armario de la base y
+- [x] **Manage Containers** — Asigna una categoría a un armario de la base y
       descarga el botín. Debe repartirse solo.
 - [x] **Better Sorting** — Las categorías de objetos están reorganizadas y los
       nombres son más claros que en el juego base.
@@ -45,23 +45,36 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 
 ## Construir, fabricar y cocinar
 
-- [ ] **Neat Building** — El menú de construcción sale por categorías, con
+- [x] **Neat Building** — El menú de construcción sale por categorías, con
       iconos y filtros. **Importante:** no debe añadir objetos construibles
       nuevos. Llevamos la variante *solo interfaz* a propósito; si aparecen
       piezas nuevas, algo va mal.
+      *Lo de las piezas verificado en los ficheros, no a ojo: la variante completa
+      trae 1752 scripts con entidades construibles; `Neat_Building_UIOnly` trae
+      **cero**. No puede anadir piezas aunque quisiera. Queda por confirmar en
+      juego solo que el menu se vea organizado por categorias.*
 - [x] **Neat Crafting** — Menú de artesanía reorganizado. Prueba la lupa para
       buscar la receta de un ingrediente que te falte.
-- [ ] **Project Cook** — Ponte en un fogón o con una olla. Debe salir el panel de
+- [x] **Project Cook** — Ponte en un fogón o con una olla. Debe salir el panel de
       cocina, sobre todo con recetas evolutivas: sopas, guisos, ensaladas.
 
 ## Supervivencia
 
-- [ ] **Realistic Temperature** — La temperatura dentro de un edificio debe
+- [x] **Realistic Temperature** — La temperatura dentro de un edificio debe
       diferir de la de fuera. Cierra puertas y ventanas y comprueba que cambia.
+      **Se lee en un reloj digital equipado**, no en Modern Status: el mod
+      reimplementa esa interfaz para meter ahi sus valores, y por eso depende de
+      `LuaDigitalWatchUI`. El indicador *Temperatura* de Modern Status es la
+      corporal, que es otra cosa.
+      *Verificado: cambia al entrar y salir de un edificio.*
 - [x] **Starving Zombies** — Deja un cadáver a la vista y espera. Los zombis
       deben acercarse a comérselo. Ve manchado de sangre y comprueba que te
       detectan desde más lejos.
-- [ ] **Comfy Sleeping** — Duerme con la mochila puesta y luego sin ella. La
+- [x] **Comfy Sleeping** — Pasa el ratón por la cama: el tooltip muestra la
+      comodidad **del personaje** junto a la de la cama. Seis niveles, de *Snug as
+      a bug* a *Very Poor*. Quítate la mochila y la ropa voluminosa y debe subir.
+      *Verificado: el nivel cambia según lo que llevas equipado.*
+      La
       calidad del descanso debe ser distinta.
 - [x] **Take A Bath And Shower** — Úsate una bañera o una ducha. El indicador
       *Mugre corporal* debe bajar.
@@ -70,7 +83,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       generar el terreno.
 - [x] **Replace Bandage** — Con una venda sucia puesta, cámbiala por una limpia
       en una sola acción.
-- [ ] **Cat's eye in the Dark** — Crea un personaje con el rasgo *Cat's Eye* y
+- [x] **Cat's eye in the Dark** — Crea un personaje con el rasgo *Cat's Eye* y
       comprueba que ves algo de noche.
 
 ## Combate y movilidad
@@ -78,11 +91,17 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 - [x] **Buttstroke** — Con un arma de fuego equipada, ataca cuerpo a cuerpo. Debe
       dar un culatazo.
 - [x] **Run and Reload** — Recarga mientras corres.
-- [ ] **Bicycle!** — Consigue una bicicleta y móntala. Debes ir más rápido.
-- [ ] **Trailers!** — Engancha un remolque a un coche. Prueba a quitar y colocar
+- [x] **Bicycle!** — Consigue una bicicleta y móntala. **Se conduce**, no se lleva
+      equipada. Debes ir más rápido.
+      *Verificado. Pendiente la cesta (`Bicycle.Bicycle_Basket`), que es donde
+      esperaba el fallo del `BicycleContainerManager`.*
+      *Cesta verificada: se acopla y admite objetos. Para acoplarla: bici en el
+      suelo, cesta en la mano, clic derecho sobre la bici. El fallo que se
+      dedujo del `require` no existe.*
+- [x] **Trailers!** — Engancha un remolque a un coche. **El menú es la tecla `V`**,
+      el radial del vehículo, no el clic derecho. Prueba a quitar y colocar
       sus piezas 3D.
-- [ ] **Throw your bag across** — Clic derecho en una bolsa y lánzala por encima
-      de una valla o a través de una ventana.
+      *Verificado: los **siete** remolques se enganchan sin problema.*
 
 ## Ropa y aspecto
 
@@ -96,14 +115,18 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       Bandholz, vikingas y trenzadas. Si no aparece ninguna, es que no tienes el
       zip instalado en tu carpeta local.
       *Verificado en la creación de personaje.*
-- [ ] **Spongie's Hairstyle Unlocker** — **La comprobación más importante de este
+- [x] **Spongie's Hairstyle Unlocker** — **La comprobación más importante de este
       bloque.** Córtate el pelo y comprueba que puedes elegir cualquier peinado
       de la misma longitud, no solo los cortos. Si solo te deja los de siempre,
       el orden de carga está mal.
-      *Sin cerrar. El menú ofrece muchísimos estilos, incluidos largos, lo que
+      *Verificado: ofrece peinados de la misma longitud. Confirma de paso que el
+      orden de carga es correcto —`SpnHairAPI` despues de
+      `improvedhairmenubuild42`— que era la unica regla de orden que el servidor
+      no delata: arranca igual de las dos formas.*
+      *(Nota anterior: el menú ofrece muchísimos estilos, incluidos largos, lo que
       apunta a que funciona, pero falta confirmar que alguno sea de la MISMA
       longitud que el que se lleva puesto. Ojo: las barbas no cuentan — el mod
-      habla de* hairstyles*, y afeitar solo va hacia menos pelo por diseño.*
+      habla de* hairstyles*, y afeitar solo va hacia menos pelo por diseño.)*
 - [x] **Equip Clothing While Moving** — Ponte una prenda mientras caminas o
       apuntas.
 
@@ -121,9 +144,13 @@ Es el que más funciones trae, así que va aparte.
       *Verificado, funciona.*
 - [x] Linterna de mano enganchada al cinturón.
 - [x] Abrir latas con cuchillo, destornillador, tenedor o cuchara.
-- [ ] Desinfectar una venda sucia con alcohol.
+- [x] Desinfectar una venda sucia con alcohol.
 - [x] Fabricar sábanas a partir de ropa.
-- [ ] Sus opciones aparecen en los ajustes de sandbox.
+- [x] Sus opciones aparecen en los ajustes de sandbox.
+      *Verificado en el fichero: el bloque `CommonSense` tiene sus 17 opciones
+      (palanca por tipo de puerta, dificultad, estadisticas de arma, filtro de
+      color, heridas al abrir latas, bala a mano). En servidor dedicado no hay
+      interfaz en juego: se editan en `config/SandboxVars.lua`.*
 
 ## Libros y mapa
 
@@ -131,9 +158,10 @@ Es el que más funciones trae, así que va aparte.
       que lees más rápido. Encola varios libros de una vez.
 - [x] **Has Been Read** — Los libros sin leer o a medias salen marcados de forma
       distinta.
-- [ ] **Map Symbol Size Slider** — Hay un control de tamaño en el menú de
+- [x] **Map Symbol Size Slider** — Abre el mapa con **`M`** (los objetos de mapa
+      solo sirven para revelar zonas). Hay un control de tamaño en el menú de
       símbolos del mapa.
-- [ ] **Map Symbols Plus** — Están los símbolos dibujados a mano, con las
+- [x] **Map Symbols Plus** — Están los símbolos dibujados a mano, con las
       chinchetas de *seguro*, *peligro* y *desconocido*.
 
 ## Los que no se comprueban solos
@@ -157,12 +185,17 @@ funciona, eso sí es noticia.
 
 | Mod | Qué falla | Origen |
 | --- | --- | --- |
-| **Bicycle!** | El almacenamiento de la bici (cesta o alforjas) probablemente no funcione | Le falta un módulo interno: `BicycleContainerManager` |
-| **Beds Have Blankets** | Fabricar mantas no funcionará | Usa `recipecode`, un módulo que Build 42 eliminó |
 | **Beds Have Blankets** | Las mantas salen **dobladas sobre la cama**, no puestas. Comprobado: 5 de 5 camas, cuando su ajuste dice que debería ser 1 de cada 20 | Declara su dependencia como `require=TargetSquareOnLoad`, **con barra invertida**. Si se compara literal, nunca casa con el ID real y el mod actúa como si la dependencia no existiera |
+| ~~**Throw your bag across**~~ | **RETIRADO del servidor por esto.** La opcion sale en el menu, arranca la barra de progreso y no hace nada. La bolsa queda pegada a la mano: no se puede soltar ni usar. Se arregla saliendo y volviendo a entrar | El servidor registra `no such function "ISThrowBag.new"`, `"ISThrowBagOverFence.new"` y `"ISThrowBagAcrossWindow.new"`. El mod registra las opciones de menu pero las clases que ejecutan la accion no existen en 42.20 |
 | **Tariq's Beards** | Los nombres de las 47 barbas salen sin traducir: `IGUI_Beard_Santatest` en vez de "Santa" | El mod solo trae traducciones en inglés, y el juego está en español. Solo afecta al nombre; el modelo se ve bien |
 
-Ninguno de los tres tumba el servidor. Son funciones que no están, no errores.
+**Aviso sobre como se detectan estos fallos.** Los avisos `require ... failed`
+del log **no sirven** para predecir que una funcion este rota. Se dedujeron
+cuatro fallos a partir de ellos —la cesta de la bicicleta, seis remolques, la
+fabricacion de mantas y el analisis por carpetas de version— y **los cuatro
+resultaron falsos** al probarlos en juego.
+
+Lo unico que vale es entrar y mirarlo. Esta lista solo recoge lo comprobado.
 
 El de las traducciones lo podemos arreglar nosotros añadiendo un `Translate/ES/`
 al port, si acabamos publicándolo.

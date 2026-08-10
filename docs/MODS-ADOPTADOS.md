@@ -1,6 +1,6 @@
 # Mods del servidor
 
-Esto es lo que llevamos puesto ahora mismo. **37 mods**, todos probados y
+Esto es lo que llevamos puesto ahora mismo. **36 mods**, todos probados y
 funcionando en la versión actual del juego (Build 42.20).
 
 No tenéis que hacer nada para instalarlos: al entrar al servidor, el juego los
@@ -17,6 +17,10 @@ descarga automáticamente.
 - **[Better Sorting](https://steamcommunity.com/sharedfiles/filedetails/?id=2313387159)** — Reorganiza las categorías de objetos y arregla un montón de nombres.
 - **[Split Items](https://steamcommunity.com/sharedfiles/filedetails/?id=3147428398)** — Dividir pilas de objetos.
 - **[Modern Status](https://steamcommunity.com/sharedfiles/filedetails/?id=3451167732)** — Los indicadores de estado del personaje, en círculos y barras configurables.
+
+## Manitas y sentido común
+
+- **[Common Sense](https://steamcommunity.com/sharedfiles/filedetails/?id=3717968421)** — Un montón de cosas que el juego debería hacer y no hace: forzar puertas y ventanas con una palanca, ver munición y estado del arma que llevas equipada, equiparte cosas del suelo con clic derecho, colgarte la linterna del cinturón, abrir latas con un cuchillo o un destornillador, desinfectar vendas con alcohol y fabricar sábanas con ropa vieja.
 
 ## Construir, fabricar y cocinar
 
@@ -39,15 +43,13 @@ descarga automáticamente.
 - **[Buttstroke](https://steamcommunity.com/sharedfiles/filedetails/?id=3394044313)** — Puedes dar culatazos con el arma de fuego.
 - **[Run and Reload](https://steamcommunity.com/sharedfiles/filedetails/?id=3397207461)** — Recargar mientras corres.
 - **[Bicycle!](https://steamcommunity.com/sharedfiles/filedetails/?id=3461415167)** — Bicicleta. Se dirige con el botón derecho o Ctrl.
-- **[Trailers!](https://steamcommunity.com/sharedfiles/filedetails/?id=3330403100)** — Seis remolques para enganchar al coche, con piezas que puedes quitar, poner y fabricar: lonas, cajas de herramientas, bidones.
-- **[Throw your bag across](https://steamcommunity.com/sharedfiles/filedetails/?id=3391902125)** — Lanzar bolsas por ventanas y por encima de vallas.
+- **[Trailers!](https://steamcommunity.com/sharedfiles/filedetails/?id=3330403100)** — Siete remolques para enganchar al coche, con piezas que puedes quitar, poner y fabricar: lonas, cajas de herramientas, bidones.
 
 ## Ropa y aspecto
 
 - **[Improved Hair Menu](https://steamcommunity.com/sharedfiles/filedetails/?id=3589548354)** — El menú de peinados y barbas, mucho más manejable.
 - **[Spongie's Hair](https://steamcommunity.com/sharedfiles/filedetails/?id=2463184726)** — Peinados nuevos.
 - **[Spongie's Hairstyle Unlocker](https://steamcommunity.com/sharedfiles/filedetails/?id=3041733782)** — Al cortarte el pelo puedes elegir cualquier peinado de la misma longitud.
-- **[Right Click To Wear](https://steamcommunity.com/sharedfiles/filedetails/?id=3453580134)** — Ponerte ropa del suelo con clic derecho, sin recogerla antes.
 - **[Equip Clothing While Moving](https://steamcommunity.com/sharedfiles/filedetails/?id=3446510982)** — Vestirte andando o apuntando.
 - **[Tariq's Beards](https://steamcommunity.com/sharedfiles/filedetails/?id=2962908954)** — 47 barbas y bigotes, con las largas incluidas: Thor, Kratos, Bandholz, vikingas y trenzadas. **Este se instala a mano**, mira más abajo.
 
