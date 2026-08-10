@@ -149,9 +149,10 @@ Es el que más funciones trae, así que va aparte.
       que lees más rápido. Encola varios libros de una vez.
 - [x] **Has Been Read** — Los libros sin leer o a medias salen marcados de forma
       distinta.
-- [ ] **Map Symbol Size Slider** — Hay un control de tamaño en el menú de
+- [x] **Map Symbol Size Slider** — Abre el mapa con **`M`** (los objetos de mapa
+      solo sirven para revelar zonas). Hay un control de tamaño en el menú de
       símbolos del mapa.
-- [ ] **Map Symbols Plus** — Están los símbolos dibujados a mano, con las
+- [x] **Map Symbols Plus** — Están los símbolos dibujados a mano, con las
       chinchetas de *seguro*, *peligro* y *desconocido*.
 
 ## Los que no se comprueban solos
