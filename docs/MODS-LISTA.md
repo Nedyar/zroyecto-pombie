@@ -31,21 +31,27 @@ WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;
 ```
 
 ```
-Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;TargetSquareOnLoad;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;BB_CommonSenseFix;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;blankets;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand
+Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;\TargetSquareOnLoad;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;BB_CommonSenseFix;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;blankets;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand
 ```
 
 El orden **es** el orden de carga. Los ID van sin prefijo `\` y respetando los
 espacios cuando los llevan dentro (`Run and Reload`, `Tariq's Beards`).
 
-**Excepcion: `TargetSquareOnLoad` lleva barra a proposito.** No hace falta para
+**Excepción: `\TargetSquareOnLoad` lleva barra a propósito.** No hace falta para
 cargarlo —PZ la ignora al buscar el mod— pero *Beds Have Blankets* comprueba
-`getActivatedMods():contains("\TargetSquareOnLoad")`, con barra literal. Sin
-ella la comprobacion falla y el mod se comporta como si la dependencia no
-estuviera: suelta las mantas como objeto en vez de vestir la cama.
+literalmente:
 
-**Ojo al escribirlo en `.env`:** hay que poner `\TargetSquareOnLoad`, con dos
-barras. Docker Compose interpreta la barra simple como escape y se la come antes
-de llegar al contenedor.
+```lua
+if getActivatedMods():contains("\\TargetSquareOnLoad") then
+```
+
+En Lua eso es la cadena `\TargetSquareOnLoad`, con barra. Sin ella la
+comprobación falla, el mod se comporta como si la dependencia no estuviera y
+suelta las mantas como objeto en vez de vestir la cama.
+
+**Ojo al escribirlo en `.env`:** hay que poner **dos** barras,
+`\\TargetSquareOnLoad`. Docker Compose interpreta la simple como escape y se la
+come antes de llegar al contenedor.
 
 ## Mod local: Tariq's Beards
 
