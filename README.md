@@ -21,11 +21,17 @@ los guardados. Eso no se consigue teniendo cuidado, se consigue con estructura:
 
 ```bash
 cp .env.example .env        # y rellena las contrasenas
+chmod +x scripts/*.sh       # en Linux; git no siempre conserva el bit
 docker compose build
 ./scripts/bootstrap.sh      # instala el juego (~8 GB) y genera la config real
 docker compose up -d
 docker compose logs -f pz
 ```
+
+En Linux, si no quieres meter tu usuario en el grupo `docker` —que equivale a
+darle root sin contrasena— este montaje funciona tal cual con **Docker
+rootless**. Requiere poner `PUID=0` en el `.env`; el porque esta en
+[docs/OPERACIONES.md](docs/OPERACIONES.md).
 
 Conexion: `<ip-del-host>:16261`, siempre **UDP** (no TCP: es el error mas comun).
 
@@ -70,6 +76,8 @@ esta carpeta: viven en volumenes de Docker, por rendimiento. Se migran con
 
 ## Documentacion
 
+- [docs/HANDOFF.md](docs/HANDOFF.md) — **empieza aqui**: como esta desplegado ahora, que esta verificado y que queda pendiente.
+- [AGENTS.md](AGENTS.md) — contexto para agentes de IA que trabajen en el repo.
 - [docs/OPERACIONES.md](docs/OPERACIONES.md) — runbook: operar, actualizar, migrar, recuperarse de un desastre.
 - [docs/TAILSCALE.md](docs/TAILSCALE.md) — como entran los jugadores: node sharing, ACL y diagnostico de red.
 - [docs/MODS.md](docs/MODS.md) — procedimiento verificado para anadir mods sin arriesgar los guardados.

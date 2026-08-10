@@ -13,8 +13,12 @@ Referencia temporal: **Build 42 estable (42.20) salió el 29/07/2026.**
 
 # 1. Lo que está activo ahora
 
-**Corriendo en staging.** Producción está parada y con el mundo borrado, a la
-espera de cerrar las votaciones pendientes.
+**Corriendo en producción**, sobre un mundo nuevo creado con esta misma lista.
+Los 36 elementos del Workshop descargaron correctamente y el arranque no
+registró ningún `required mod not found`.
+
+Queda pendiente la comprobación en juego, mod por mod: ver
+[CHECKLIST-MODS.md](CHECKLIST-MODS.md).
 
 **36 elementos del Workshop · 38 Mod ID.** La diferencia sale de que *Take A
 Bath And Shower* aporta dos IDs, y de que *Tariq's Beards* no viene del Workshop
