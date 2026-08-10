@@ -38,6 +38,44 @@ x-pz-common: &pz-common
 
   restart: unless-stopped
 
+  # Techo de memoria del contenedor. Sin esto el unico limite es la RAM de la
+  # maquina. El heap del JVM son PZ_MEMORY, pero el consumo real suma metaspace,
+  # pilas de hilos, buffers directos y el propio GC, y se va bastante por encima.
+  # Quedarse sin memoria sin limite declarado significa que el OOM killer del
+  # kernel elige victima por su cuenta; si le toca al JVM en mitad de un
+  # guardado, sale justo el mundo corrupto que todo este montaje existe para
+  # evitar, porque un SIGKILL del kernel no espera al apagado seguro.
+  #
+  # 10g deja margen de sobra sobre lo esperado con un heap de 6g: en operacion
+  # normal no deberia activarse nunca. Si se activa es que algo va mal, y al
+  # menos muere el proceso correcto en vez de la base de datos de al lado.
+  # No se limita el swap a proposito: degradado pero vivo es preferible a
+  # muerto, porque de un servidor lento se sale y de un guardado a medias no.
+  mem_limit: 10g
+
+  # El contenedor arranca como root porque el entrypoint necesita serlo para
+  # ajustar UID/GID y ceder el control con gosu, pero no necesita ni de lejos
+  # el juego completo de capabilities por defecto: sobran NET_RAW, MKNOD,
+  # SYS_CHROOT y compania. Se dejan solo las cinco que se usan de verdad:
+  #
+  #   CHOWN          el chown -R de los volumenes, y tar -x preservando duenos
+  #   DAC_OVERRIDE   escribir durante ese ajuste en ficheros de otro dueno
+  #   FOWNER         usermod/groupmod tocando /etc/passwd y /etc/group
+  #   SETUID SETGID  gosu bajando de root a steam
+  #
+  # no-new-privileges cierra la escalada via binarios setuid. No estorba a gosu:
+  # gosu no es setuid, deja privilegios en vez de cogerlos.
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  cap_add:
+    - CHOWN
+    - DAC_OVERRIDE
+    - FOWNER
+    - SETUID
+    - SETGID
+
   healthcheck:
     test: ["CMD-SHELL", "rcon -a 127.0.0.1:27015 -p \"$$PZ_RCON_PASSWORD\" -t rcon players >/dev/null 2>&1 || exit 1"]
     interval: 60s
@@ -64,8 +102,14 @@ services:
       # una regla TCP se ve perfecta en el router y no sirve absolutamente de
       # nada. Ambos puertos hacen falta: 16261 es el principal y 16262 el de
       # conexion directa.
-      - "${HOST_GAME_PORT:-16261}:16261/udp"
-      - "${HOST_GAME_PORT_2:-16262}:16262/udp"
+      #
+      # HOST_BIND_IP decide EN QUE INTERFAZ escucha. Con la IP de Tailscale, el
+      # servidor solo existe dentro del tailnet y las ACL deciden quien entra.
+      # Dejarlo en 0.0.0.0 lo publica tambien en la WiFi de casa, y ahi no hay
+      # ACL que valga: quien este en la misma red entra por la puerta de al lado.
+      # La IP va en el .env, no aqui: es propia de cada maquina.
+      - "${HOST_BIND_IP:-0.0.0.0}:${HOST_GAME_PORT:-16261}:16261/udp"
+      - "${HOST_BIND_IP:-0.0.0.0}:${HOST_GAME_PORT_2:-16262}:16262/udp"
       # RCON solo en loopback. Da control total del servidor: exponerlo a la
       # red seria regalar la administracion a cualquiera que pruebe la clave.
       - "127.0.0.1:${HOST_RCON_PORT:-27015}:27015/tcp"
@@ -128,8 +172,8 @@ services:
       # Mapeo 1:1 a proposito. Traducir puertos aqui rompe la conexion, porque
       # el servidor anuncia los suyos internos y el cliente acaba hablando al
       # puerto equivocado del host.
-      - "${STAGING_GAME_PORT:-16361}:${STAGING_GAME_PORT:-16361}/udp"
-      - "${STAGING_GAME_PORT_2:-16362}:${STAGING_GAME_PORT_2:-16362}/udp"
+      - "${HOST_BIND_IP:-0.0.0.0}:${STAGING_GAME_PORT:-16361}:${STAGING_GAME_PORT:-16361}/udp"
+      - "${HOST_BIND_IP:-0.0.0.0}:${STAGING_GAME_PORT_2:-16362}:${STAGING_GAME_PORT_2:-16362}/udp"
       - "127.0.0.1:${STAGING_RCON_PORT:-27115}:27015/tcp"
 
     volumes:

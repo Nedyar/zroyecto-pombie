@@ -18,6 +18,45 @@ Bash**, no PowerShell: los scripts son bash.
 3. **Los cambios de riesgo se ensayan en staging primero.** Mods, mapas y
    actualizaciones del juego. Un cambio de ajuste normal no lo necesita.
 4. **Antes de tocar nada delicado, `./scripts/backup.sh`.** Es gratis.
+5. **Si tocas `docker/`, reconstruye la imagen.** Esos scripts se hornean con
+   `COPY docker/ /docker/`: editarlos en el host no cambia nada hasta que hagas
+   `docker compose build`. El fallo es silencioso —el contenedor sigue corriendo
+   la version vieja— y se pierde un buen rato buscando por que un cambio "no
+   hace nada". `config/` no tiene este problema: va montado, no horneado.
+
+---
+
+## Docker rootless
+
+Este despliegue corre con **Docker rootless**: el daemon es del usuario, no de
+root, y el socket vive en `/run/user/<uid>/docker.sock`. Se hizo asi para no
+tener que meter al usuario en el grupo `docker`, que equivale a darle root sin
+contrasena.
+
+Los scripts del repo funcionan igual, sin cambios, siempre que el contexto este
+activo:
+
+```bash
+docker context show      # debe decir: rootless
+docker info --format '{{.SecurityOptions}}'   # debe incluir: name=rootless
+```
+
+Tres consecuencias que conviene tener presentes:
+
+**`PUID=0` y `PGID=0` en el `.env`, y no es un descuido.** En rootless, el UID 0
+de dentro del contenedor es tu usuario fuera. Con `PUID=1000` los ficheros que
+el contenedor escribe en `config/` y `backups/` saldrian con un dueno del rango
+subuid que tu usuario no puede editar ni commitear. Con 0 aterrizan a tu nombre.
+Correr como root *dentro* de un contenedor rootless no da privilegios fuera.
+
+**El daemon arranca con la sesion de usuario.** Para que sobreviva a un
+reinicio sin que nadie inicie sesion hace falta `loginctl enable-linger <user>`,
+ademas de `systemctl --user enable docker`.
+
+**La IP de origen de los jugadores se pierde en UDP.** El reenvio lo hace
+RootlessKit en espacio de usuario. Todos apareceran viniendo de la misma
+direccion: banear por IP no sirve, hay que banear por Steam ID. Detalle y
+escape en [TAILSCALE.md](TAILSCALE.md).
 
 ---
 
@@ -219,10 +258,18 @@ para que el mensaje sea legible.
 
 **No se puede conectar**
 
+Si el acceso es por Tailscale, el diagnostico esta en
+[TAILSCALE.md](TAILSCALE.md): tiene una tabla que distingue los fallos de share,
+de ACL y de Tailnet Lock, que se parecen entre si y se arreglan de forma muy
+distinta. Empieza por ahi y vuelve aqui solo si los paquetes llegan.
+
 1. `docker compose ps` — el contenedor debe estar `healthy`.
 2. `./scripts/rcon.sh players` — si responde, el servidor esta vivo y el
    problema es de red.
-3. Comprueba que las reglas del router son **UDP**. Una regla TCP se ve
+3. `ss -ulpn | grep 1626` — comprueba **en que interfaz** escucha. Lo fija
+   `HOST_BIND_IP`: si esta en la IP de Tailscale, desde la LAN no se entra, y es
+   a proposito.
+4. Comprueba que las reglas del router son **UDP**. Una regla TCP se ve
    perfecta y no sirve de nada.
 4. **Conectate al 16261, nunca al 16262.** El 16262 tiene que estar abierto
    pero no se teclea: lo usa el motor por su cuenta.
@@ -270,8 +317,21 @@ recurso para redes que bloquean UDP entrante; en local y en LAN no hace falta.
 **Va a tirones con varios jugadores**
 
 Sube `PZ_MEMORY` en `.env` y reinicia. Build 42 movio el inventario al lado
-servidor y consume mas que Build 41. Con 32 GB en la maquina, 12g o 16g es
-razonable.
+servidor y consume mas que Build 41.
+
+Dos avisos antes de subirlo: el heap **no** es el consumo total (metaspace,
+pilas de hilos, buffers y GC se suman por encima), y el `mem_limit` del compose
+tiene que quedar por encima del consumo real o el contenedor morira de golpe.
+Mide antes de decidir:
+
+```bash
+docker stats --no-stream pombie-pz
+```
+
+Como referencia de este despliegue: con `PZ_MEMORY=6g` y nadie conectado, el
+contenedor ronda los 7,1 GiB. Regla practica: deja al menos un 30% de margen
+entre consumo observado y `mem_limit`, y no pongas `mem_limit` por encima de lo
+que la maquina puede dar sin empezar a usar swap.
 
 **El apagado tarda demasiado o se corta**
 

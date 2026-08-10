@@ -1,6 +1,12 @@
 # Secretos y ajustes propios de cada instancia.
 .env
 
+# El mismo fichero sin el punto, tal y como llega al copiarlo de otra maquina.
+# Sin esta regla no esta ignorado, y un `git add -A` lo commitea con las
+# contrasenas dentro. El historial de git es permanente: quitarlo despues del
+# ultimo commit no lo saca del historial.
+/env
+
 # Los backups son datos, no codigo. Se migran a mano, no por git.
 backups/*
 !backups/.gitkeep

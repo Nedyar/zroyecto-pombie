@@ -53,12 +53,23 @@ SRC_NAME="$(basename "$SRC_ABS")"
 
 say "Instalando '${SRC_NAME}' en ${SVC} (volumen ${VOL})"
 
+# El dueno que hay que dejar en los ficheros sale del .env, no de un 1000 fijo.
+# Este `docker run` no pasa por env_file, asi que los valores se leen aqui, igual
+# que hace stage.sh con los puertos. Importa cuando el .env no usa 1000: en
+# Docker rootless el dueno correcto es 0, porque el UID 0 de dentro es el usuario
+# del host, y dejar 1000 obliga al entrypoint a rehacer un chown recursivo sobre
+# todo el volumen en el siguiente arranque.
+PUID="$(grep -E '^PUID=' .env | cut -d= -f2 | tr -d '[:space:]' || true)"
+PGID="$(grep -E '^PGID=' .env | cut -d= -f2 | tr -d '[:space:]' || true)"
+
 # --entrypoint bash para quedarnos como root: un volumen recien creado pertenece
 # a root, y el entrypoint normal baja a 'steam' antes de poder tocarlo.
 MSYS_NO_PATHCONV=1 docker run --rm --entrypoint bash \
     -v "${VOL}:/data" \
     -v "${SRC_DIR}:/src:ro" \
     -e SRC_NAME="$SRC_NAME" \
+    -e PUID="${PUID:-1000}" \
+    -e PGID="${PGID:-1000}" \
     zroyecto-pombie:latest -c '
 set -euo pipefail
 mkdir -p /data/mods
@@ -99,7 +110,7 @@ root="$(find "$tmp" -maxdepth 4 -name mod.info -printf "%d %h\n" 2>/dev/null | s
 name="$(basename "$root")"
 rm -rf "/data/mods/${name}"
 cp -r "$root" "/data/mods/${name}"
-chown -R 1000:1000 /data
+chown -R "${PUID}:${PGID}" /data
 
 modid="$(grep -iE "^id=" "/data/mods/${name}/mod.info" | head -1 | cut -d= -f2- | tr -d "\r")"
 echo
