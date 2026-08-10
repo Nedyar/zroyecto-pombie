@@ -154,6 +154,43 @@ Commitear el cambio explicando qué mod, qué ID y por qué.
 
 ---
 
+## Mods locales (fuera del Workshop)
+
+Un mod puede no venir del Workshop: porque lo hemos reempaquetado nosotros para
+Build 42, porque su autor lo abandonó, o porque no hay versión compatible.
+
+```bash
+./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging]
+```
+
+Acepta un `.zip` o una carpeta, localiza solo dónde está el `mod.info` —el
+menos profundo, porque un mod de B42 tiene otro dentro de su carpeta de
+versión— y se niega a instalar con el servidor corriendo.
+
+Después hay que **añadir su Mod ID a `PZ_MODS`** a mano. El script lo imprime al
+terminar. No se añade a `WorkshopItems`: no está en el Workshop.
+
+### Dónde vive el fichero
+
+**No en el repositorio**, si son assets de un tercero sin permiso. El historial
+de git es permanente: si se commitean y luego el autor dice que no, quitarlos
+del último commit no los saca del historial.
+
+Van en `workbench/`, que está en `.gitignore`, y se distribuyen por el canal
+privado del grupo — el mismo por el que los jugadores reciben su copia.
+
+Esto tiene una consecuencia al migrar de máquina: los mods locales **no viajan
+con el repositorio**. Hay que llevarlos aparte. Ver
+[OPERACIONES.md](OPERACIONES.md), sección *Migrar a otra maquina*.
+
+### Cada jugador necesita el suyo
+
+Un mod cosmético lo dibuja el cliente, así que instalarlo en el servidor no
+basta. Cada jugador tiene que copiarlo a su carpeta `Zomboid/mods`. Las
+instrucciones para ellos están en [MODS-ADOPTADOS.md](MODS-ADOPTADOS.md).
+
+---
+
 ## Cómo llegan los mods a los jugadores
 
 **Solos.** Al conectar al servidor, el cliente descarga del Workshop los mods

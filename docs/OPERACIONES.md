@@ -164,8 +164,19 @@ docker compose stop            # apagado seguro, importante
 ./scripts/backup.sh migracion
 ```
 
-**Copia a la maquina destino:** la carpeta del proyecto entera (incluido
-`.env`, que no esta en git) y el `.tar.zst` recien creado dentro de `backups/`.
+**Copia a la maquina destino** tres cosas:
+
+1. La carpeta del proyecto entera, **incluido `.env`**, que no esta en git y
+   lleva las contrasenas y la lista de mods.
+2. El `.tar.zst` recien creado dentro de `backups/`.
+3. **Los mods locales**, si los hay. Tampoco estan en git: viven en
+   `workbench/` y se distribuyen por el canal privado del grupo. Ahora mismo es
+   `TariqsBeardsB42.zip`. La lista actual esta en
+   [MODS-LISTA.md](MODS-LISTA.md), seccion 1.
+
+Si se pierde el `.env`, se reconstruye desde `.env.example` mas los bloques
+`WorkshopItems` y `Mods` de [MODS-LISTA.md](MODS-LISTA.md), que si estan
+versionados.
 
 **En la maquina destino:**
 
@@ -175,12 +186,20 @@ id -u && id -g
 
 docker compose build
 docker compose run --rm --no-deps pz restore pz-pombie-<fecha>-migracion.tar.zst
+
+# Mods locales, ANTES de arrancar. Uno por cada .zip que traigas:
+./scripts/install-local-mods.sh <ruta>/TariqsBeardsB42.zip
+
 docker compose up -d
 docker compose logs -f pz
 ```
 
-El primer arranque descarga los ~7,5 GB del juego. El mundo restaurado ya esta
-en su sitio antes de que el servidor arranque.
+El primer arranque descarga los ~7,5 GB del juego y los mods del Workshop. El
+mundo restaurado ya esta en su sitio antes de que el servidor arranque.
+
+**Comprueba que no falta ningun mod local:** si el log dice
+`required mod "X" not found`, es que ese mod no esta en `Zomboid/mods` de la
+maquina nueva.
 
 Abre **16261 y 16262 en UDP** en el router y el cortafuegos de la maquina
 destino. UDP, no TCP.
