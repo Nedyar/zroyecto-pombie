@@ -67,4 +67,5 @@ esta carpeta: viven en volumenes de Docker, por rendimiento. Se migran con
 - [docs/OPERACIONES.md](docs/OPERACIONES.md) — runbook: operar, actualizar, migrar, recuperarse de un desastre.
 - [docs/MODS.md](docs/MODS.md) — procedimiento verificado para anadir mods sin arriesgar los guardados.
 - [docs/MODS-ADOPTADOS.md](docs/MODS-ADOPTADOS.md) — que mods llevamos, en lenguaje llano. Pensado para pasarselo a los jugadores.
+- [docs/CHECKLIST-MODS.md](docs/CHECKLIST-MODS.md) — que comprobar en juego, mod por mod, para saber si funcionan de verdad.
 - [docs/DECISIONES.md](docs/DECISIONES.md) — por que el montaje es asi.
