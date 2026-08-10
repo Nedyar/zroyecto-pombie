@@ -91,7 +91,8 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       equipada. Debes ir más rápido.
       *Verificado. Pendiente la cesta (`Bicycle.Bicycle_Basket`), que es donde
       esperamos el fallo del `BicycleContainerManager`.*
-- [ ] **Trailers!** — Engancha un remolque a un coche. Prueba a quitar y colocar
+- [x] **Trailers!** — Engancha un remolque a un coche. **El menú es la tecla `V`**,
+      el radial del vehículo, no el clic derecho. Prueba a quitar y colocar
       sus piezas 3D.
 - [ ] **Throw your bag across** — Clic derecho en una bolsa y lánzala por encima
       de una valla o a través de una ventana.
@@ -176,7 +177,6 @@ funciona, eso sí es noticia.
 | **Bicycle!** | El almacenamiento de la bici (cesta o alforjas) probablemente no funcione | Le falta un módulo interno: `BicycleContainerManager` |
 | **Beds Have Blankets** | Fabricar mantas no funcionará | Usa `recipecode`, un módulo que Build 42 eliminó |
 | **Beds Have Blankets** | Las mantas salen **dobladas sobre la cama**, no puestas. Comprobado: 5 de 5 camas, cuando su ajuste dice que debería ser 1 de cada 20 | Declara su dependencia como `require=TargetSquareOnLoad`, **con barra invertida**. Si se compara literal, nunca casa con el ID real y el mod actúa como si la dependencia no existiera |
-| **Trailers!** | Seis de los siete remolques no se pueden enganchar: cargo y utility (small/medium/large). Solo funciona `TrailerKI5livestock` | En la version de Build 41 declaran `attachment trailerfront`; en la de Build 42 ese punto de enganche desaparecio. Sin el, el juego no ofrece la opcion de remolcar |
 | **Tariq's Beards** | Los nombres de las 47 barbas salen sin traducir: `IGUI_Beard_Santatest` en vez de "Santa" | El mod solo trae traducciones en inglés, y el juego está en español. Solo afecta al nombre; el modelo se ve bien |
 
 Ninguno de los tres tumba el servidor. Son funciones que no están, no errores.
