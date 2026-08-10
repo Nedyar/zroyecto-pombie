@@ -65,7 +65,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       calidad del descanso debe ser distinta.
 - [x] **Take A Bath And Shower** — Úsate una bañera o una ducha. El indicador
       *Mugre corporal* debe bajar.
-- [ ] **Beds Have Blankets** — Explora una zona **nueva**. Algunas camas deben
+- [x] **Beds Have Blankets** — Explora una zona **nueva**. Algunas camas deben
       tener mantas. En zonas ya visitadas no aparecerán: solo se aplica al
       generar el terreno.
 - [x] **Replace Bandage** — Con una venda sucia puesta, cámbiala por una limpia
@@ -113,7 +113,7 @@ Es el que más funciones trae, así que va aparte.
 
 - [x] Forzar con palanca: puertas de edificio, de garaje, reforzadas, ventanas y
       puertas de vehículo.
-- [ ] Interfaz de arma: con un arma equipada debe verse munición, estado y
+- [x] Interfaz de arma: con un arma equipada debe verse munición, estado y
       condición.
 - [x] Equipar desde el suelo por menú contextual — armas, ropa y mochilas.
       **Esta sustituye a Right Click To Wear, que quitamos.** Si no funciona,
@@ -158,7 +158,8 @@ funciona, eso sí es noticia.
 | Mod | Qué falla | Origen |
 | --- | --- | --- |
 | **Bicycle!** | El almacenamiento de la bici (cesta o alforjas) probablemente no funcione | Le falta un módulo interno: `BicycleContainerManager` |
-| **Beds Have Blankets** | Fabricar mantas no funcionará. Que aparezcan en las camas sí | Usa `recipecode`, un módulo que Build 42 eliminó |
+| **Beds Have Blankets** | Fabricar mantas no funcionará | Usa `recipecode`, un módulo que Build 42 eliminó |
+| **Beds Have Blankets** | Las mantas salen **dobladas sobre la cama**, no puestas. Comprobado: 5 de 5 camas, cuando su ajuste dice que debería ser 1 de cada 20 | Declara su dependencia como `require=TargetSquareOnLoad`, **con barra invertida**. Si se compara literal, nunca casa con el ID real y el mod actúa como si la dependencia no existiera |
 | **Tariq's Beards** | Los nombres de las 47 barbas salen sin traducir: `IGUI_Beard_Santatest` en vez de "Santa" | El mod solo trae traducciones en inglés, y el juego está en español. Solo afecta al nombre; el modelo se ve bien |
 
 Ninguno de los tres tumba el servidor. Son funciones que no están, no errores.
