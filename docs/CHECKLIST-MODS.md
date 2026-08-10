@@ -19,9 +19,12 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       *Verificado: muestra el contenido de contenedores cercanos, incluidas las
       bolsas anidadas dentro de ellos. Pendiente probarlo sobre un montón de
       cadáveres, que es su otro caso de uso.*
-- [ ] **CleanUI** — Los paneles se ven compactos. Prueba: buscar por nombre y por
+- [x] **CleanUI** — Los paneles se ven compactos. Prueba: buscar por nombre y por
       categoría (clic derecho en la lupa cambia el modo), *Transfer All* / *Take
       All*, reordenar contenedores arrastrando sus iconos, y el botón de ordenar.
+      *Verificado. La reordenación funciona solo en el panel del jugador, no en
+      los contenedores cercanos: es así por diseño, su documentación dice
+      "in the player inventory panel".*
 - [x] **Nested Containers** — Mete una bolsa dentro de la mochila. Debes poder ver
       lo que hay dentro **sin sacarla**. Comprueba además que esas bolsas
       anidadas aparecen en el saqueo por proximidad: es lo que depende de que el
