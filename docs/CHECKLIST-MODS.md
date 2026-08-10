@@ -95,7 +95,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       el radial del vehículo, no el clic derecho. Prueba a quitar y colocar
       sus piezas 3D.
       *Verificado: los **siete** remolques se enganchan sin problema.*
-- [ ] **Throw your bag across** — Clic derecho en una bolsa y lánzala por encima
+- [!] **Throw your bag across** — ROTO, ver abajo. Clic derecho en una bolsa y lánzala por encima
       de una valla o a través de una ventana.
 
 ## Ropa y aspecto
@@ -179,6 +179,7 @@ funciona, eso sí es noticia.
 | **Bicycle!** | El almacenamiento de la bici (cesta o alforjas) probablemente no funcione | Le falta un módulo interno: `BicycleContainerManager` |
 | **Beds Have Blankets** | Fabricar mantas no funcionará | Usa `recipecode`, un módulo que Build 42 eliminó |
 | **Beds Have Blankets** | Las mantas salen **dobladas sobre la cama**, no puestas. Comprobado: 5 de 5 camas, cuando su ajuste dice que debería ser 1 de cada 20 | Declara su dependencia como `require=TargetSquareOnLoad`, **con barra invertida**. Si se compara literal, nunca casa con el ID real y el mod actúa como si la dependencia no existiera |
+| **Throw your bag across** | **ROTO Y PELIGROSO.** La opcion sale en el menu, arranca la barra de progreso y no hace nada. La bolsa queda pegada a la mano: no se puede soltar ni usar. Se arregla saliendo y volviendo a entrar | El servidor registra `no such function "ISThrowBag.new"`, `"ISThrowBagOverFence.new"` y `"ISThrowBagAcrossWindow.new"`. El mod registra las opciones de menu pero las clases que ejecutan la accion no existen en 42.20 |
 | **Tariq's Beards** | Los nombres de las 47 barbas salen sin traducir: `IGUI_Beard_Santatest` en vez de "Santa" | El mod solo trae traducciones en inglés, y el juego está en español. Solo afecta al nombre; el modelo se ve bien |
 
 Ninguno de los tres tumba el servidor. Son funciones que no están, no errores.
