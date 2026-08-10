@@ -154,28 +154,16 @@ Commitear el cambio explicando qué mod, qué ID y por qué.
 
 ---
 
-## Cómo se suscriben los jugadores
+## Cómo llegan los mods a los jugadores
 
-Cada jugador necesita exactamente los mismos mods que el servidor. Hay dos
-mecanismos y conviene usar los dos:
+**Solos.** Al conectar al servidor, el cliente descarga del Workshop los mods
+que le falten y se entra de inmediato. Comprobado en juego. No hay que
+suscribirse a nada por adelantado ni reiniciar el juego después.
 
-**1. Aviso automático al conectar (no requiere hacer nada).** Al entrar al
-servidor, el juego compara su lista con la del cliente y ofrece suscribirse a
-los que falten. Después hay que reiniciar el juego. Funciona solo, pero
-interrumpe a mitad de conexión y el primer intento siempre falla.
-
-**2. Colección del Workshop (recomendado).** Se crea una colección de Steam con
-todos los mods del servidor y se comparte el enlace. Un botón, *Suscribirse a
-todo*, y Steam los descarga antes de entrar al juego. Es lo que conviene para
-una lista larga: la gente llega ya con todo listo en vez de descubrirlo a mitad
-de la primera conexión.
-
-La colección hay que mantenerla al día cuando cambie `PZ_WORKSHOP_ITEMS`. Para
-ver la lista actual en el formato que hace falta:
-
-```bash
-grep PZ_WORKSHOP_ITEMS .env
-```
+La excepción son los **mods locales**, los que no vienen del Workshop. Esos el
+cliente no los puede descargar solo, así que cada jugador necesita una copia en
+su carpeta `Zomboid/mods`. Ver el apartado correspondiente en
+[MODS-ADOPTADOS.md](MODS-ADOPTADOS.md).
 
 ---
 

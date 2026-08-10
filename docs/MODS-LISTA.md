@@ -1,305 +1,249 @@
-# Lista de mods candidatos — análisis
+# Mods: estado y decisiones
 
-Investigación de los 47 candidatos propuestos por el grupo. Datos obtenidos de
-la API pública del Workshop de Steam (`ISteamRemoteStorage/GetPublishedFileDetails`),
-no de guías: título, etiquetas de Build, fecha de actualización y descripción
-completa de cada uno.
+Documento técnico. Para la lista en lenguaje llano que se pasa a los jugadores,
+ver [MODS-ADOPTADOS.md](MODS-ADOPTADOS.md).
 
-Referencia temporal: **Build 42 estable (42.20) salió el 29/07/2026**. Análisis
-hecho el 09/08/2026.
+Punto de partida: 47 candidatos propuestos por el grupo. Los datos salieron de
+la API pública del Workshop (`ISteamRemoteStorage/GetPublishedFileDetails`) y de
+los `mod.info` realmente descargados, no de guías.
+
+Referencia temporal: **Build 42 estable (42.20) salió el 29/07/2026.**
 
 ---
 
-## Descartados: solo Build 41 (13)
+# 1. Lo que está activo ahora
 
-No tienen etiqueta *Build 42* o el propio autor los marca como exclusivos de
-Build 41. No van a funcionar en 42.20.
+**Corriendo en staging.** Producción está parada y con el mundo borrado, a la
+espera de cerrar las votaciones pendientes.
+
+**36 elementos del Workshop · 38 Mod ID.** La diferencia sale de que *Take A
+Bath And Shower* aporta dos IDs, y de que *Tariq's Beards* no viene del Workshop
+sino de una carpeta local.
+
+## Copia de seguridad de la configuración
+
+`.env` está fuera de git. Si se pierde, o al migrar de máquina, esto es lo que
+hay que restaurar.
+
+```
+WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782;3028528478;3461415167;3600401184;3397207461;2650547917;3589548354;3396867685;2463184726;3641697417;3330403100;2944344655;3402513620;3410947298;3446510982;3391902125;3453580134;3399645148;3171167894;2969455858;2447729538;3676456221
+```
+
+```
+Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;TargetSquareOnLoad;FH;LuaDigitalWatchUI;SpnHairAPI;SpnHair;nm_nested_containers;ProximityInventory;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;blankets;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;DELRAN_CLICK_TO_WEAR;throw-your-bag-across;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;MapSymbolSizeSlider;MapSymbolsPlusDeonHand;Tariq's Beards
+```
+
+El orden **es** el orden de carga. Los ID van sin prefijo `\` y respetando los
+espacios cuando los llevan dentro (`Run and Reload`, `Tariq's Beards`).
+
+## Mod local: Tariq's Beards
+
+No sale del Workshop. Vive en `Zomboid/mods/` dentro del volumen del servidor, y
+cada jugador necesita una copia en su propia carpeta `Zomboid/mods`.
+
+Los ficheros de trabajo están en `workbench/`, que **no se versiona**: son assets
+de un tercero. El original (`2962908954`) no tiene licencia declarada ni
+repositorio, y su autor menciona que parte de los modelos derivan de *Yaki's
+Barbershop*.
+
+## Pendiente
+
+**Corrección de orden de carga.** `SpnHairAPI` debe ir **después** de
+`improvedhairmenubuild42`; su autor lo dice en mayúsculas. Ahora está en la
+posición 7 y el otro en la 35, o sea al revés. El servidor arranca igual —por eso
+no lo detectaron las pruebas— pero el desbloqueo de peinados no funcionará.
+
+**Permiso de Tariq.** Se le ha escrito. Hasta que responda, el port no se publica
+y solo circula entre el grupo.
+
+**Verificación en juego de Tariq's Beards.** El servidor lo carga sin errores,
+pero los modelos son de 2023 y B42 rehizo el modelado de personajes. Que cargue
+no garantiza que se vean bien.
+
+---
+
+# 2. Lo que se descartó
+
+## Solo Build 41 (13)
+
+Sin etiqueta *Build 42*, o el autor los marca como exclusivos de B41.
 
 | ID | Nombre | Últ. act. | Nota |
 | --- | --- | --- | --- |
-| 2487022075 | True Actions. Act 1 & 2 - Sitting & Lying | 2023-01-01 | El título dice literalmente **[Only for B41]** |
-| 2648779556 | True Actions. Act 3 - Dancing | 2022-01-20 | Solo B41 |
+| 2487022075 | True Actions. Act 1 & 2 | 2023-01-01 | El título dice **[Only for B41]** |
+| 2648779556 | True Actions. Act 3 - Dancing | 2022-01-20 | |
 | 3236152598 | The Only Cure | 2025-10-05 | El título dice **[B41]** |
-| 2903771337 | Reorder The Hotbar | 2024-12-18 | Solo B41 **y** marcado DISCONTINUED |
+| 2903771337 | Reorder The Hotbar | 2024-12-18 | Además marcado DISCONTINUED |
 | 2732804047 | Players On Map | 2024-10-20 | Sin etiqueta de Build 42 |
-| 2659216714 | Just Throw Them Out The Window | 2023-07-10 | Solo B41 |
-| 2962908954 | Tariqs Beards | 2023-07-05 | Solo B41 |
+| 2659216714 | Just Throw Them Out The Window | 2023-07-10 | |
+| 2962908954 | Tariqs Beards | 2023-07-05 | **Rescatado** reempaquetándolo — ver sección 1 |
 | 2835829018 | Weapon Condition Indicator_ES | 2023-06-02 | Traducción del de abajo; cae con él |
-| 2687798127 | Water Dispenser | 2022-08-09 | Solo B41 |
-| 2631149521 | Eggon's Have I Found This Book??? | 2022-08-06 | Solo B41 **y** requiere *Eggon's Modding Utils*, que no está en la lista |
-| 2832401837 | Tuck and Roll | 2022-07-12 | Solo B41 |
-| 2701170568 | Extra Map Symbols | 2022-02-27 | Solo B41 |
-| 2619072426 | Weapon Condition Indicator | 2022-01-06 | Solo B41 **y** requiere *Mod Options*, que no está en la lista |
+| 2687798127 | Water Dispenser | 2022-08-09 | |
+| 2631149521 | Eggon's Have I Found This Book??? | 2022-08-06 | Y requiere *Eggon's Modding Utils*, ausente |
+| 2832401837 | Tuck and Roll | 2022-07-12 | |
+| 2701170568 | Extra Map Symbols | 2022-02-27 | |
+| 2619072426 | Weapon Condition Indicator | 2022-01-06 | Y requiere *Mod Options*, ausente |
 
-## Descartados: descatalogados por su autor (2)
-
-Tienen etiqueta Build 42 pero el autor los abandonó, y llevan sin tocarse desde
-antes de la estable.
+## Descatalogados por su autor (2)
 
 | ID | Nombre | Últ. act. | Nota |
 | --- | --- | --- | --- |
 | 2950902979 | Equipment UI - Paper Doll | 2025-12-24 | DISCONTINUED en el título |
-| 2901962885 | Reorder Containers | 2025-12-28 | DISCONTINUED, **y CleanUI dice expresamente que su función ya está integrada** |
+| 2901962885 | Reorder Containers | 2025-12-28 | DISCONTINUED, y CleanUI declara que ya integra esa función |
+
+## Incompatible por declaración del autor (1)
+
+| ID | Nombre | Motivo |
+| --- | --- | --- |
+| 2883633728 | I Might Need A Lighter | Su `mod.info` declara **`versionMax=42.12`** y estamos en 42.20. El juego lo rechaza por diseño |
 
 ---
 
-## Dependencia crítica que faltaba
+# 3. Dependencias que hubo que añadir
 
-**NeatUI Framework — `3508537032` — Mod ID `NeatUI_Framework`**
+Ninguna estaba entre los 47 candidatos. Sin ellas, su mod no carga.
 
-Lo exigen **cinco** mods de la lista: CleanUI, Neat Building, Neat Crafting,
-Project Cook y Modern Status. No estaba entre los candidatos. Sin él, esos
-cinco no cargan.
-
-Actualizado 08/08/2026, soporte declarado *B42.0.2 a B42.20.x*, 853k
-suscriptores. Debe cargar **antes** que cualquiera que dependa de él, y hay que
-añadirlo también a la suscripción de cada jugador.
-
----
-
-## Lista activa en produccion
-
-Copia versionada de lo que hay en `.env`, que esta fuera de git. Si se pierde
-el `.env` (o al migrar de maquina), esto es lo que hay que restaurar.
-
-```
-PZ_WORKSHOP_ITEMS=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782
-
-PZ_MODS=ATakeABathAndShowerDepthMap;NeatUI_Framework;SpnHairAPI;ProximityInventory;CleanUI;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;SplitItems;BetterSortCC;ComfySleeping;Buttstroke;TakeABathAndShowerNew;P4HasBeenRead;MapSymbolSizeSlider
-```
-
-Son 15 elementos del Workshop y 16 Mod ID: *Take A Bath And Shower* aporta dos
-(el mod y su arreglo de DepthMap, que va el primero de la lista).
-
-**Cada jugador debe estar suscrito a los 15.** Lo comodo es montar una
-coleccion de Steam con ellos y compartir el enlace: un boton y listo.
+| Workshop ID | Mod ID | Lo exige |
+| --- | --- | --- |
+| 3508537032 | `NeatUI_Framework` | CleanUI, Neat Building, Neat Crafting, Project Cook, Modern Status |
+| 3171167894 | `damnlib` | Trailers! |
+| 2969455858 | `TargetSquareOnLoad` | Beds Have Blankets |
+| 2447729538 | `FH` (Fluffy Hair) | Spongie's Hair |
+| 3676456221 | `LuaDigitalWatchUI` | Realistic Temperature |
 
 ---
 
-## Lote A — confirmados y probados (15)
+# 4. Reglas de orden de carga
 
-Autor declara soporte hasta 42.20, o actualizados después de la estable.
-**Probados juntos en staging: los 15 cargan y el servidor arranca.**
+Declaradas por los autores. Todas respetadas salvo la última.
 
-| Orden | ID | Mod ID | Nombre |
-| --- | --- | --- | --- |
-| 1 | 3508537032 | `NeatUI_Framework` | NeatUI Framework — *dependencia, va primero* |
-| 2 | 3041733782 | `SpnHairAPI` | Spongie's Hairstyle Unlocker |
-| 3 | 2847184718 | `ProximityInventory` | Proximity Inventory B42.20+ |
-| 4 | 3437629766 | `CleanUI` | CleanUI |
-| 5 | 3502080466 | `Neat_Crafting` | Neat Crafting |
-| 6 | 3536052310 | `Neat_Building` | Neat Building |
-| 7 | 3490188370 | `Project_Cook` | Project Cook |
-| 8 | 3451167732 | `ModernStatus` | Modern Status |
-| 9 | 3147428398 | `SplitItems` | Split Items |
-| 10 | 2313387159 | `BetterSortCC` | Better Sorting |
-| 11 | 2998737588 | `ComfySleeping` | Comfy Sleeping |
-| 12 | 3394044313 | `Buttstroke` | Buttstroke / Gun Stock Attack |
-| 13 | 3592172476 | `TakeABathAndShowerNew` | Take A Bath And Shower |
-| 14 | 2544353492 | `P4HasBeenRead` | Has Been Read |
-| 15 | 2734705913 | `MapSymbolSizeSlider` | Map Symbol Size Slider |
-
-**Pendiente de comprobar en juego:** con los mods cargados aparecen 6 avisos
-`require(...) failed` en ficheros Lua del juego base (`corpseStorageCheck`,
-`ISCampingMenu`, `ISInventoryTransferUtil`). **No aparecen en producción sin
-mods**, así que los provocan los mods — casi seguro los de interfaz de
-inventario. No impiden arrancar, pero hay que verificar en juego que los menús
-contextuales, el traslado de objetos y el campamento funcionan.
-
-## Lote B — sin confirmación explícita para 42.20 (18)
-
-Tienen etiqueta Build 42 pero no se han tocado desde antes de la estable, o
-declaran soporte para una versión anterior. Se prueban en una segunda tanda,
-sobre la base ya validada del lote A.
-
-| ID | Mod ID | Nombre | Últ. act. |
-| --- | --- | --- | --- |
-| 3028528478 | `blankets` (+2 variantes) | Beds Have Blankets | 2026-08-07 |
-| 3461415167 | `BicycleMod` | Bicycle! [B42.15+] | 2026-07-10 |
-| 3600401184 | `RC_RealisticColdMod` | Realistic Temperature [B42.18+] | 2026-06-10 |
-| 3397207461 | `Run and Reload` | Run and Reload | 2026-05-31 |
-| 2650547917 | `manageContainers` | Manage Containers | 2026-05-27 |
-| 3589548354 | `improvedhairmenubuild42` | Improved Hair Menu | 2026-05-05 |
-| 3396867685 | `StarvingZombies` | Starving Zombies | 2026-04-24 |
-| 2463184726 | `SpnHair` | Spongie's Hair | 2026-03-12 |
-| 3641697417 | `Reading+` | Reading+ [B42.13] | 2026-02-13 |
-| 3330403100 | `KI5trailers` | Trailers! | 2026-01-29 |
-| 2944344655 | `ReplaceBandage` | Replace Bandage | 2026-01-02 |
-| 2883633728 | `IMightNeedALighter` | I Might Need A Lighter 42.12 | 2025-12-15 |
-| 3402513620 | `CatseyeInTheDark` | Cat's eye in the Dark | 2025-12-14 |
-| 3410947298 | `nm_nested_containers` | Nested Containers | 2025-12-13 |
-| 3446510982 | `EquipClothingWhileMoving` | Equip Clothing While Moving | 2025-12-13 |
-| 3391902125 | `throw-your-bag-across` | Throw your bag across | 2025-08-08 |
-| 3453580134 | *(por determinar)* | Right Click To Wear | 2025-05-20 |
-| 3399645148 | `MapSymbolsPlusDeonHand` | Map Symbols Plus | 2025-01-04 |
-
----
-
-## Restricciones de orden y solapamientos
-
-**Órdenes de carga obligatorios (declarados por los autores):**
-
+- `ATakeABathAndShowerDepthMap` el primero de toda la lista.
 - `NeatUI_Framework` antes que CleanUI, Neat Crafting, Neat Building, Project
   Cook y Modern Status.
-- `nm_nested_containers` **antes** que `ProximityInventory`, o no detecta los
+- `nm_nested_containers` antes que `ProximityInventory`, o no detecta los
   contenedores anidados.
+- `damnlib` antes que `KI5trailers`.
+- `TargetSquareOnLoad` antes que `blankets`; `FH` antes que `SpnHair`;
+  `LuaDigitalWatchUI` antes que `RC_RealisticColdMod`.
+- ⚠️ `improvedhairmenubuild42` antes que `SpnHairAPI` — **sin aplicar**.
 
-**Zona de riesgo: cinco mods tocan la interfaz de inventario y contenedores.**
+## Zona de riesgo
 
-CleanUI, Proximity Inventory, Nested Containers, Manage Containers y Better
-Sorting. El autor de CleanUI avisa explícitamente: *"usar varios mods de
-reforma de la UI de inventario juntos es más propenso a causar conflictos"*.
+Seis mods tocan la interfaz de inventario y contenedores: CleanUI, Proximity
+Inventory, Nested Containers, Manage Containers, Better Sorting y Split Items.
+El autor de CleanUI avisa de que juntar varios mods de reforma de inventario es
+propenso a conflictos. Cargan todos sin error, pero es la primera zona donde
+mirar si algo se comporta raro en juego.
 
-Matiz importante: CleanUI declara compatibilidad con **Proximity Inventory
-`3669550831`**, que es un **fork distinto** del que hay en la lista
-(`2847184718`). Cargan juntos, pero la compatibilidad no está declarada para
-esa combinación concreta y hay que verificarla en juego.
+Matiz: CleanUI declara compatibilidad con **Proximity Inventory `3669550831`**,
+un fork distinto del que usamos (`2847184718`).
 
-**Solapamientos menores:**
+## Incompatibilidades con mods que NO tenemos
 
-- Cabello: `SpnHair` + `SpnHairAPI` + `improvedhairmenubuild42` son
-  complementarios, pero el API va antes.
-- Símbolos de mapa: `MapSymbolSizeSlider` + `MapSymbolsPlusDeonHand` conviven,
-  pero el segundo es de enero de 2025.
-
-**Incompatibilidades declaradas con mods que NO están en la lista** (sin
-problema, se anotan por si alguien los propone más adelante):
+Se anotan por si alguien los propone más adelante.
 
 - Take A Bath And Shower ↔ *Item Arrange*
 - Better Containers ↔ Proximity Inventory
 - Bicycle! ↔ *Gael's Gun Store* y otros mods de armas que alteran las mejoras
-- Neat Building ↔ *Stairs East & South* (hay una variante de compatibilidad)
+- Neat Building ↔ *Stairs East & South*
+- NeatUI Hairstyler ↔ *Improved Hair Menu* (por eso no se adoptó)
 
 ---
 
-## Variantes dentro de un mismo elemento del Workshop
+# 5. Variantes dentro de un mismo elemento del Workshop
 
-Varios elementos traen más de un Mod ID. **No se activan todos**: son
-alternativas o complementos, y elegir mal tiene consecuencias.
+Varios elementos traen más de un Mod ID. No se activan todos.
 
-### Neat Building (3536052310) — 4 variantes, decisión de una sola dirección
-
-| Mod ID | Qué es |
-| --- | --- |
-| `Neat_Building` | Completa (legacy): la interfaz **más** todos los construibles **y** las barandillas metálicas |
-| `Neat_Building_UIOnly` | **Solo la interfaz.** No añade ninguna entidad construible |
-| `Neat_Building_Buildables_SESCompat` | Los construibles **sin** las barandillas metálicas que chocan con *Stairs East & South* |
-| `Neat_Building_Railings` | Solo las barandillas metálicas |
-
-La completa **no** se combina con las modulares: o una o las otras.
-
-**Esto es lo importante.** El autor avisa de que en servidores multijugador,
-quitar una variante con construibles de un mundo existente puede provocar
-errores de `WorldDictionary` **que impiden cargar el mundo**. Existe incluso un
-mod aparte de "Safe Uninstall Support" para mundos que la quitaron. Su
-recomendación es mantener la misma variante una vez que el mundo la ha usado.
-
-Es exactamente el escenario de corrupción que este proyecto intenta evitar, así
-que la variante se elige **antes** de crear el mundo definitivo y no se toca.
-
-`Neat_Building_UIOnly` es la opción segura: al no añadir entidades, quitarla
-más adelante no puede romper el `WorldDictionary`. El propio autor dice que esta
-variante no necesita el Safe Uninstall Support. Las que traen construibles son
-un compromiso deliberado a cambio de más piezas de construcción.
-
-No tenemos *Stairs East & South*, así que la variante SESCompat no aporta nada.
-
-### Take A Bath And Shower (3592172476) — 2, complementarias
+## Neat Building (3536052310) — decisión de una sola dirección
 
 | Mod ID | Qué es |
 | --- | --- |
-| `TakeABathAndShowerNew` | El mod principal |
-| `ATakeABathAndShowerDepthMap` | Arreglo de mapas de profundidad de bañeras y duchas. **Debe ir el primero de toda la lista** (por eso la `A` inicial: es para que ordene alfabéticamente arriba) |
+| `Neat_Building` | Completa: interfaz **+** construibles **+** barandillas |
+| `Neat_Building_UIOnly` | **Solo la interfaz.** Ninguna entidad construible. ← **la elegida** |
+| `Neat_Building_Buildables_SESCompat` | Construibles sin las barandillas que chocan con *Stairs East & South* |
+| `Neat_Building_Railings` | Solo las barandillas |
 
-Se activan las dos.
+El autor avisa de que en servidores multijugador, quitar una variante con
+construibles de un mundo existente puede provocar errores de `WorldDictionary`
+que impiden cargar el mundo; existe un mod aparte de *Safe Uninstall Support*
+precisamente para eso.
 
-### Project Cook (3490188370) — 1 principal + 1 opcional estético
+Se eligió `Neat_Building_UIOnly` porque al no añadir entidades, quitarla más
+adelante no puede romper nada.
 
-| Mod ID | Qué es |
-| --- | --- |
-| `Project_Cook` | El mod principal |
-| `Project_Cook_Pixel_Icon_Pack` | Opcional: sustituye algunos iconos del panel de cocina por versiones en pixel-art. Debe cargar **después** de Project Cook |
+## Otros
 
-### Buttstroke (3394044313) — ojo, una de ellas no se toca
-
-| Mod ID | Qué es |
-| --- | --- |
-| `Buttstroke` | El mod |
-| `Buttstroke42.12.3` | Versión antigua para builds 42.12.x. Su propio nombre interno es **"42.12.3 Buttstroke (DO NOT ENABLE)"** |
-
-### Pendientes de determinar
-
-El autor no explica las variantes y aún no están descargadas. Se resolverán al
-probar el lote B, mirando los `mod.info`:
-
-- Starving Zombies (3396867685): `StarvingZombies`, `StarvingZombiesWIP`
-- Beds Have Blankets (3028528478): `blankets`, `Bedding Covers-With Pillows`,
-  `Bedding Covers-no pillows`
-
-Better Sorting (2313387159) repite `BetterSortCC` dos veces en su descripción,
-pero es un único mod: no hay variante que elegir.
-
-### Nota sobre las etiquetas `[B42.12]`, `[B42.13]`, `[Legacy]`
-
-Al inspeccionar los mods descargados aparecen entradas como *Neat Building
-[B42.12]* o *Project Cook [Legacy]*. **No son variantes que haya que elegir**:
-son las carpetas versionadas de Build 42, y el juego escoge sola la que
-corresponde a la versión instalada. Comparten Mod ID con la principal.
-
----
-
-## Resultado del lote B
-
-**37 mods cargando, 0 errores criticos, servidor arrancado.**
-
-### Cuatro dependencias mas que faltaban
-
-Ninguna estaba en la lista y sin ellas su mod no carga:
-
-| Workshop ID | Mod ID | Lo exige |
+| Elemento | Variantes | Decisión |
 | --- | --- | --- |
-| 3171167894 | `damnlib` | Trailers! (`KI5trailers`) |
-| 2969455858 | `TargetSquareOnLoad` | Beds Have Blankets (`blankets`) |
-| 2447729538 | `FH` (Fluffy Hair) | Spongie's Hair (`SpnHair`) |
-| 3676456221 | `LuaDigitalWatchUI` | Realistic Temperature (`RC_RealisticColdMod`) |
+| Take A Bath (3592172476) | `TakeABathAndShowerNew`, `ATakeABathAndShowerDepthMap` | Las dos; el DepthMap va el primero de la lista |
+| Project Cook (3490188370) | `Project_Cook`, `Project_Cook_Pixel_Icon_Pack` | Solo el principal; el pack de iconos es estético |
+| Buttstroke (3394044313) | `Buttstroke`, `Buttstroke42.12.3` | Solo el primero. El segundo se llama internamente **"42.12.3 Buttstroke (DO NOT ENABLE)"** |
+| Beds Have Blankets (3028528478) | `blankets`, `BeddingCovers-WithPillows`, `BeddingCovers-nopillows` | `blankets`; las otras son *Legacy* |
+| Starving Zombies (3396867685) | `StarvingZombies`, `StarvingZombiesWIP` | El principal |
 
-### Descartado: I Might Need A Lighter (2883633728)
+## Nota sobre `[B42.12]`, `[B42.13]`, `[Legacy]`
 
-Su `mod.info` declara **`versionMax=42.12`**. Estamos en 42.20, asi que el juego
-lo rechaza por diseno. No hay arreglo por nuestra parte; hace falta que el autor
-lo actualice. El titulo del propio mod ya lo avisaba ("42.12").
+Al inspeccionar los mods descargados aparecen entradas con esas etiquetas. **No
+son variantes a elegir**: son las carpetas versionadas de Build 42, comparten Mod
+ID con la principal y el juego escoge sola la que corresponde.
 
-### Correcciones de IDs
+---
 
-- **Run and Reload**: su Mod ID real es `Run and Reload`, **con espacios**. La
-  descripcion del Workshop lo decia bien.
-- **Right Click To Wear**: `DELRAN_CLICK_TO_WEAR`.
-- **Beds Have Blankets**: `blankets` es la version actual; `BeddingCovers-*` son
-  las *Legacy*.
-- **Starving Zombies**: `StarvingZombies` (la `WIP` es la de desarrollo).
+# 6. Lo que se aprendió
 
-### Hipotesis que se probaron y resultaron FALSAS
+## Correcciones de Mod ID
 
-Se anotan para no volver a perder tiempo con ellas:
+Todas salieron de leer los `mod.info` descargados, no las descripciones.
 
-- *"Un mod sin `mod.info` en la raiz no carga"*: falso. Hay 20 asi (CleanUI,
-  NeatUI_Framework, Neat_Crafting, Reading+...) y cargan sin problema.
-- *"Las carpetas con espacios en el nombre no cargan"*: falso. Take A Bath And
-  Shower New, Map Symbol Size Slider y Spongie Hair las tienen y funcionan.
-- *"Es una carrera entre la descarga de Steam y el indexado"*: falso. Fallaban
+| Mod | ID correcto | Nota |
+| --- | --- | --- |
+| Run and Reload | `Run and Reload` | **Con espacios.** La descripción del Workshop lo decía bien |
+| Right Click To Wear | `DELRAN_CLICK_TO_WEAR` | No estaba documentado |
+| Nested Containers | `nm_nested_containers` | |
+| Common Sense (descartado) | `BB_CommonSense` | La carpeta se llama `CommonSense` |
+
+## Qué hace que Build 42 indexe un mod
+
+Lo determinante, comprobado por comparación: **B42 solo indexa mods que traen una
+carpeta de versión** (`42/`, `42.13/`…).
+
+| Mod | Carpeta de versión | Carga |
+| --- | --- | --- |
+| Better Sorting | `42/` | sí |
+| Has Been Read | `42.13/` | sí |
+| Replace Bandage | `42.13/` | sí |
+| Tariqs Beards (original) | ninguna | **no** |
+
+Los tres primeros están etiquetados como Build 41 igual que Tariq y funcionan
+porque su autor los reempaquetó. Esto es lo que permitió arreglar Tariq's Beards:
+añadir una carpeta `42/` con copia de `mod.info` y `media/`, sin tocar contenido.
+
+## Hipótesis que se probaron y resultaron falsas
+
+Se anotan para no volver a perder tiempo con ellas.
+
+- *"Build 42 exige prefijo `\` en `Mods=`"*. **Falso.** Varias guías lo repiten
+  como "la causa más común de que los mods no carguen". Con `Mods=BB_CommonSense`
+  el servidor responde `Mod: loading BB_CommonSense`.
+- *"Un mod sin `mod.info` en la raíz no carga"*. **Falso.** Hay 20 así (CleanUI,
+  NeatUI_Framework, Neat_Crafting, Reading+…) y cargan.
+- *"Las carpetas con espacios en el nombre no cargan"*. **Falso.** Take A Bath
+  And Shower New, Map Symbol Size Slider y Spongie Hair las tienen y funcionan.
+- *"Es una carrera entre la descarga de Steam y el indexado"*. **Falso.** Fallaban
   igual tras reiniciar.
 
-La causa real siempre estuvo en el `mod.info`: un ID mal leido, una dependencia
-declarada solo dentro de `42/`, y un limite de version.
+La causa real siempre estuvo en el `mod.info`: un ID mal leído, una dependencia
+declarada solo dentro de `42/`, o un límite de versión.
 
----
+## Fallos propios que costaron tiempo
 
-## Correccion pendiente en el orden de carga
+- La herramienta `/docker/run.sh mods` leía los ID con `tr -d " \r"`, que borra
+  los espacios **dentro** del ID. Convertía `Run and Reload` en `RunandReload` y
+  el log solo decía `required mod not found`, que parece un problema del servidor
+  y no un dato mal leído.
+- Esa misma herramienta buscaba `require=` solo en el `mod.info` de la raíz, así
+  que se escapaban las dependencias declaradas dentro de `42/`. Así pasó
+  desapercibido `LuaDigitalWatchUI`.
 
-**`SpnHairAPI` (Spongie's Hairstyle Unlocker) debe cargar DESPUES de
-`improvedhairmenubuild42` (Improved Hair Menu).** Su autor lo dice en
-mayusculas: *"LOAD THIS MOD AFTER IMPROVED HAIR MENU OR IT WON'T WORK"*.
-
-En la lista validada va en la posicion 7 y Improved Hair Menu en la 35, o sea
-al reves. El servidor arranca igual —por eso no salio en las pruebas— pero el
-desbloqueo de peinados no funcionara.
+Ambos arreglados. Ahora muestra además `versionMin`/`versionMax`, que es la razón
+más silenciosa de que un mod no cargue.
