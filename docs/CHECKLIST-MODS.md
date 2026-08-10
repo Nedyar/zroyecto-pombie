@@ -55,7 +55,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       juego solo que el menu se vea organizado por categorias.*
 - [x] **Neat Crafting** — Menú de artesanía reorganizado. Prueba la lupa para
       buscar la receta de un ingrediente que te falte.
-- [ ] **Project Cook** — Ponte en un fogón o con una olla. Debe salir el panel de
+- [x] **Project Cook** — Ponte en un fogón o con una olla. Debe salir el panel de
       cocina, sobre todo con recetas evolutivas: sopas, guisos, ensaladas.
 
 ## Supervivencia
@@ -87,7 +87,10 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 - [x] **Buttstroke** — Con un arma de fuego equipada, ataca cuerpo a cuerpo. Debe
       dar un culatazo.
 - [x] **Run and Reload** — Recarga mientras corres.
-- [ ] **Bicycle!** — Consigue una bicicleta y móntala. Debes ir más rápido.
+- [x] **Bicycle!** — Consigue una bicicleta y móntala. **Se conduce**, no se lleva
+      equipada. Debes ir más rápido.
+      *Verificado. Pendiente la cesta (`Bicycle.Bicycle_Basket`), que es donde
+      esperamos el fallo del `BicycleContainerManager`.*
 - [ ] **Trailers!** — Engancha un remolque a un coche. Prueba a quitar y colocar
       sus piezas 3D.
 - [ ] **Throw your bag across** — Clic derecho en una bolsa y lánzala por encima
