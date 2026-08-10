@@ -37,6 +37,16 @@ Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;TargetSquareOnLoad;FH;
 El orden **es** el orden de carga. Los ID van sin prefijo `\` y respetando los
 espacios cuando los llevan dentro (`Run and Reload`, `Tariq's Beards`).
 
+**Excepcion: `TargetSquareOnLoad` lleva barra a proposito.** No hace falta para
+cargarlo —PZ la ignora al buscar el mod— pero *Beds Have Blankets* comprueba
+`getActivatedMods():contains("\TargetSquareOnLoad")`, con barra literal. Sin
+ella la comprobacion falla y el mod se comporta como si la dependencia no
+estuviera: suelta las mantas como objeto en vez de vestir la cama.
+
+**Ojo al escribirlo en `.env`:** hay que poner `\TargetSquareOnLoad`, con dos
+barras. Docker Compose interpreta la barra simple como escape y se la come antes
+de llegar al contenedor.
+
 ## Mod local: Tariq's Beards
 
 No sale del Workshop. Vive en `Zomboid/mods/` dentro del volumen del servidor, y
