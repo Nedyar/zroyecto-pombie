@@ -94,6 +94,7 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 - [x] **Trailers!** — Engancha un remolque a un coche. **El menú es la tecla `V`**,
       el radial del vehículo, no el clic derecho. Prueba a quitar y colocar
       sus piezas 3D.
+      *Verificado: los **siete** remolques se enganchan sin problema.*
 - [ ] **Throw your bag across** — Clic derecho en una bolsa y lánzala por encima
       de una valla o a través de una ventana.
 
