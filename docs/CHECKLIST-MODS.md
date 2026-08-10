@@ -19,10 +19,12 @@ Marca lo que falle y dilo, aunque parezca una tontería.
 - [ ] **CleanUI** — Los paneles se ven compactos. Prueba: buscar por nombre y por
       categoría (clic derecho en la lupa cambia el modo), *Transfer All* / *Take
       All*, reordenar contenedores arrastrando sus iconos, y el botón de ordenar.
-- [ ] **Nested Containers** — Mete una bolsa dentro de la mochila. Debes poder ver
+- [x] **Nested Containers** — Mete una bolsa dentro de la mochila. Debes poder ver
       lo que hay dentro **sin sacarla**. Comprueba además que esas bolsas
       anidadas aparecen en el saqueo por proximidad: es lo que depende de que el
       orden de carga sea correcto.
+      *Verificado: se ve dentro de la bolsa anidada. Falta la segunda mitad —
+      que esos objetos salgan también en el saqueo por proximidad.*
 - [ ] **Manage Containers** — Asigna una categoría a un armario de la base y
       descarga el botín. Debe repartirse solo.
 - [ ] **Better Sorting** — Las categorías de objetos están reorganizadas y los
