@@ -23,7 +23,7 @@ Queda pendiente, en este orden: quitar ese mod de `.env` y reiniciar; y la
 comprobación en juego, mod por mod, del resto: ver
 [CHECKLIST-MODS.md](CHECKLIST-MODS.md).
 
-**35 elementos del Workshop · 37 Mod ID.** La diferencia sale de que *Take A
+**33 elementos del Workshop · 35 Mod ID.** La diferencia sale de que *Take A
 Bath And Shower* aporta dos IDs, y de que *Tariq's Beards* no viene del Workshop
 sino de una carpeta local.
 
@@ -33,11 +33,11 @@ sino de una carpeta local.
 hay que restaurar.
 
 ```
-WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782;3028528478;3461415167;3600401184;3397207461;2650547917;3589548354;3396867685;2463184726;3641697417;3330403100;2944344655;3402513620;3410947298;3446510982;3399645148;3171167894;2969455858;2447729538;3676456221;3717968421
+WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782;3461415167;3600401184;3397207461;2650547917;3589548354;3396867685;2463184726;3641697417;3330403100;2944344655;3402513620;3410947298;3446510982;3399645148;3171167894;2447729538;3676456221;3717968421
 ```
 
 ```
-Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;\TargetSquareOnLoad;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;BB_CommonSenseFix;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;blankets;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand
+Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;BB_CommonSenseFix;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand
 ```
 
 El orden **es** el orden de carga. Los ID van sin prefijo `\` y respetando los
@@ -124,11 +124,12 @@ Sin etiqueta *Build 42*, o el autor los marca como exclusivos de B41.
 | --- | --- | --- |
 | 2883633728 | I Might Need A Lighter | Su `mod.info` declara **`versionMax=42.12`** y estamos en 42.20. El juego lo rechaza por diseño |
 
-## Retirados despues de probarlos (2)
+## Retirados despues de probarlos (3)
 
 | ID | Nombre | Motivo |
 | --- | --- | --- |
 | 3453580134 | Right Click To Wear | Funcionaba, pero Common Sense hace lo mismo con más alcance (armas y mochilas, no solo ropa). Ver sección 3bis |
+| 3028528478 | Beds Have Blankets (y con el su dependencia `2969455858` TargetSquareOnLoad, que solo servia para el) | Las mantas salen dobladas sobre la cama en vez de puestas. Su codigo comprueba `getActivatedMods():contains("\TargetSquareOnLoad")`, con barra invertida, pero `getActivatedMods()` devuelve el ID canonico sin barra. La comprobacion no puede dar verdadero, se escriba como se escriba en `Mods=`: es un fallo del autor, no configurable. El mod era estetico |
 | 3391902125 | Throw your bag across | **Roto en 42.20 y ademas peligroso.** La opcion sale en el menu, arranca la accion y no hace nada; la bolsa queda pegada a la mano. El log lo confirma: `no such function "ISThrowBag.new"` |
 
 ---
@@ -141,7 +142,6 @@ Ninguna estaba entre los 47 candidatos. Sin ellas, su mod no carga.
 | --- | --- | --- |
 | 3508537032 | `NeatUI_Framework` | CleanUI, Neat Building, Neat Crafting, Project Cook, Modern Status |
 | 3171167894 | `damnlib` | Trailers! |
-| 2969455858 | `TargetSquareOnLoad` | Beds Have Blankets |
 | 2447729538 | `FH` (Fluffy Hair) | Spongie's Hair |
 | 3676456221 | `LuaDigitalWatchUI` | Realistic Temperature |
 
