@@ -471,8 +471,19 @@ do_backup() {
     fi
 
     log "Respaldando (${label}): ${items[*]}"
-    tar --use-compress-program='zstd -6 -T0' \
-        -cf "$out" -C "$DATA_DIR" "${items[@]}"
+
+    # Dos detalles del tar:
+    #
+    # umask 077 -> el tarball lleva dentro la base de datos de jugadores. Con el
+    #   umask por defecto sale 0644 y queda legible por cualquier usuario de la
+    #   maquina anfitriona, porque ./backups es una carpeta del host, no un
+    #   volumen. El subshell evita que el umask se quede puesto para el resto.
+    #
+    # -T4 en vez de -T0 -> T0 usa todos los nucleos. El backup periodico salta
+    #   cada BACKUP_INTERVAL_HOURS con la gente jugando, y comerse la maquina
+    #   entera durante la compresion se nota en el servidor.
+    ( umask 077; tar --use-compress-program='zstd -6 -T4' \
+        -cf "$out" -C "$DATA_DIR" "${items[@]}" )
 
     log "Backup listo: $(basename "$out") ($(du -h "$out" | cut -f1))"
     rotate_backups
