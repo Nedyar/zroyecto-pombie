@@ -84,3 +84,4 @@ esta carpeta: viven en volumenes de Docker, por rendimiento. Se migran con
 - [docs/MODS-ADOPTADOS.md](docs/MODS-ADOPTADOS.md) — que mods llevamos, en lenguaje llano. Pensado para pasarselo a los jugadores.
 - [docs/CHECKLIST-MODS.md](docs/CHECKLIST-MODS.md) — que comprobar en juego, mod por mod, para saber si funcionan de verdad.
 - [docs/DECISIONES.md](docs/DECISIONES.md) — por que el montaje es asi.
+- [docs/incidencias/](docs/incidencias/) — lo que esta roto: sintoma, evidencia y propuesta, sin aplicar.
