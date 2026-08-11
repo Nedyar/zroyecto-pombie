@@ -11,8 +11,8 @@ forma del despliegue, no sus valores.
 
 ## Estado en una linea
 
-**El servidor esta levantado, sano y con el mundo creado. Nadie ha entrado
-todavia.**
+**El servidor esta levantado y sano. Ya se ha jugado: 4 jugadores simultaneos
+durante una sesion larga, sin caidas. Hay bugs de jugabilidad abiertos.**
 
 ## Que hay montado
 
@@ -22,7 +22,7 @@ todavia.**
 | Docker | **rootless**, daemon de usuario, sin grupo `docker` |
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
 | Juego | Build 42, `buildid` registrado y coincidente con el instalado |
-| Mods | 36 elementos del Workshop + 1 local (`TariqsBeardsB42`) |
+| Mods | 33 elementos del Workshop + 1 local (`TariqsBeardsB42`) |
 | Memoria | heap 6g, `mem_limit` 10g |
 | Backups | automatico al arrancar + cada 6 h |
 
@@ -39,42 +39,55 @@ Esto se ejecuto y se comprobo, no se dedujo:
   con el daemon de sistema (`permission denied`).
 - Bootstrap completo: instalacion, arranque, RCON y **apagado limpio** (`save`
   -> `quit` -> JVM muerto por su cuenta).
-- Primer arranque real: 36/36 mods del Workshop descargados y **cero**
-  `required mod not found`.
+- Primer arranque real: todos los mods del Workshop descargados y **cero**
+  `required mod not found`. Cifras confirmadas contra el INI renderizado.
+- **Los jugadores entran y juegan.** 4 simultaneos, sesion larga, sin
+  desconexiones inesperadas ni reinicios del contenedor.
+- **Varios clientes a la vez se distinguen bien** pese a compartir IP de origen
+  por el reenvio UDP de rootless. Era una incognita y quedo resuelta jugando.
+- **Steam Relay no estorba** contra un servidor que solo existe dentro del
+  tailnet. Tambien era incognita.
 - El juego escucha solo en la interfaz de Tailscale, no en `0.0.0.0`. RCON solo
   en loopback.
 - El mod local se instalo tras auditar su contenido: 142 ficheros, unicamente
   10 lineas de Lua sin acceso a red, sistema ni reflexion Java.
 
+## Bugs abiertos de jugabilidad
+
+La primera sesion con jugadores destapo fallos **de juego, no de servidor**: el
+contenedor no se ha reiniciado ni una vez y la memoria sigue plana. El mas
+concreto es que **los cadaveres no aparecen como contenedor** en la ventana de
+saqueo, asi que no se pueden registrar.
+
+La investigacion completa —sintoma, evidencia, causa y propuesta, **sin aplicar
+nada**— vive en la rama `docs/incidencias-jugabilidad`, carpeta
+`docs/incidencias/`. Cuatro incidencias, cada una con su seccion de lo que NO
+esta probado. Leerlas antes de tocar mods: hay una hipotesis ya refutada con
+datos y no conviene volver a recorrerla.
+
+Aviso metodologico que costo tiempo aprender: el error mas numeroso del log
+**no** era el relevante. Se cuenta por causas distintas, no por lineas.
+
 ## NO verificado
 
-Nada de esto se puede comprobar sin jugadores reales dentro. Que no se den por
-buenas:
-
-1. **Que un cliente conecte de verdad.** El socket no ha recibido ni un paquete.
-2. **Que dos clientes simultaneos se distingan.** En rootless el reenvio UDP no
-   conserva la IP de origen; deberian diferenciarse por puerto, pero hay que
-   verlo.
-3. **Como se comporta Steam Relay** contra un servidor que solo existe dentro
-   del tailnet. Primer sospechoso si alguien conecta y se queda a medias.
-4. **Que el servidor vuelva solo tras un reinicio.** El daemon rootless y el
+1. **Que el servidor vuelva solo tras un reinicio.** El daemon rootless y el
    linger estan habilitados, pero hay una carrera sin probar: si Docker arranca
    antes de que exista la interfaz de Tailscale, el bind falla. `restart:
    unless-stopped` deberia recuperarlo.
-5. **Que los mods hagan lo que prometen en juego.** Para eso esta
-   [CHECKLIST-MODS.md](CHECKLIST-MODS.md). Ojo con las barbas: en el log salen
-   avisos `Could not find bone index for node name: "Body"`, probablemente de
-   sus modelos. Si aparecen las 47 barbas, es ruido; si no aparece ninguna, ahi
-   esta la pista.
+2. **Que los mods hagan lo que prometen en juego.** Para eso esta
+   [CHECKLIST-MODS.md](CHECKLIST-MODS.md), que ya lleva buena parte marcada.
+3. **Cual es la linea base de errores** de un B42.20 multijugador sano. Sin ese
+   dato no se puede calificar de anomalo el volumen de errores del cliente, y
+   eso condiciona varias de las incidencias abiertas.
 
 ## Pendiente
 
-- Que entre el primer jugador y se cierren los puntos 1 a 3 de arriba.
+- Decidir sobre la incidencia 001: retirar `StarvingZombies`. Requiere reinicio.
 - Cada jugador necesita su **propia copia del mod local** en su carpeta
   `Zomboid\mods`. El servidor no puede enviarselo.
 - Dar de alta a los invitados que falten: son **tres** pasos independientes, ver
-  [TAILSCALE.md](TAILSCALE.md).
-- Decidir cuando promocionar la rama de trabajo a `main`.
+  [TAILSCALE.md](TAILSCALE.md). Ojo con Tailnet Lock, que fue lo que mas tiempo
+  costo de todo el despliegue.
 
 ## Errores del log que ya estan revisados
 
