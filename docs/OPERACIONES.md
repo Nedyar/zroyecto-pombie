@@ -53,10 +53,13 @@ Correr como root *dentro* de un contenedor rootless no da privilegios fuera.
 reinicio sin que nadie inicie sesion hace falta `loginctl enable-linger <user>`,
 ademas de `systemctl --user enable docker`.
 
-**La IP de origen de los jugadores se pierde en UDP.** El reenvio lo hace
-RootlessKit en espacio de usuario. Todos apareceran viniendo de la misma
-direccion: banear por IP no sirve, hay que banear por Steam ID. Detalle y
-escape en [TAILSCALE.md](TAILSCALE.md).
+**La IP de origen de los jugadores no es fiable.** El reenvio lo hace
+RootlessKit en espacio de usuario y no conserva el origen, asi que parte de las
+conexiones se registran con la IP del gateway del contenedor. Y hay un segundo
+motivo que no tiene que ver con rootless: la mayoria de los jugadores entra por
+el **relay de Steam**, y ahi se registra la direccion del retransmisor. En
+ninguno de los dos casos identifica a nadie: **banear por Steam ID, no por IP.**
+Los datos en [TAILSCALE.md](TAILSCALE.md).
 
 ---
 
@@ -95,6 +98,26 @@ nunca en `Saves/` ni en `db/`. Esta comprobado, no es una suposicion.
 Aviso: buena parte de los `SandboxVars` solo tienen efecto **al crear el
 mundo**. Cambiar el tamano del mapa o la distribucion inicial de zombis en un
 mundo ya jugado no hace lo que esperas.
+
+---
+
+## Mapa y zonas de aparicion: no son lo mismo
+
+Confunde porque el juego usa la misma palabra para las dos cosas.
+
+**`PZ_MAP=Muldraugh, KY` es el mundo entero**, no una ciudad. Es Knox Country:
+un territorio continuo que incluye Muldraugh, West Point, Rosewood, Riverside,
+Louisville y todo lo demas. Se llama asi por herencia, porque Muldraugh fue la
+primera zona que tuvo el juego. **Lo fija el servidor y el jugador no lo elige.**
+
+**Lo que el jugador elige al crear personaje son las zonas de
+`config/spawnregions.lua`**: en que pueblo empieza. Por defecto cuatro. Del
+mismo mapa, asi que se puede ir andando de uno a otro sin pantalla de carga.
+
+Para el jugador la pantalla se parece a "elegir mapa", y no lo es. Si alguien
+pide "otro mapa", casi siempre lo que quiere es otra zona de inicio, y eso se
+toca en `spawnregions.lua`. Un mapa de verdad distinto es un mod de mapa, con lo
+que implica: entra en `PZ_MAP` y en la lista de mods, y se ensaya en staging.
 
 ---
 
@@ -158,6 +181,44 @@ Que mirar antes de dar por bueno un cambio:
 - Tu personaje existe, con su inventario.
 - Las construcciones y los contenedores de tu base estan intactos.
 - Puedes recorrer zona ya explorada sin celdas rotas ni huecos.
+
+---
+
+## Mundo vanilla: la referencia sin mods
+
+```bash
+docker compose --profile vanilla up -d pz-vanilla     # levantar
+docker compose --profile vanilla stop pz-vanilla      # parar
+```
+
+Se conecta al **puerto 16461**, no al 16261.
+
+Es el mismo mapa (Knox Country), la misma semilla y los mismos ajustes de
+partida que produccion, pero con el mundo generado desde cero y **sin un solo
+mod**: ni lista de Workshop, ni mods locales, ni contenido descargado en su
+instalacion.
+
+Existe para responder una pregunta que sin el no tiene respuesta: cuando algo se
+comporta raro en juego, saber si la causa son los mods o es el juego base. Se
+reproduce el fallo aqui; si tambien pasa, no es de los mods.
+
+No confundir con staging, que es otra cosa: staging levanta una **copia del
+mundo real CON sus mods** para ensayar un cambio antes de meterlo en
+produccion. Este levanta un mundo **limpio SIN mods** para comparar
+comportamiento.
+
+Cuidado con la memoria: no conviene tener produccion y vanilla arriba a la vez
+salvo que haga falta comparar en caliente. Miden ~4,5 GB y ~4,1 GB, asi que
+caben en una maquina de 14 GB pero sin margen para picos. Comprueba antes con
+`docker stats`.
+
+Para regenerar su mundo desde cero, con el servicio parado:
+
+```bash
+docker run --rm -v zroyecto-pombie_pz-data-vanilla:/data \
+  --entrypoint bash zroyecto-pombie:latest \
+  -c 'rm -rf /data/Saves/* /data/db/* /data/Server/*'
+```
 
 ---
 
