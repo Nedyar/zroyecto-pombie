@@ -1163,7 +1163,7 @@ SandboxVars = {
         -- Min: 0 Max: 20 Default: 0
         PlayerStartDistance = 0,
         -- Min: 0 Max: 200 Default: 50
-        PlayerMaxDistance = 50,
+        PlayerMaxDistance = 30,
         -- Min: -1.00 Max: 2.00 Default: 0.75
         PlayerBloodMultiplier = 0.75,
         -- Min: 0.00 Max: 2.00 Default: 0.25
