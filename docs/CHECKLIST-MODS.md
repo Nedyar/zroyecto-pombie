@@ -78,10 +78,6 @@ Marca lo que falle y dilo, aunque parezca una tontería.
       calidad del descanso debe ser distinta.
 - [x] **Take A Bath And Shower** — Úsate una bañera o una ducha. El indicador
       *Mugre corporal* debe bajar.
-- [x] **Beds Have Blankets** — Explora una zona **nueva**. Algunas camas deben
-      tener mantas. En zonas ya visitadas no aparecerán: solo se aplica al
-      generar el terreno.
-- [x] **Replace Bandage** — Con una venda sucia puesta, cámbiala por una limpia
       en una sola acción.
 - [x] **Cat's eye in the Dark** — Crea un personaje con el rasgo *Cat's Eye* y
       comprueba que ves algo de noche.
@@ -172,7 +168,6 @@ Estos no hacen nada por sí mismos: si funcionan los de arriba, funcionan ellos.
 | --- | --- |
 | NeatUI Framework | CleanUI, Neat Crafting, Neat Building, Project Cook, Modern Status |
 | that DAMN Library | Trailers! |
-| Target Square: On Load Commands | Beds Have Blankets |
 | Lua Digital Watch Framework | Realistic Temperature |
 | Fluffy Hair | Ponte un sombrero: el peinado no debe deformarse |
 
@@ -185,7 +180,6 @@ funciona, eso sí es noticia.
 
 | Mod | Qué falla | Origen |
 | --- | --- | --- |
-| **Beds Have Blankets** | Las mantas salen **dobladas sobre la cama**, no puestas. Comprobado: 5 de 5 camas, cuando su ajuste dice que debería ser 1 de cada 20 | Declara su dependencia como `require=TargetSquareOnLoad`, **con barra invertida**. Si se compara literal, nunca casa con el ID real y el mod actúa como si la dependencia no existiera |
 | ~~**Throw your bag across**~~ | **RETIRADO del servidor por esto.** La opcion sale en el menu, arranca la barra de progreso y no hace nada. La bolsa queda pegada a la mano: no se puede soltar ni usar. Se arregla saliendo y volviendo a entrar | El servidor registra `no such function "ISThrowBag.new"`, `"ISThrowBagOverFence.new"` y `"ISThrowBagAcrossWindow.new"`. El mod registra las opciones de menu pero las clases que ejecutan la accion no existen en 42.20 |
 | **Tariq's Beards** | Los nombres de las 47 barbas salen sin traducir: `IGUI_Beard_Santatest` en vez de "Santa" | El mod solo trae traducciones en inglés, y el juego está en español. Solo afecta al nombre; el modelo se ve bien |
 

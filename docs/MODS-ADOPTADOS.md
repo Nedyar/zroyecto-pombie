@@ -1,6 +1,6 @@
 # Mods del servidor
 
-Esto es lo que llevamos puesto ahora mismo. **36 mods**, todos probados y
+Esto es lo que llevamos puesto ahora mismo. **34 mods**, todos probados y
 funcionando en la versión actual del juego (Build 42.20).
 
 No tenéis que hacer nada para instalarlos: al entrar al servidor, el juego los
@@ -34,7 +34,6 @@ descarga automáticamente.
 - **[Starving Zombies](https://steamcommunity.com/sharedfiles/filedetails/?id=3396867685)** — Los zombis huelen los cadáveres y van a comérselos. También te huelen a ti, y más si vas manchado de sangre. El viento lleva el olor más lejos.
 - **[Comfy Sleeping](https://steamcommunity.com/sharedfiles/filedetails/?id=2998737588)** — Dormir descansa más o menos según la ropa que lleves, cómo estés de ánimo y de limpio. Acostarse con la mochila puesta se paga.
 - **[Take A Bath And Shower](https://steamcommunity.com/sharedfiles/filedetails/?id=3592172476)** — Bañarse y ducharse de verdad, con su papel en el día a día.
-- **[Beds Have Blankets](https://steamcommunity.com/sharedfiles/filedetails/?id=3028528478)** — Las camas del mundo aparecen con mantas.
 - **[Replace Bandage](https://steamcommunity.com/sharedfiles/filedetails/?id=2944344655)** — Cambiar un vendaje sucio por uno limpio de una vez, sin quitar y volver a poner.
 - **[Cat's eye in the Dark](https://steamcommunity.com/sharedfiles/filedetails/?id=3402513620)** — El rasgo _Cat's Eye_ ahora sí deja ver algo en la oscuridad.
 
@@ -60,14 +59,13 @@ descarga automáticamente.
 - **[Map Symbol Size Slider](https://steamcommunity.com/sharedfiles/filedetails/?id=2734705913)** — Cambiar el tamaño de los símbolos y las notas del mapa.
 - **[Map Symbols Plus](https://steamcommunity.com/sharedfiles/filedetails/?id=3399645148)** — Símbolos de mapa dibujados a mano, con chinchetas de "seguro", "peligro" y "desconocido".
 
-## Y cinco más que no vais a notar
+## Y cuatro más que no vais a notar
 
 Estos no añaden nada por sí solos: hacen funcionar a los de arriba.
 
 - **[NeatUI Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=3508537032)**
 - **[that DAMN Library](https://steamcommunity.com/sharedfiles/filedetails/?id=3171167894)**
 - **[Fluffy Hair](https://steamcommunity.com/sharedfiles/filedetails/?id=2447729538)** — este además hace que el peinado no se deforme al llevar sombrero
-- **[Target Square: On Load Commands](https://steamcommunity.com/sharedfiles/filedetails/?id=2969455858)**
 - **[Lua Digital Watch Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=3676456221)**
 
 ---
