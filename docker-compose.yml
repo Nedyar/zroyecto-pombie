@@ -11,9 +11,14 @@ name: zroyecto-pombie
 #   pz-staging  ensayo. Se levanta con una copia del mundo real, en otros
 #               puertos, para probar mods y ajustes de riesgo antes de tocar
 #               produccion. Perfil `staging`, asi que no arranca por defecto.
+#   pz-vanilla  referencia sin mods. Mismo mapa, misma semilla y mismos ajustes
+#               que produccion, pero mundo generado de cero y CERO mods. Sirve
+#               para distinguir "esto falla por un mod" de "esto es asi en
+#               Build 42". Perfil `vanilla`.
 #
 # Levantar produccion:   docker compose up -d
 # Levantar staging:      ./scripts/stage.sh
+# Levantar vanilla:      docker compose --profile vanilla up -d pz-vanilla
 # ============================================================================
 
 x-pz-common: &pz-common
@@ -186,8 +191,84 @@ services:
       - ./config:/config
       - ./backups:/backups
 
+  # ==========================================================================
+  # pz-vanilla - el MISMO mundo, sin un solo mod.
+  #
+  # No es staging y no lo sustituye. Staging existe para ensayar un cambio
+  # antes de meterlo en produccion; esto existe para responder una pregunta
+  # distinta: cuando algo se comporta raro en juego, saber si la causa son los
+  # mods o es el juego base. Sin una referencia sin mods, "esto falla" no se
+  # puede distinguir de "esto es asi en Build 42".
+  #
+  # Por eso tiene NOMBRE PROPIO, al reves que staging: aqui no queremos una
+  # copia indistinguible, queremos poder tener las dos y comparar.
+  #
+  # Levantar:  docker compose --profile vanilla up -d pz-vanilla
+  # ==========================================================================
+  pz-vanilla:
+    <<: *pz-common
+    container_name: pombie-vanilla
+    hostname: pombie-vanilla
+    profiles: ["vanilla"]
+    restart: "no"
+
+    environment:
+      # Nombre distinto al de produccion. Da nombre a la carpeta de guardado y
+      # a la base de datos, asi que el mundo copiado hay que renombrarlo dentro
+      # del volumen para que este servidor lo encuentre; si no, generaria uno
+      # nuevo y vacio al lado e ignoraria la copia.
+      PZ_SERVER_NAME: "${VANILLA_SERVER_NAME:-pombie-vanilla}"
+      PZ_PUBLIC_NAME: "Zroyecto Pombie (vanilla)"
+      PZ_PUBLIC: "false"
+
+      # SIN MODS. Es la razon de ser de este servicio.
+      #
+      # Van vacias aqui y no en el .env porque `environment` tiene prioridad
+      # sobre `env_file`: asi produccion conserva su lista intacta.
+      #
+      # PZ_USE_STAGING_MODS queda en false a proposito: con true, una lista
+      # vacia significa "replica los mods de produccion", que es justo lo
+      # contrario de lo que queremos aqui.
+      PZ_USE_STAGING_MODS: "false"
+      PZ_WORKSHOP_ITEMS: ""
+      PZ_MODS: ""
+
+      # Los puertos INTERNOS deben coincidir con los publicados. El servidor le
+      # anuncia al cliente los suyos: si dentro dijera 16261, el cliente
+      # acabaria hablando con PRODUCCION a mitad del handshake.
+      PZ_PORT: "${VANILLA_GAME_PORT:-16461}"
+      PZ_UDP_PORT: "${VANILLA_GAME_PORT_2:-16462}"
+
+      # Sin mods consume bastante menos, y asi caben los dos en la maquina si
+      # algun dia hace falta compararlos en caliente.
+      PZ_MEMORY: "${VANILLA_MEMORY:-3g}"
+      PZ_MEMORY_MIN: "1g"
+
+      # Prefijo propio para que sus backups no se confundan con los de
+      # produccion en la carpeta compartida, y sin backup automatico: es un
+      # mundo de comparacion, desechable por definicion.
+      BACKUP_NAME_PREFIX: "vanilla"
+      BACKUP_INTERVAL_HOURS: "0"
+      BACKUP_ON_START: "false"
+
+      # Es una copia: aceptamos abrirla con otra version si hiciera falta.
+      ALLOW_BUILD_CHANGE: "true"
+
+    ports:
+      - "${HOST_BIND_IP:-0.0.0.0}:${VANILLA_GAME_PORT:-16461}:${VANILLA_GAME_PORT:-16461}/udp"
+      - "${HOST_BIND_IP:-0.0.0.0}:${VANILLA_GAME_PORT_2:-16462}:${VANILLA_GAME_PORT_2:-16462}/udp"
+      - "127.0.0.1:${VANILLA_RCON_PORT:-27215}:27015/tcp"
+
+    volumes:
+      - pz-game-vanilla:/opt/pz-server
+      - pz-data-vanilla:/home/steam/Zomboid
+      - ./config:/config
+      - ./backups:/backups
+
 volumes:
   pz-game:
   pz-data:
   pz-game-staging:
   pz-data-staging:
+  pz-game-vanilla:
+  pz-data-vanilla:
