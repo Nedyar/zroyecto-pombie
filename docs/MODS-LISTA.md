@@ -45,22 +45,6 @@ Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;FH;LuaDigitalWatchUI;S
 El orden **es** el orden de carga. Los ID van sin prefijo `\` y respetando los
 espacios cuando los llevan dentro (`Run and Reload`, `Tariq's Beards`).
 
-**Excepción: `\TargetSquareOnLoad` lleva barra a propósito.** No hace falta para
-cargarlo —PZ la ignora al buscar el mod— pero *Beds Have Blankets* comprueba
-literalmente:
-
-```lua
-if getActivatedMods():contains("\\TargetSquareOnLoad") then
-```
-
-En Lua eso es la cadena `\TargetSquareOnLoad`, con barra. Sin ella la
-comprobación falla, el mod se comporta como si la dependencia no estuviera y
-suelta las mantas como objeto en vez de vestir la cama.
-
-**Ojo al escribirlo en `.env`:** hay que poner **dos** barras,
-`\\TargetSquareOnLoad`. Docker Compose interpreta la simple como escape y se la
-come antes de llegar al contenedor.
-
 ## Mod local: Tariq's Beards
 
 No sale del Workshop. Vive en `Zomboid/mods/` dentro del volumen del servidor, y
@@ -202,8 +186,8 @@ Declaradas por los autores. Todas respetadas salvo la última.
 - `BB_CommonSenseFix` **antes** que `CleanUI`. No lo declara ningún autor: se
   descubrió rompiendo la interfaz en juego. Ver sección 3bis.
 - `damnlib` antes que `KI5trailers`.
-- `TargetSquareOnLoad` antes que `blankets`; `FH` antes que `SpnHair`;
-  `LuaDigitalWatchUI` antes que `RC_RealisticColdMod`.
+- `FH` antes que `SpnHair`; `LuaDigitalWatchUI` antes que
+  `RC_RealisticColdMod`.
 - `improvedhairmenubuild42` antes que `SpnHairAPI`. Su autor lo dice en
   mayúsculas: *"LOAD THIS MOD AFTER IMPROVED HAIR MENU OR IT WON'T WORK"*. Es la
   única regla que el servidor **no** delata: arranca igual, y lo que falla en
