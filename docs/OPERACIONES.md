@@ -109,8 +109,35 @@ restaurar. Manual:
 ```
 
 La rotacion solo borra los automaticos (`prestart`, `periodic`), conservando
-los ultimos `BACKUP_KEEP`. Los `manual`, `pre-update` y `pre-restore` **no se
-borran nunca**: son justo los que quieres tener cuando algo ha salido mal.
+los ultimos `BACKUP_KEEP` **de cada tipo** — con el valor por defecto son 20
+`periodic` y 20 `prestart`, no 20 en total. A 6 horas, eso son unos 5 dias de
+historial. Los `manual`, `pre-update` y `pre-restore` **no se borran nunca**:
+son justo los que quieres tener cuando algo ha salido mal.
+
+Consecuencia que conviene tener presente: **los que no se rotan crecen sin
+limite**. Cada backup manual y cada actualizacion dejan un fichero para
+siempre, y el tamano sube segun se explora el mundo. Conviene mirar
+`du -sh backups/` de vez en cuando y limpiar a mano los antiguos que ya no
+tengan valor.
+
+### Que pasa si no hay espacio
+
+El backup **se cancela antes de escribir nada** y avisa en el log. No es por
+cuidar la copia, es por cuidar el mundo: `backups/` y los volumenes de datos
+comparten sistema de ficheros, asi que un backup que llenara el disco dejaria
+al servidor en marcha sin sitio donde guardar. Es preferible quedarse sin copia
+de hoy.
+
+Si el empaquetado falla a medias, el fichero incompleto **se borra**, y cada
+backup se verifica con `zstd -t` nada mas crearlo. La regla es que en
+`backups/` no llegue a quedarse nunca un archivo roto con aspecto de bueno: se
+descubriria el dia de la restauracion, que es el peor momento posible.
+
+Comprobar a mano un backup concreto:
+
+```bash
+docker compose exec pz zstd -t /backups/<fichero>.tar.zst
+```
 
 Los backups viven en `backups/` en el disco del host, no dentro de un volumen
 de Docker. Un `docker volume rm` accidental no se los lleva.
