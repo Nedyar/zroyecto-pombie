@@ -63,9 +63,13 @@ Se confirmó que el cliente registra **muchísimos más errores que el servidor*
 | Cliente (solo `ERROR`, en partida) | 753 | 4 h 23 · 1 jugador | 172 |
 
 Unas 49 veces más por hora, y con un jugador frente a cuatro. **Pero sin línea
-base no se puede afirmar que sea anormal**: se desconoce cuántos errores por
-hora produce un B42.20 multijugador sano. Ese dato falta y condiciona cualquier
-conclusión de este issue.
+base no se podía afirmar que fuera anormal**: se desconocía cuántos errores por
+hora produce un B42.20 multijugador sano.
+
+**Ese hueco ya tiene cómo taparse.** Existe el servidor vanilla (puerto 16461):
+mismo mapa, misma semilla, mismos ajustes y cero mods. Jugando un rato allí y
+contando errores por hora se obtiene la referencia que falta, y con ella estas
+cifras pasan a significar algo. Mientras no se haga, siguen sin significar nada.
 
 Además, servidor y cliente fallan en cosas casi disjuntas: de las firmas del
 servidor, solo `ReceiveEatBody` aparece también en el cliente (19 frente a 686).
