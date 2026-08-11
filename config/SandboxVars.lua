@@ -789,7 +789,7 @@ SandboxVars = {
     },
     Map = {
         -- If enabled, a mini-map window will be available.
-        AllowMiniMap = false,
+        AllowMiniMap = true,
         -- If enabled, the world map can be accessed.
         AllowWorldMap = true,
         -- If enabled, the world map will be completely filled in on starting the game.
