@@ -96,6 +96,19 @@ Dos consecuencias:
   también `cannot get ID for container`, y en qué cantidad.
 - No se ha comprobado si el mod se comporta igual en un solo jugador.
 
+## Comprobacion previa que ahora si es posible
+
+Desde que existe el **servidor vanilla** (mismo mapa, misma semilla, mismos
+ajustes, cero mods, puerto 16461) hay una forma de acotar esto sin retirar nada
+de produccion: reproducir el sintoma alli.
+
+- Si en vanilla los cadaveres **tambien** fallan -> no es de los mods, y esta
+  incidencia esta mal enfocada.
+- Si en vanilla **funcionan** -> es de los mods, y la propuesta de abajo pasa de
+  hipotesis razonada a candidata con respaldo.
+
+Es mas barato que un ciclo de retirada, y no toca produccion.
+
 ## Propuesta
 
 Retirar `StarvingZombies` (`3396867685`) siguiendo el procedimiento de
