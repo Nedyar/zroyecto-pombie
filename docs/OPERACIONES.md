@@ -184,6 +184,44 @@ Que mirar antes de dar por bueno un cambio:
 
 ---
 
+## Mundo vanilla: la referencia sin mods
+
+```bash
+docker compose --profile vanilla up -d pz-vanilla     # levantar
+docker compose --profile vanilla stop pz-vanilla      # parar
+```
+
+Se conecta al **puerto 16461**, no al 16261.
+
+Es el mismo mapa (Knox Country), la misma semilla y los mismos ajustes de
+partida que produccion, pero con el mundo generado desde cero y **sin un solo
+mod**: ni lista de Workshop, ni mods locales, ni contenido descargado en su
+instalacion.
+
+Existe para responder una pregunta que sin el no tiene respuesta: cuando algo se
+comporta raro en juego, saber si la causa son los mods o es el juego base. Se
+reproduce el fallo aqui; si tambien pasa, no es de los mods.
+
+No confundir con staging, que es otra cosa: staging levanta una **copia del
+mundo real CON sus mods** para ensayar un cambio antes de meterlo en
+produccion. Este levanta un mundo **limpio SIN mods** para comparar
+comportamiento.
+
+Cuidado con la memoria: no conviene tener produccion y vanilla arriba a la vez
+salvo que haga falta comparar en caliente. Miden ~4,5 GB y ~4,1 GB, asi que
+caben en una maquina de 14 GB pero sin margen para picos. Comprueba antes con
+`docker stats`.
+
+Para regenerar su mundo desde cero, con el servicio parado:
+
+```bash
+docker run --rm -v zroyecto-pombie_pz-data-vanilla:/data \
+  --entrypoint bash zroyecto-pombie:latest \
+  -c 'rm -rf /data/Saves/* /data/db/* /data/Server/*'
+```
+
+---
+
 ## Actualizar el juego
 
 El arranque normal **no** comprueba actualizaciones, a proposito. La unica via
