@@ -13,14 +13,16 @@ Referencia temporal: **Build 42 estable (42.20) salió el 29/07/2026.**
 
 # 1. Lo que está activo ahora
 
-**Corriendo en producción, pero con la lista ANTERIOR a esta votación.** El
-mundo se creó mientras las votaciones se cerraban, y arrancó con 36 elementos
-del Workshop (0 `required mod not found`). Esta lista quitó
-`3391902125` (*Throw your bag across*, ver sección 2) después de ese arranque:
-**el servidor todavía lo tiene activo y hay que retirarlo a mano.**
+**Corriendo en producción**, sobre un mundo creado ya con esta lista. Verificado
+contra el INI que el servidor tiene renderizado: 33 elementos del Workshop, 35
+Mod ID, 0 `required mod not found`.
 
-Queda pendiente, en este orden: quitar ese mod de `.env` y reiniciar; y la
-comprobación en juego, mod por mod, del resto: ver
+Hubo un mundo anterior, creado mientras las votaciones se cerraban y por tanto
+con la lista antigua. Se borró junto con sus backups y se regeneró desde cero en
+lugar de retirarle los mods en caliente: era un mundo recién creado y sin nadie
+dentro, así que rehacerlo salía más barato y más limpio que arrastrarlo.
+
+Queda pendiente la comprobación en juego, mod por mod: ver
 [CHECKLIST-MODS.md](CHECKLIST-MODS.md).
 
 **33 elementos del Workshop · 35 Mod ID.** La diferencia sale de que *Take A
