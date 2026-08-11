@@ -900,9 +900,9 @@ SandboxVars = {
         -- If zombies have a chance to lunge at you after climbing over a fence or through a window if you're too close.
         ZombiesFenceLunge = true,
         -- Serves as a multiplier when determining the effectiveness of armor worn by zombies. Min: 0.00 Max: 100.00 Default: 2.00
-        ZombiesArmorFactor = 2.0,
+        ZombiesArmorFactor = 1.0,
         -- The maximum defense percentage that any worn protective garments can provide to a zombie. Min: 0 Max: 100 Default: 85
-        ZombiesMaxDefense = 85,
+        ZombiesMaxDefense = 60,
         -- Percentage chance of having a random attached weapon. Min: 0 Max: 100 Default: 6
         ChanceOfAttachedWeapon = 6,
         -- How much damage zombies take when falling from height. Min: 0.00 Max: 100.00 Default: 1.00
