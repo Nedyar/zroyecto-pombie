@@ -487,6 +487,31 @@ do_backup() {
         return 0
     fi
 
+    # ---- Guarda de espacio, ANTES de escribir nada ----
+    #
+    # No es para proteger el backup, es para proteger el MUNDO. backups/ y los
+    # volumenes de datos viven en el mismo sistema de ficheros, asi que un
+    # backup que llene el disco deja al servidor en marcha sin sitio donde
+    # escribir sus guardados. Eso es corrupcion, que es justo lo que todo este
+    # montaje existe para evitar: mas vale no tener copia de hoy que perder el
+    # mundo por intentar hacerla.
+    #
+    # El umbral es el tamano SIN comprimir de lo que vamos a empaquetar. Es
+    # conservador a proposito —comprimido suele ocupar bastante menos— porque el
+    # coste de pasarse es saltarse un backup, y el de quedarse corto es el
+    # escenario de arriba.
+    local need_kb free_kb
+    need_kb=$(cd "$DATA_DIR" && du -sk "${items[@]}" 2>/dev/null | awk '{s+=$1} END {print s+0}')
+    free_kb=$(df -Pk "$BACKUP_DIR" | awk 'NR==2 {print $4}')
+
+    if (( need_kb > 0 && free_kb < need_kb )); then
+        warn "Backup (${label}) CANCELADO por falta de espacio."
+        warn "  necesita ~$(( need_kb / 1024 )) MB y quedan $(( free_kb / 1024 )) MB en ${BACKUP_DIR}."
+        warn "  Se cancela a proposito: llenar el disco dejaria al servidor sin"
+        warn "  poder guardar el mundo. Libera espacio y repite el backup."
+        return 1
+    fi
+
     log "Respaldando (${label}): ${items[*]}"
 
     # Dos detalles del tar:
@@ -499,10 +524,46 @@ do_backup() {
     # -T4 en vez de -T0 -> T0 usa todos los nucleos. El backup periodico salta
     #   cada BACKUP_INTERVAL_HOURS con la gente jugando, y comerse la maquina
     #   entera durante la compresion se nota en el servidor.
-    ( umask 077; tar --use-compress-program='zstd -6 -T4' \
-        -cf "$out" -C "$DATA_DIR" "${items[@]}" )
+    #
+    # El `if !` no es estilo: dentro de una condicion, `set -e` no aborta, y eso
+    # es lo que permite limpiar el fichero a medias antes de salir. Comprobado
+    # que hace falta: un tar interrumpido DEJA el fichero parcial en disco, con
+    # nombre y fecha de uno bueno, y solo se descubre que esta roto al intentar
+    # restaurarlo. Un backup ausente es honesto; uno roto que parece bueno es
+    # peor que no tener ninguno.
+    if ! ( umask 077; tar --use-compress-program='zstd -6 -T4' \
+             -cf "$out" -C "$DATA_DIR" "${items[@]}" ); then
+        rm -f "$out"
+        warn "El backup (${label}) fallo durante la compresion."
+        warn "  Se ha borrado el fichero incompleto para que nadie lo confunda"
+        warn "  con una copia valida."
+        return 1
+    fi
 
-    log "Backup listo: $(basename "$out") ($(du -h "$out" | cut -f1))"
+    # ---- Verificacion: no damos por bueno lo que no hemos comprobado ----
+    #
+    # Un segundo de CPU frente a descubrir el problema el dia de la restauracion.
+    # Detecta el truncamiento: zstd responde "premature end".
+    if ! zstd -t "$out" >/dev/null 2>&1; then
+        rm -f "$out"
+        warn "El backup (${label}) se creo pero NO pasa la verificacion."
+        warn "  Archivo corrupto, borrado. Revisa el espacio en disco y los logs."
+        return 1
+    fi
+
+    log "Backup listo y verificado: $(basename "$out") ($(du -h "$out" | cut -f1))"
+
+    # Aviso temprano: cuando el margen se estrecha conviene enterarse antes de
+    # que el backup empiece a cancelarse solo.
+    free_kb=$(df -Pk "$BACKUP_DIR" | awk 'NR==2 {print $4}')
+    if (( need_kb > 0 && free_kb < need_kb * 3 )); then
+        warn "Queda poco espacio: $(( free_kb / 1024 )) MB libres para backups de ~$(( need_kb / 1024 )) MB."
+        warn "Con menos de un backup de margen, el proximo se cancelara."
+    fi
+
+    # La rotacion cuenta ficheros por nombre, no comprueba su validez. Solo es
+    # de fiar porque a partir de aqui ningun fichero invalido llega a quedarse:
+    # si llegara, ocuparia plaza y empujaria fuera a uno bueno.
     rotate_backups
 }
 
