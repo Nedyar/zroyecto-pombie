@@ -61,16 +61,20 @@
       "dst": ["servidor-pz"],
 
       // UDP, no TCP: una regla TCP se ve perfecta y no sirve de nada.
-      // 16261 es el puerto al que se conecta el jugador; 16262 no se
-      // teclea nunca pero lo usa el motor por su cuenta, y sin el la
-      // conexion se queda a medias sin dar ningun error claro.
       //
-      // Si cambias HOST_GAME_PORT en el .env, cambia tambien esto.
-      "ip": ["udp:16261", "udp:16262"],
+      // 16261  produccion, el puerto al que se conecta el jugador
+      // 16262  produccion, NO se teclea nunca: lo usa el motor por su
+      //        cuenta, pero sin permiso la conexion se queda a medias sin
+      //        dar ningun error claro
+      // 16461  mundo vanilla (perfil `vanilla`), mismo criterio
+      // 16462  su puerto de motor
+      //
+      // Si cambias los puertos en el .env, cambialos tambien aqui.
+      "ip": ["udp:16261", "udp:16262", "udp:16461", "udp:16462"],
 
       // Si algun dia se invita a alguien a probar en staging, se anaden
-      // aqui sus puertos. Por defecto staging no se comparte con nadie.
-      // "ip": ["udp:16261", "udp:16262", "udp:16361", "udp:16362"],
+      // sus puertos igual. Por defecto staging no se comparte con nadie.
+      // "ip": [..., "udp:16361", "udp:16362"],
     },
   ],
 }

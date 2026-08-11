@@ -68,6 +68,22 @@ datos y no conviene volver a recorrerla.
 Aviso metodologico que costo tiempo aprender: el error mas numeroso del log
 **no** era el relevante. Se cuenta por causas distintas, no por lineas.
 
+## El mundo vanilla: la referencia que faltaba
+
+Existe un tercer servidor, perfil `vanilla`, con el **mismo mapa, la misma
+semilla y los mismos ajustes** que produccion pero con el mundo generado desde
+cero y **sin un solo mod**. Puerto 16461.
+
+No es un capricho: sin el no habia forma de distinguir "esto lo rompe un mod" de
+"esto es asi en Build 42", y varias incidencias abiertas estaban bloqueadas
+justamente por eso. Cuando alguien reporte un fallo raro, se reproduce ahi.
+
+Detalle en [OPERACIONES.md](OPERACIONES.md), seccion *Mundo vanilla*.
+
+**Solo uno a la vez.** Produccion y vanilla consumen ~4,5 GB y ~4,1 GB sobre una
+maquina de 14 GB: caben los dos, pero sin margen para picos. Mira `docker stats`
+antes de levantar el segundo.
+
 ## NO verificado
 
 1. **Que el servidor vuelva solo tras un reinicio.** El daemon rootless y el
