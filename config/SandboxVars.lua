@@ -1171,15 +1171,6 @@ SandboxVars = {
         -- Min: 0 Max: 90 Default: 35
         PlayerDispersionAngle = 35,
     },
-    GunsBlankets = {
-        DisablePatterns = false,
-        -- Min: 0 Max: 100 Default: 95
-        BlanketSpawnrate = 95,
-        -- Min: 0 Max: 100 Default: 40
-        patternSpawnrate = 40,
-        -- Min: 0 Max: 100 Default: 5
-        chanceOfNotCovering = 5,
-    },
     TakeABathAndShower = {
         GeneralSection = false,
         WaterTemperatureConcept = true,
