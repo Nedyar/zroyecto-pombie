@@ -204,16 +204,45 @@ y no sirve de nada.
 de diagnostico de [OPERACIONES.md](OPERACIONES.md), en particular lo de
 `steamclient.so`.
 
-## Limitacion conocida con Docker rootless
+## La IP que registra el servidor no identifica a nadie
 
-Si el servidor corre en Docker **rootless**, el reenvio de puertos UDP lo hace
-RootlessKit en espacio de usuario y no conserva la IP de origen. En el log de
-Project Zomboid todos los jugadores apareceran viniendo de la misma direccion,
-con puertos distintos.
+**Banear por IP no sirve en este montaje. Hay que banear por Steam ID.**
 
-Consecuencia practica: **banear por IP no sirve**, hay que banear por Steam ID o
-por usuario. No es grave, porque el acceso ya esta limitado antes: para llegar
-al servidor hay que estar en la lista de la ACL.
+El motivo es doble, y conviene saber los dos porque producen registros que
+parecen contradecirse. Esto sale de `Zomboid/Logs/*_connections.txt`, campo
+`ip=`:
+
+```
+jugador-1  -> 172.18.0.1        <- gateway del bridge de Docker
+jugador-2  -> 172.18.0.1
+jugador-3  -> 203.0.113.41, 198.51.100.7, 192.0.2.88...
+jugador-4  -> 203.0.113.6, 198.51.100.219, 192.0.2.153...
+```
+
+**Unos salen con la IP del gateway del contenedor.** Es Docker rootless: el
+reenvio de puertos UDP lo hace RootlessKit en espacio de usuario y no conserva
+el origen, asi que el servidor ve llegar todo desde la puerta de enlace de su
+propia red. `172.18.0.1` no es la IP de nadie.
+
+**Otros salen con IPs publicas cambiantes.** Esos entran por la **red de
+Steam**, no por UDP directo, y lo que se registra es la direccion del
+retransmisor de Steam. Cambia entre conexiones y no se parece a nada del
+tailnet.
+
+En una sesion real el reparto fue:
+
+```
+157  connection-type="Steam"
+ 37  connection-type="UDPRakNet"
+```
+
+Es decir, **la mayoria de los jugadores entra por el relay de Steam**, aunque
+el servidor solo exista dentro del tailnet. Conviene tenerlo presente al
+diagnosticar: hay un salto mas entre cliente y servidor del que uno supondria
+mirando solo la configuracion de red.
+
+Nada de esto es grave para el control de acceso, porque quien entra ya ha
+pasado antes por el share y por la ACL.
 
 Si hiciera falta la IP real, la salida es instalar `passt` y anadir al servicio
 de usuario de Docker:

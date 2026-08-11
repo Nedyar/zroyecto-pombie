@@ -53,10 +53,13 @@ Correr como root *dentro* de un contenedor rootless no da privilegios fuera.
 reinicio sin que nadie inicie sesion hace falta `loginctl enable-linger <user>`,
 ademas de `systemctl --user enable docker`.
 
-**La IP de origen de los jugadores se pierde en UDP.** El reenvio lo hace
-RootlessKit en espacio de usuario. Todos apareceran viniendo de la misma
-direccion: banear por IP no sirve, hay que banear por Steam ID. Detalle y
-escape en [TAILSCALE.md](TAILSCALE.md).
+**La IP de origen de los jugadores no es fiable.** El reenvio lo hace
+RootlessKit en espacio de usuario y no conserva el origen, asi que parte de las
+conexiones se registran con la IP del gateway del contenedor. Y hay un segundo
+motivo que no tiene que ver con rootless: la mayoria de los jugadores entra por
+el **relay de Steam**, y ahi se registra la direccion del retransmisor. En
+ninguno de los dos casos identifica a nadie: **banear por Steam ID, no por IP.**
+Los datos en [TAILSCALE.md](TAILSCALE.md).
 
 ---
 
@@ -95,6 +98,26 @@ nunca en `Saves/` ni en `db/`. Esta comprobado, no es una suposicion.
 Aviso: buena parte de los `SandboxVars` solo tienen efecto **al crear el
 mundo**. Cambiar el tamano del mapa o la distribucion inicial de zombis en un
 mundo ya jugado no hace lo que esperas.
+
+---
+
+## Mapa y zonas de aparicion: no son lo mismo
+
+Confunde porque el juego usa la misma palabra para las dos cosas.
+
+**`PZ_MAP=Muldraugh, KY` es el mundo entero**, no una ciudad. Es Knox Country:
+un territorio continuo que incluye Muldraugh, West Point, Rosewood, Riverside,
+Louisville y todo lo demas. Se llama asi por herencia, porque Muldraugh fue la
+primera zona que tuvo el juego. **Lo fija el servidor y el jugador no lo elige.**
+
+**Lo que el jugador elige al crear personaje son las zonas de
+`config/spawnregions.lua`**: en que pueblo empieza. Por defecto cuatro. Del
+mismo mapa, asi que se puede ir andando de uno a otro sin pantalla de carga.
+
+Para el jugador la pantalla se parece a "elegir mapa", y no lo es. Si alguien
+pide "otro mapa", casi siempre lo que quiere es otra zona de inicio, y eso se
+toca en `spawnregions.lua`. Un mapa de verdad distinto es un mod de mapa, con lo
+que implica: entra en `PZ_MAP` y en la lista de mods, y se ensaya en staging.
 
 ---
 
