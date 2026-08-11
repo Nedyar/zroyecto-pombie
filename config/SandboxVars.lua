@@ -231,7 +231,7 @@ SandboxVars = {
     -- 3 = Normal (100 Days)
     -- 4 = Slow (200 Days)
     -- 5 = Very Slow (500 Days)
-    ErosionSpeed = 3,
+    ErosionSpeed = 4,
     -- For a custom Erosion Speed. Zero means use the Erosion Speed option. Maximum is 36,500 days (approximately 100 years). Min: -1 Max: 36500 Default: 0
     ErosionDays = 0,
     -- The speed of plant growth. Default = Normal
@@ -789,7 +789,7 @@ SandboxVars = {
     },
     Map = {
         -- If enabled, a mini-map window will be available.
-        AllowMiniMap = false,
+        AllowMiniMap = true,
         -- If enabled, the world map can be accessed.
         AllowWorldMap = true,
         -- If enabled, the world map will be completely filled in on starting the game.
@@ -900,9 +900,9 @@ SandboxVars = {
         -- If zombies have a chance to lunge at you after climbing over a fence or through a window if you're too close.
         ZombiesFenceLunge = true,
         -- Serves as a multiplier when determining the effectiveness of armor worn by zombies. Min: 0.00 Max: 100.00 Default: 2.00
-        ZombiesArmorFactor = 2.0,
+        ZombiesArmorFactor = 1.0,
         -- The maximum defense percentage that any worn protective garments can provide to a zombie. Min: 0 Max: 100 Default: 85
-        ZombiesMaxDefense = 85,
+        ZombiesMaxDefense = 60,
         -- Percentage chance of having a random attached weapon. Min: 0 Max: 100 Default: 6
         ChanceOfAttachedWeapon = 6,
         -- How much damage zombies take when falling from height. Min: 0.00 Max: 100.00 Default: 1.00
@@ -925,7 +925,7 @@ SandboxVars = {
     },
     ZombieConfig = {
         -- Set by the "Zombie Count" population option, or by a custom number here. Insane = 2.5, Very High = 1.6, High = 1.2, Normal = 0.65, Low = 0.15, None = 0.0. Min: 0.00 Max: 4.00 Default: 0.65
-        PopulationMultiplier = 0.74,
+        PopulationMultiplier = 0.65,
         -- A multiplier for the desired zombie population at the start of the game. Insane = 3.0, Very High = 2.0, High = 1.5, Normal = 1.0, Low = 0.5, None = 0.0. Min: 0.00 Max: 4.00 Default: 1.00
         PopulationStartMultiplier = 1.0,
         -- A multiplier for the desired zombie population on the peak day. Insane = 3.0, Very High = 2.0, High = 1.5, Normal = 1.0, Low = 0.5, None = 0.0. Min: 0.00 Max: 4.00 Default: 1.50
@@ -933,11 +933,11 @@ SandboxVars = {
         -- The day when the population reaches its peak. Min: 1 Max: 365 Default: 28
         PopulationPeakDay = 28,
         -- The number of hours that must pass before zombies may respawn in a cell. If 0, spawning is disabled. Min: 0.00 Max: 8760.00 Default: 0.00
-        RespawnHours = 672.0,
+        RespawnHours = 0.0,
         -- The number of hours that a chunk must be unseen before zombies may respawn in it. Min: 0.00 Max: 8760.00 Default: 0.00
-        RespawnUnseenHours = 288.0,
+        RespawnUnseenHours = 0.0,
         -- The fraction of a cell's desired population that may respawn every RespawnHours. Min: 0.00 Max: 1.00 Default: 0.00
-        RespawnMultiplier = 0.025,
+        RespawnMultiplier = 0.0,
         -- The number of hours that must pass before zombies migrate  to empty parts of the same cell. If 0, migration is disabled. Min: 0.00 Max: 8760.00 Default: 12.00
         RedistributeHours = 216.0,
         -- The distance a zombie will try to walk towards the last sound it heard. Min: 10 Max: 1000 Default: 100
@@ -1163,22 +1163,13 @@ SandboxVars = {
         -- Min: 0 Max: 20 Default: 0
         PlayerStartDistance = 0,
         -- Min: 0 Max: 200 Default: 50
-        PlayerMaxDistance = 50,
+        PlayerMaxDistance = 30,
         -- Min: -1.00 Max: 2.00 Default: 0.75
         PlayerBloodMultiplier = 0.75,
         -- Min: 0.00 Max: 2.00 Default: 0.25
         PlayerWindSpeedMultiplier = 0.25,
         -- Min: 0 Max: 90 Default: 35
         PlayerDispersionAngle = 35,
-    },
-    GunsBlankets = {
-        DisablePatterns = false,
-        -- Min: 0 Max: 100 Default: 95
-        BlanketSpawnrate = 95,
-        -- Min: 0 Max: 100 Default: 40
-        patternSpawnrate = 40,
-        -- Min: 0 Max: 100 Default: 5
-        chanceOfNotCovering = 5,
     },
     TakeABathAndShower = {
         GeneralSection = false,

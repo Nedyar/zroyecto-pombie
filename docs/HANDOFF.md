@@ -43,10 +43,13 @@ Esto se ejecuto y se comprobo, no se dedujo:
   `required mod not found`. Cifras confirmadas contra el INI renderizado.
 - **Los jugadores entran y juegan.** 4 simultaneos, sesion larga, sin
   desconexiones inesperadas ni reinicios del contenedor.
-- **Varios clientes a la vez se distinguen bien** pese a compartir IP de origen
-  por el reenvio UDP de rootless. Era una incognita y quedo resuelta jugando.
+- **Varios clientes a la vez se distinguen bien**, pese a que la IP registrada
+  no identifique a nadie. Era una incognita y quedo resuelta jugando.
 - **Steam Relay no estorba** contra un servidor que solo existe dentro del
-  tailnet. Tambien era incognita.
+  tailnet. Es mas: **la mayoria de las conexiones entran por ahi** (157 frente a
+  37 por UDP directo en una sesion), asi que hay un salto mas entre cliente y
+  servidor del que sugiere la configuracion de red. Conviene recordarlo al
+  diagnosticar.
 - El juego escucha solo en la interfaz de Tailscale, no en `0.0.0.0`. RCON solo
   en loopback.
 - El mod local se instalo tras auditar su contenido: 142 ficheros, unicamente
@@ -67,6 +70,22 @@ datos y no conviene volver a recorrerla.
 
 Aviso metodologico que costo tiempo aprender: el error mas numeroso del log
 **no** era el relevante. Se cuenta por causas distintas, no por lineas.
+
+## El mundo vanilla: la referencia que faltaba
+
+Existe un tercer servidor, perfil `vanilla`, con el **mismo mapa, la misma
+semilla y los mismos ajustes** que produccion pero con el mundo generado desde
+cero y **sin un solo mod**. Puerto 16461.
+
+No es un capricho: sin el no habia forma de distinguir "esto lo rompe un mod" de
+"esto es asi en Build 42", y varias incidencias abiertas estaban bloqueadas
+justamente por eso. Cuando alguien reporte un fallo raro, se reproduce ahi.
+
+Detalle en [OPERACIONES.md](OPERACIONES.md), seccion *Mundo vanilla*.
+
+**Solo uno a la vez.** Produccion y vanilla consumen ~4,5 GB y ~4,1 GB sobre una
+maquina de 14 GB: caben los dos, pero sin margen para picos. Mira `docker stats`
+antes de levantar el segundo.
 
 ## NO verificado
 
@@ -99,6 +118,25 @@ Aparecen en cada arranque y **no son fallos**:
   carpetas que algunos mods no traen.
 - `[S_API FAIL] ... SteamNetworkingUtils004` — aparece siempre, incluso con todo
   funcionando.
+
+## Lo que git NO puede devolverte
+
+El repositorio reconstruye el montaje entero en otra maquina, pero hay dos cosas
+que no cubre y que solo existen en el disco del servidor:
+
+- **`.env`**, con las contrasenas y los valores de la instancia. Esta ignorado a
+  proposito.
+- **El mundo**, en volumenes de Docker. Ni siquiera esta dentro del repositorio.
+
+Si la maquina se pierde, con el repositorio se levanta el servidor en un rato,
+pero el mundo jugado y las credenciales no vuelven. Las dos piezas viajan por
+otro canal: el **tarball de `backups/`** y una **copia del `.env`**.
+
+Que ambas esten hechas no basta: mientras vivan en el mismo disco que protegen,
+no protegen de nada. Tienen que salir de la maquina.
+
+Ver [OPERACIONES.md](OPERACIONES.md), seccion *Migrar a otra maquina*, que es el
+mismo procedimiento.
 
 ## Lo que mas tiempo costo, para no repetirlo
 
