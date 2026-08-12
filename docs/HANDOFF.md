@@ -71,15 +71,26 @@ datos y no conviene volver a recorrerla.
 Aviso metodologico que costo tiempo aprender: el error mas numeroso del log
 **no** era el relevante. Se cuenta por causas distintas, no por lineas.
 
-## El mundo vanilla: la referencia que faltaba
+## El mundo vanilla: de referencia a mundo propio
 
 Existe un tercer servidor, perfil `vanilla`, con el **mismo mapa, la misma
 semilla y los mismos ajustes** que produccion pero con el mundo generado desde
-cero y **sin un solo mod**. Puerto 16461.
+cero. Puerto 16461.
 
-No es un capricho: sin el no habia forma de distinguir "esto lo rompe un mod" de
-"esto es asi en Build 42", y varias incidencias abiertas estaban bloqueadas
-justamente por eso. Cuando alguien reporte un fallo raro, se reproduce ahi.
+Nacio **sin un solo mod**, y no era un capricho: sin el no habia forma de
+distinguir "esto lo rompe un mod" de "esto es asi en Build 42", y varias
+incidencias abiertas estaban bloqueadas por eso.
+
+**Ha dejado de ser eso.** La gente se puso a jugar ahi y pidio interfaz, asi que
+el 2026-08-12 se le anadieron **siete mods de interfaz** —los unicos que pasan
+el filtro de no declarar ninguna entidad— y antes se le habian activado los
+backups. Los dos cambios responden al mismo hecho: es un mundo habitado.
+
+Consecuencia que hay que tener presente antes de apoyarse en el: **la linea base
+de errores por hora de un B42.20 limpio ya no se puede medir aqui**, y ese era
+el dato que le faltaba a la incidencia 004. Para descartar sigue sirviendo (26
+mods que no lleva), para medir el juego base ya no. Si hiciera falta esa
+medicion, hay que levantar una cuarta instancia limpia o regenerar esta.
 
 Detalle en [OPERACIONES.md](OPERACIONES.md), seccion *Mundo vanilla*.
 

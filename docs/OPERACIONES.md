@@ -321,7 +321,7 @@ Que mirar antes de dar por bueno un cambio:
 
 ---
 
-## Mundo vanilla: la referencia sin mods
+## Mundo vanilla: el mundo ligero
 
 ```bash
 docker compose --profile vanilla up -d pz-vanilla     # levantar
@@ -331,18 +331,59 @@ docker compose --profile vanilla stop pz-vanilla      # parar
 Se conecta al **puerto 16461**, no al 16261.
 
 Es el mismo mapa (Knox Country), la misma semilla y los mismos ajustes de
-partida que produccion, pero con el mundo generado desde cero y **sin un solo
-mod**: ni lista de Workshop, ni mods locales, ni contenido descargado en su
-instalacion.
+partida que produccion, pero con el mundo generado desde cero y con **siete
+mods de interfaz** en vez de los 33 de produccion.
 
-Existe para responder una pregunta que sin el no tiene respuesta: cuando algo se
-comporta raro en juego, saber si la causa son los mods o es el juego base. Se
-reproduce el fallo aqui; si tambien pasa, no es de los mods.
+Nacio literalmente sin ninguno, para responder una pregunta que sin el no tiene
+respuesta: cuando algo se comporta raro en juego, si la causa son los mods o es
+el juego base. **Esa funcion la ha perdido en parte**, y conviene saberlo: la
+linea base de errores por hora de un B42.20 sano, que era el dato que faltaba
+para calificar las cifras de la incidencia 004, ya no se puede medir aqui
+limpiamente. Se cambio a peticion de quienes juegan en el.
+
+Lo que sigue siendo cierto es que su lista es corta, conocida y **sin una sola
+entidad**, asi que sigue sirviendo para descartar: si un fallo aparece aqui, no
+lo causa ninguno de los 26 mods que este no lleva.
 
 No confundir con staging, que es otra cosa: staging levanta una **copia del
-mundo real CON sus mods** para ensayar un cambio antes de meterlo en
-produccion. Este levanta un mundo **limpio SIN mods** para comparar
-comportamiento.
+mundo real CON todos sus mods** para ensayar un cambio antes de meterlo en
+produccion. Este es un mundo aparte con lista propia.
+
+### Los siete, y por que solo esos
+
+El criterio fue: interfaz, compatible con un mundo ya empezado y sin
+responsabilidad conocida en ningun fallo abierto.
+
+| Mod | Mod ID |
+| --- | --- |
+| NeatUI Framework | `NeatUI_Framework` |
+| Neat Building (solo interfaz) | `Neat_Building_UIOnly` |
+| Neat Crafting | `Neat_Crafting` |
+| Modern Status | `ModernStatus` |
+| Map Symbol Size Slider | `MapSymbolSizeSlider` |
+| Has Been Read | `P4HasBeenRead` |
+| Map Symbols Plus | `MapSymbolsPlusDeonHand` |
+
+**Lo que los hace seguros en un mundo empezado** es que ninguno declara
+entidades. Sin `media/scripts` un mod no puede meter objetos, construibles,
+vehiculos ni tiles, asi que ni al ponerlo ni al quitarlo deja referencias
+colgando en el `WorldDictionary`. Verificado fichero a fichero sobre lo
+descargado, no leyendo el Workshop: los siete dan cero scripts, cero items,
+cero entities y cero tiles.
+
+El contraste que lo ilustra: `Neat_Building` completa trae 441 ficheros de
+entidades y `Neat_Building_UIOnly` trae 0.
+
+**Los seis de inventario quedan fuera a proposito**, aunque tambien sean de
+interfaz: CleanUI, Proximity Inventory, Nested Containers, Manage Containers,
+Better Sorting y Split Items son la *zona de riesgo* de
+[MODS-LISTA.md](MODS-LISTA.md), y la incidencia 004 tiene como mejor indicio 54
+casos de `ItemContainer.AddItem: container already has id`, que es exactamente
+un problema de contenedores. Mientras no se descarte, no se puede afirmar que no
+sean responsables, y el encargo era casi-certeza.
+
+Los siete llevan ademas meses corriendo en produccion y estan marcados como
+comprobados en juego en [CHECKLIST-MODS.md](CHECKLIST-MODS.md).
 
 Cuidado con la memoria: no conviene tener produccion y vanilla arriba a la vez
 salvo que haga falta comparar en caliente. Miden ~4,5 GB y ~4,1 GB, asi que

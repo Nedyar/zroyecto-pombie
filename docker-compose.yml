@@ -192,13 +192,17 @@ services:
       - ./backups:/backups
 
   # ==========================================================================
-  # pz-vanilla - el MISMO mundo, sin un solo mod.
+  # pz-vanilla - el MISMO mundo, con lista de mods corta y propia.
   #
   # No es staging y no lo sustituye. Staging existe para ensayar un cambio
-  # antes de meterlo en produccion; esto existe para responder una pregunta
+  # antes de meterlo en produccion; esto nacio para responder una pregunta
   # distinta: cuando algo se comporta raro en juego, saber si la causa son los
-  # mods o es el juego base. Sin una referencia sin mods, "esto falla" no se
-  # puede distinguir de "esto es asi en Build 42".
+  # mods o es el juego base.
+  #
+  # Nacio sin ningun mod, que era lo que permitia distinguir "esto falla" de
+  # "esto es asi en Build 42". Se le anadieron siete de interfaz a peticion de
+  # quienes juegan aqui, asi que esa funcion queda a medias: sirve para
+  # descartar los 26 que no lleva, no para medir la linea base del juego limpio.
   #
   # Por eso tiene NOMBRE PROPIO, al reves que staging: aqui no queremos una
   # copia indistinguible, queremos poder tener las dos y comparar.
@@ -221,17 +225,42 @@ services:
       PZ_PUBLIC_NAME: "Zroyecto Pombie (vanilla)"
       PZ_PUBLIC: "false"
 
-      # SIN MODS. Es la razon de ser de este servicio.
-      #
-      # Van vacias aqui y no en el .env porque `environment` tiene prioridad
-      # sobre `env_file`: asi produccion conserva su lista intacta.
+      # Lista PROPIA de mods, corta y deliberada. Se define aqui y no en el .env
+      # porque `environment` tiene prioridad sobre `env_file`: asi produccion
+      # conserva su lista de 33 intacta pase lo que pase aqui.
       #
       # PZ_USE_STAGING_MODS queda en false a proposito: con true, una lista
-      # vacia significa "replica los mods de produccion", que es justo lo
+      # vacia significaria "replica los mods de produccion", que es justo lo
       # contrario de lo que queremos aqui.
+      #
+      # ---- Criterio de admision, y por que es tan estrecho ----
+      #
+      # Este mundo estaba EMPEZADO cuando se anadieron. La regla que lo hace
+      # seguro es que ninguno declare entidades: sin `media/scripts`, un mod no
+      # puede meter objetos, construibles, vehiculos ni tiles en el mundo, asi
+      # que ni al ponerlo ni al quitarlo puede dejar referencias colgando en el
+      # WorldDictionary. Comprobado fichero a fichero sobre lo que hay
+      # descargado, no leyendo descripciones del Workshop: los siete dan cero
+      # scripts, cero items, cero entities y cero tiles.
+      #
+      # Contraste que lo ilustra: la variante `Neat_Building` completa trae 441
+      # ficheros de entidades; `Neat_Building_UIOnly`, que es la que va aqui,
+      # trae 0. Su propio autor avisa de que quitar una variante con
+      # construibles de un mundo existente puede impedir que el mundo cargue.
+      #
+      # Quedan FUERA los seis de inventario y contenedores (CleanUI, Proximity
+      # Inventory, Nested Containers, Manage Containers, Better Sorting y Split
+      # Items) pese a ser tambien de interfaz: son la "zona de riesgo" que
+      # documenta MODS-LISTA.md y, sobre todo, la incidencia 004 tiene como
+      # mejor indicio 54 casos de `ItemContainer.AddItem: container already has
+      # id`, que es un problema de contenedores. Mientras no se descarte, no se
+      # puede afirmar que no sean responsables.
+      #
+      # ORDEN DE CARGA: NeatUI_Framework va el primero. Lo exigen Neat Crafting,
+      # Neat Building y Modern Status.
       PZ_USE_STAGING_MODS: "false"
-      PZ_WORKSHOP_ITEMS: ""
-      PZ_MODS: ""
+      PZ_WORKSHOP_ITEMS: "${VANILLA_WORKSHOP_ITEMS:-3508537032;3536052310;3502080466;3451167732;2734705913;2544353492;3399645148}"
+      PZ_MODS: "${VANILLA_MODS:-NeatUI_Framework;Neat_Building_UIOnly;Neat_Crafting;ModernStatus;MapSymbolSizeSlider;P4HasBeenRead;MapSymbolsPlusDeonHand}"
 
       # Los puertos INTERNOS deben coincidir con los publicados. El servidor le
       # anuncia al cliente los suyos: si dentro dijera 16261, el cliente
