@@ -134,14 +134,40 @@ restaurar. Manual:
 La rotacion solo borra los automaticos (`prestart`, `periodic`), conservando
 los ultimos `BACKUP_KEEP` **de cada tipo** — con el valor por defecto son 20
 `periodic` y 20 `prestart`, no 20 en total. A 6 horas, eso son unos 5 dias de
-historial. Los `manual`, `pre-update` y `pre-restore` **no se borran nunca**:
-son justo los que quieres tener cuando algo ha salido mal.
+historial. Todo lo demas **no se borra nunca**: son justo los que quieres tener
+cuando algo ha salido mal.
 
-Consecuencia que conviene tener presente: **los que no se rotan crecen sin
-limite**. Cada backup manual y cada actualizacion dejan un fichero para
-siempre, y el tamano sube segun se explora el mundo. Conviene mirar
-`du -sh backups/` de vez en cuando y limpiar a mano los antiguos que ya no
-tengan valor.
+Ademas la rotacion es **por instancia**: produccion, staging y vanilla usan
+prefijos distintos y ninguna puede borrar los backups de otra. En la practica
+solo produccion genera rotables — staging y vanilla llevan
+`BACKUP_INTERVAL_HOURS=0` y `BACKUP_ON_START=false`.
+
+### Lo que se acumula sin limite
+
+Los que no rotan crecen para siempre, y no son solo los que tecleas tu:
+
+| Etiqueta | Cuando aparece | Ritmo real |
+| --- | --- | --- |
+| `manual` y las tuyas | `./scripts/backup.sh [etiqueta]` | cuando lo pides |
+| `stage` | **cada** `./scripts/stage.sh` | el mas frecuente de los automaticos |
+| `pre-update` | cada actualizacion del juego | unas pocas al ano |
+| `pre-restore` | cada restauracion | raro |
+
+Y hay uno **mas grande que todos, que no esta en `backups/`**: cada
+restauracion aparta el mundo entero a una carpeta `.pre-restore-<fecha>`
+**dentro del volumen de datos**. No son ~14 MB comprimidos, son los ~110 MB del
+mundo sin comprimir, en el mismo disco, y nadie los borra. Una restauracion
+cuesta unas ocho veces mas espacio que un backup.
+
+Revision periodica, que son dos comandos:
+
+```bash
+du -sh backups/
+docker compose run --rm --no-deps pz bash -c 'du -sh /home/steam/Zomboid/.pre-restore-* 2>/dev/null'
+```
+
+La parte acotada, en cambio, no preocupa: con un mundo de ~14 MB comprimidos,
+40 ficheros rotables son ~550 MB y ahi se queda.
 
 ### Que pasa si no hay espacio
 
@@ -151,19 +177,71 @@ comparten sistema de ficheros, asi que un backup que llenara el disco dejaria
 al servidor en marcha sin sitio donde guardar. Es preferible quedarse sin copia
 de hoy.
 
-Si el empaquetado falla a medias, el fichero incompleto **se borra**, y cada
-backup se verifica con `zstd -t` nada mas crearlo. La regla es que en
-`backups/` no llegue a quedarse nunca un archivo roto con aspecto de bueno: se
-descubriria el dia de la restauracion, que es el peor momento posible.
+Antes de rendirse **intenta rotar los antiguos** para hacer sitio. Importa
+porque la rotacion normal vive al final del backup, o sea detras de la
+cancelacion: sin ese intento, bajar `BACKUP_KEEP` en el `.env` no liberaria
+nada, porque la limpieza estaria detras de un backup que ya no puede ocurrir.
 
-Comprobar a mano un backup concreto:
+Si no puede medir el espacio (un fallo de `du` o `df`), **sigue adelante
+avisando** en vez de cancelar. Un fallo al medir no debe dejarte sin copias,
+pero tampoco puede apagar la guarda en silencio.
+
+### Como se decide que un backup vale
+
+Cada backup se verifica con `zstd -t` nada mas crearlo, y si no pasa **se
+borra**. La regla es que en `backups/` no llegue a quedarse nunca un archivo
+roto con aspecto de bueno: se descubriria el dia de la restauracion, que es el
+peor momento posible.
+
+Ojo con una sutileza que costo un backup bueno: **`tar` sale con codigo 1
+cuando un fichero cambia mientras lo lee** (`file changed as we read it`), y con
+el servidor en marcha sobre ~22.000 ficheros eso es lo *normal*, no un fallo —
+el archivo queda entero. Solo el codigo 2 es un error de verdad. Quien decide
+si un archivo vale es siempre `zstd -t`, nunca el codigo de salida de `tar`.
+
+Comprobar a mano un backup concreto (con `run`, que funciona este el servidor
+levantado o parado; `exec` falla si el contenedor no esta corriendo):
 
 ```bash
-docker compose exec pz zstd -t /backups/<fichero>.tar.zst
+docker compose run --rm --no-deps pz zstd -t /backups/<fichero>.tar.zst
 ```
+
+### Detectar que han dejado de hacerse
+
+Contar backups no sirve: los que no rotan sostienen la cifra, asi que un
+servidor que lleva nueve dias sin copiar ensena el mismo numero que uno sano. Lo
+que lo delata es la **edad**:
+
+```bash
+docker compose run --rm --no-deps pz status
+```
+
+La linea `Ultimo backup` da nombre y antiguedad, y marca `<-- REVISAR` si supera
+el doble del intervalo configurado.
+
+### Detalles de funcionamiento
+
+- **Solo un backup a la vez.** Hay un cerrojo (`backups/.backup.lock`) que
+  serializa incluso entre contenedores distintos, porque los tres comparten
+  `./backups`. Si el bucle periodico salta mientras haces uno a mano, el segundo
+  espera y se salta si tarda demasiado.
+- **El `prestart` se salta si ya hay uno reciente** (por defecto 60 min,
+  `BACKUP_PRESTART_MIN_GAP_MINUTES`). Sin eso, un bucle de reinicios haria 20
+  backups del estado roto y expulsaria por rotacion los 20 buenos.
 
 Los backups viven en `backups/` en el disco del host, no dentro de un volumen
 de Docker. Un `docker volume rm` accidental no se los lleva.
+
+### Probar que todo esto funciona
+
+Un mecanismo de seguridad que nunca se ha visto funcionar es una suposicion.
+Las salvaguardas de arriba tienen pruebas propias, que no tocan nada real y se
+pueden lanzar con el servidor en marcha:
+
+```bash
+./docker/selftest-backups.sh                                  # desde el host
+docker compose run --rm --no-deps --entrypoint bash pz /docker/selftest-backups.sh
+```
 
 ---
 
@@ -175,15 +253,42 @@ de Docker. Un `docker volume rm` accidental no se los lleva.
 docker compose up -d
 ```
 
-Pide confirmacion escribiendo `SI`, para el servidor si hacia falta, respalda
-el estado actual (`pre-restore`) y **aparta** los datos anteriores en una
-carpeta `.pre-restore-<fecha>` dentro del volumen en vez de borrarlos.
+Pide confirmacion escribiendo `SI`, para el servidor si hacia falta, y por este
+orden:
 
-Cuando hayas comprobado que el mundo restaurado carga bien, esa carpeta se
-puede borrar:
+1. **Verifica el archivo con `zstd -t` antes de tocar nada.** Si esta roto,
+   aborta con el mundo actual intacto. Comprobar al leer importa mas que al
+   escribir: enterarse despues de haber apartado el mundo bueno te deja con dos
+   copias inservibles y sin saber cual era cual.
+2. Respalda el estado actual (`pre-restore`).
+3. **Aparta** los datos anteriores en una carpeta `.pre-restore-<fecha>` dentro
+   del volumen, en vez de borrarlos.
+
+Si la extraccion falla, el mensaje dice exactamente donde quedo el mundo
+anterior y como devolverlo a su sitio. **No arranques el servidor antes de
+hacerlo.**
+
+### Si el backup previo no se puede hacer
+
+La restauracion **se cancela**. Suele ser falta de espacio, y es una situacion
+incomoda: el disco lleno es justo el dia en que quieres restaurar. La salida,
+que el propio mensaje te da:
 
 ```bash
-docker compose exec pz bash -c 'rm -rf /home/steam/Zomboid/.pre-restore-*'
+FORCE_RESTORE=true ./scripts/restore.sh <fichero>.tar.zst
+```
+
+Aun asi el mundo actual no se borra: se aparta igualmente a `.pre-restore-*`.
+Lo que pierdes es el tarball, no el mundo.
+
+### Limpiar despues
+
+Cuando hayas comprobado que el mundo restaurado carga bien, borra la carpeta
+apartada. **Ocupa lo mismo que el mundo entero sin comprimir** y nadie la borra
+por ti:
+
+```bash
+docker compose run --rm --no-deps pz bash -c 'rm -rf /home/steam/Zomboid/.pre-restore-*'
 ```
 
 ---
