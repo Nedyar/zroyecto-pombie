@@ -138,9 +138,13 @@ historial. Todo lo demas **no se borra nunca**: son justo los que quieres tener
 cuando algo ha salido mal.
 
 Ademas la rotacion es **por instancia**: produccion, staging y vanilla usan
-prefijos distintos y ninguna puede borrar los backups de otra. En la practica
-solo produccion genera rotables — staging y vanilla llevan
-`BACKUP_INTERVAL_HOURS=0` y `BACKUP_ON_START=false`.
+prefijos distintos y ninguna puede borrar los backups de otra.
+
+Los generan **produccion y vanilla**. Staging no: lleva
+`BACKUP_INTERVAL_HOURS=0` y `BACKUP_ON_START=false` porque su mundo es
+literalmente una copia que `stage.sh` rehace cuando quiere. Vanilla tenia esa
+misma exencion y se le quito en cuanto dejo de ser cierto que fuera desechable:
+se juega en el.
 
 ### Lo que se acumula sin limite
 
@@ -166,8 +170,9 @@ du -sh backups/
 docker compose run --rm --no-deps pz bash -c 'du -sh /home/steam/Zomboid/.pre-restore-* 2>/dev/null'
 ```
 
-La parte acotada, en cambio, no preocupa: con un mundo de ~14 MB comprimidos,
-40 ficheros rotables son ~550 MB y ahi se queda.
+La parte acotada, en cambio, no preocupa. Con los tamanos de hoy —produccion
+~14 MB comprimidos, vanilla ~26 MB— el techo son 40 ficheros por instancia:
+~550 MB de produccion mas ~1 GB de vanilla, y ahi se queda.
 
 ### Que pasa si no hay espacio
 
@@ -344,12 +349,25 @@ salvo que haga falta comparar en caliente. Miden ~4,5 GB y ~4,1 GB, asi que
 caben en una maquina de 14 GB pero sin margen para picos. Comprueba antes con
 `docker stats`.
 
+**Tiene backups propios**, con prefijo `vanilla-`, igual que produccion: al
+arrancar y cada 6 horas. No los tuvo al principio, cuando se concibio como
+mundo de usar y tirar. Dejo de serlo en cuanto la gente empezo a jugar en el, y
+un mundo con personajes dentro no es desechable por mucho que asi se pensara.
+
 Para regenerar su mundo desde cero, con el servicio parado:
 
 ```bash
 docker run --rm -v zroyecto-pombie_pz-data-vanilla:/data \
   --entrypoint bash zroyecto-pombie:latest \
   -c 'rm -rf /data/Saves/* /data/db/* /data/Server/*'
+```
+
+**Ese comando borra personajes y bases.** Cuando el vanilla era una referencia
+vacia daba igual; ahora no. Haz antes `./scripts/backup.sh` sobre el, o
+asegurate de que el ultimo backup automatico te sirve:
+
+```bash
+docker exec pombie-vanilla /docker/run.sh status | grep 'Ultimo backup'
 ```
 
 ---

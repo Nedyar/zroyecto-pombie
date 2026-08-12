@@ -245,11 +245,18 @@ services:
       PZ_MEMORY_MIN: "1g"
 
       # Prefijo propio para que sus backups no se confundan con los de
-      # produccion en la carpeta compartida, y sin backup automatico: es un
-      # mundo de comparacion, desechable por definicion.
+      # produccion en la carpeta compartida. La rotacion es por prefijo, asi
+      # que ninguna instancia puede borrar los backups de otra.
       BACKUP_NAME_PREFIX: "vanilla"
-      BACKUP_INTERVAL_HOURS: "0"
-      BACKUP_ON_START: "false"
+
+      # Nacio sin backup automatico —"mundo de comparacion, desechable por
+      # definicion"— y esa premisa dejo de ser cierta: se juega en el, tiene
+      # cuatro personajes y un mundo mas grande que el de produccion. Un mundo
+      # en el que alguien invierte horas no es desechable por mucho que asi se
+      # concibiera, asi que hereda de .env lo mismo que produccion.
+      #
+      # Staging si conserva la exencion: ahi el mundo es literalmente una copia
+      # que stage.sh rehace cuando quiere.
 
       # Es una copia: aceptamos abrirla con otra version si hiciera falta.
       ALLOW_BUILD_CHANGE: "true"

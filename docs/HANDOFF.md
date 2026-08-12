@@ -83,6 +83,13 @@ justamente por eso. Cuando alguien reporte un fallo raro, se reproduce ahi.
 
 Detalle en [OPERACIONES.md](OPERACIONES.md), seccion *Mundo vanilla*.
 
+**Ya no es desechable, y tiene backups propios.** Nacio sin ellos por ser un
+mundo de comparacion, pero la gente se puso a jugar ahi: cuatro personajes y un
+mundo mas grande que el de produccion. Se le activaron los automaticos (al
+arrancar y cada 6 h, prefijo `vanilla-`) el 2026-08-12. Merece la pena recordar
+el patron: la premisa que justifica saltarse una salvaguarda puede caducar sin
+que nadie lo anuncie.
+
 **Solo uno a la vez.** Produccion y vanilla consumen ~4,5 GB y ~4,1 GB sobre una
 maquina de 14 GB: caben los dos, pero sin margen para picos. Mira `docker stats`
 antes de levantar el segundo.
