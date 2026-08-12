@@ -145,8 +145,24 @@ cmd_serve() {
 
     # Backup antes de abrir el mundo. Es el que te salva si el arranque de hoy
     # resulta ser el que rompe algo.
+    #
+    # Con una salvedad importante: si el contenedor entra en bucle de reinicios
+    # —`restart: unless-stopped` relanzando un arranque que falla— cada intento
+    # haria su prestart, y en veinte intentos la rotacion expulsaria los veinte
+    # prestart buenos para sustituirlos por veinte copias del estado roto. La
+    # rotacion cuenta ficheros, no sabe distinguir "veinte puntos repartidos en
+    # semanas" de "veinte fotos del mismo minuto".
+    #
+    # Por eso se salta si ya hay uno reciente: entre dos arranques seguidos el
+    # mundo apenas ha cambiado, asi que no se pierde nada util.
     if is_true "$BACKUP_ON_START" && [[ -d "${DATA_DIR}/Saves" ]]; then
-        do_backup "prestart" || warn "El backup de arranque fallo; continuo igualmente."
+        local gap="${BACKUP_PRESTART_MIN_GAP_MINUTES:-60}"
+        if (( gap > 0 )) && recent_backup_exists "prestart" "$gap"; then
+            log "Ya hay un backup de arranque de hace menos de ${gap} min; me lo salto."
+            log "  Protege el historial de un bucle de reinicios."
+        else
+            do_backup "prestart" || warn "El backup de arranque fallo; continuo igualmente."
+        fi
     fi
 
     trap on_signal TERM INT
@@ -192,7 +208,19 @@ cmd_update() {
     fi
 
     log "Actualizacion explicita del juego solicitada."
-    do_backup "pre-update"
+
+    # Aqui si es correcto abortar si el backup falla —actualizar sin copia es
+    # justo lo que no queremos— pero tiene que abortar DICIENDOLO. La llamada
+    # desnuda moria por `set -e` sin una sola linea que explicara el motivo.
+    do_backup "pre-update" || die_loud \
+"NO HE PODIDO RESPALDAR ANTES DE ACTUALIZAR - ACTUALIZACION CANCELADA
+
+El motivo esta en los AVISOS de aqui arriba; casi siempre es falta de
+espacio en disco.
+
+No se ha tocado ni el juego ni el mundo. Una actualizacion sin copia
+previa no tiene marcha atras si el mundo deja de cargar, asi que prefiero
+no empezarla. Libera espacio y repite."
 
     local before; before="$(installed_buildid)"
     install_game
@@ -301,6 +329,7 @@ cmd_status() {
     printf 'RCON responde : %s\n' "$(rcon_ready && echo si || echo no)"
     printf 'RAM maxima    : %s\n' "$PZ_MEMORY"
     printf 'Backups       : %s\n' "$(ls -1 "${BACKUP_DIR}"/*.tar.zst 2>/dev/null | wc -l)"
+    printf 'Ultimo backup : %s\n' "$(last_backup_summary)"
 }
 
 # ================================================================ DISPATCH ===

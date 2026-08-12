@@ -100,7 +100,16 @@ guard_buildid() {
 
     if is_true "${ALLOW_BUILD_CHANGE:-false}"; then
         warn "Cambio de version aceptado explicitamente: ${recorded} -> ${installed}"
-        do_backup "pre-update"
+        do_backup "pre-update" || die_loud \
+"NO HE PODIDO RESPALDAR ANTES DEL CAMBIO DE VERSION - ARRANQUE CANCELADO
+
+ALLOW_BUILD_CHANGE esta activo y el motor ha cambiado de ${recorded} a
+${installed}, pero el backup previo fallo (mira los AVISOS de arriba;
+normalmente es falta de espacio).
+
+Abrir el mundo con un motor distinto y sin copia de seguridad es
+irreversible si sale mal, asi que no arranco. Libera espacio y vuelve
+a intentarlo."
         record_buildid "$installed"
         return 0
     fi
@@ -460,12 +469,100 @@ backup_prefix() {
     printf '%s' "${BACKUP_NAME_PREFIX:-pz-${PZ_SERVER_NAME}}"
 }
 
+# Espacio libre, en KB, alli donde se escriben los backups. Devuelve cadena
+# vacia si no se ha podido medir: quien llame DEBE distinguir "hay 0 KB" de "no
+# lo se", porque tratar lo segundo como lo primero cancela backups para siempre.
+backup_free_kb() {
+    df -Pk "$BACKUP_DIR" 2>/dev/null | awk 'NR==2 {print $4+0}' || true
+}
+
+# Antiguedad del backup mas reciente de ESTA instancia, en texto legible.
+#
+# Existe porque contar backups no detecta que hayan dejado de hacerse: los que
+# no se rotan sostienen la cifra, asi que un servidor que lleva nueve dias sin
+# copiar ensena el mismo numero que uno sano. Lo que delata el fallo es la edad,
+# y sin ella la unica pista de que los backups se cancelan es un AVISO perdido
+# en el log que nadie lee hasta el dia que hace falta restaurar.
+last_backup_summary() {
+    local newest
+    newest="$(ls -1t "${BACKUP_DIR}/$(backup_prefix)"-*.tar.zst 2>/dev/null | head -1 || true)"
+
+    if [[ -z "$newest" ]]; then
+        printf 'ninguno todavia'
+        return 0
+    fi
+
+    local mins=$(( ( $(date +%s) - $(stat -c %Y "$newest") ) / 60 ))
+    local edad
+    if (( mins < 120 )); then
+        edad="hace ${mins} min"
+    elif (( mins < 2880 )); then
+        edad="hace $(( mins / 60 )) h"
+    else
+        edad="hace $(( mins / 1440 )) dias"
+    fi
+
+    printf '%s (%s)' "$(basename "$newest")" "$edad"
+
+    # El bucle periodico salta cada BACKUP_INTERVAL_HOURS. Si el mas reciente ya
+    # dobla ese plazo, o no se estan haciendo o algo los esta cancelando.
+    local interval="${BACKUP_INTERVAL_HOURS:-6}"
+    if (( interval > 0 && mins > interval * 120 )); then
+        printf '  <-- REVISAR: deberia haber uno cada %s h' "$interval"
+    fi
+}
+
+# Hay ya un backup de esta etiqueta con menos de N minutos de vida?
+recent_backup_exists() {
+    local label="$1" minutes="$2"
+    [[ -n "$(find "$BACKUP_DIR" -maxdepth 1 \
+                  -name "$(backup_prefix)-*-${label}.tar.zst" \
+                  -newermt "-${minutes} minutes" -print -quit 2>/dev/null)" ]]
+}
+
+# Envoltorio con cerrojo. Dos backups a la vez sobre el mismo mundo son dos
+# compresiones peleandose por la CPU, dos rotaciones pisandose y, si caen en el
+# mismo segundo con la misma etiqueta, el mismo nombre de fichero. Pasa de
+# verdad: el bucle periodico salta a su hora sin preguntar si alguien acaba de
+# lanzar ./scripts/backup.sh a mano.
+#
+# El cerrojo es un fichero del bind mount, asi que tambien serializa entre
+# contenedores distintos (produccion, staging y vanilla comparten ./backups).
 do_backup() {
+    mkdir -p "$BACKUP_DIR"
+
+    (
+        if ! flock -w "${BACKUP_LOCK_WAIT:-600}" 200; then
+            warn "Hay otro backup en marcha y no ha terminado a tiempo."
+            warn "  Me salto este para no solapar dos compresiones del mismo mundo."
+            exit 1
+        fi
+        do_backup_locked "$@"
+    ) 200>"${BACKUP_DIR}/.backup.lock"
+}
+
+do_backup_locked() {
     local label="${1:-manual}"
     local stamp; stamp="$(date -u +%Y%m%d-%H%M%S)"
     local out="${BACKUP_DIR}/$(backup_prefix)-${stamp}-${label}.tar.zst"
 
-    mkdir -p "$BACKUP_DIR"
+    # Con el cerrojo puesto dos backups no se solapan, pero si uno termina
+    # dentro del mismo segundo en que arranca el siguiente el nombre chocaria y
+    # el segundo pisaria al primero: la marca de tiempo tiene resolucion de un
+    # segundo.
+    #
+    # Se resuelve esperando al segundo siguiente, y no anadiendo un sufijo al
+    # nombre, porque el sufijo rompia la rotacion sin decirlo: `rotate_backups`
+    # busca ficheros que TERMINEN en `-<etiqueta>.tar.zst`, asi que un
+    # `-periodic-2.tar.zst` no lo encontraba nadie y se quedaba para siempre
+    # ocupando disco. Detectado por las pruebas de selftest-backups.sh.
+    # Esperar cuesta un segundo y solo en un caso rarisimo; ya tenemos el
+    # cerrojo, asi que nadie mas esta bloqueado mientras tanto.
+    while [[ -e "$out" ]]; do
+        sleep 1
+        stamp="$(date -u +%Y%m%d-%H%M%S)"
+        out="${BACKUP_DIR}/$(backup_prefix)-${stamp}-${label}.tar.zst"
+    done
 
     # Si el servidor esta vivo, forzamos un guardado antes de empaquetar. Sin
     # esto capturariamos el estado del ultimo autosave, o peor, un mundo a
@@ -501,15 +598,43 @@ do_backup() {
     # coste de pasarse es saltarse un backup, y el de quedarse corto es el
     # escenario de arriba.
     local need_kb free_kb
-    need_kb=$(cd "$DATA_DIR" && du -sk "${items[@]}" 2>/dev/null | awk '{s+=$1} END {print s+0}')
-    free_kb=$(df -Pk "$BACKUP_DIR" | awk 'NR==2 {print $4}')
+    need_kb="$( { cd "$DATA_DIR" && du -sk "${items[@]}"; } 2>/dev/null \
+                | awk '{s+=$1} END {print s+0}' || true )"
+    free_kb="$(backup_free_kb)"
 
-    if (( need_kb > 0 && free_kb < need_kb )); then
-        warn "Backup (${label}) CANCELADO por falta de espacio."
-        warn "  necesita ~$(( need_kb / 1024 )) MB y quedan $(( free_kb / 1024 )) MB en ${BACKUP_DIR}."
-        warn "  Se cancela a proposito: llenar el disco dejaria al servidor sin"
-        warn "  poder guardar el mundo. Libera espacio y repite el backup."
-        return 1
+    # "No he podido medir" NO es lo mismo que "hay cero". Si `du` o `df` fallan
+    # y dejamos que la aritmetica los lea como 0, salen los dos errores
+    # opuestos: need=0 apaga la guarda sin que nadie se entere, y free=0 la deja
+    # cancelando todos los backups para siempre. Se validan explicitamente.
+    [[ "$need_kb" =~ ^[0-9]+$ ]] || need_kb=0
+    [[ "$free_kb" =~ ^[0-9]+$ ]] || free_kb=0
+
+    if (( need_kb == 0 || free_kb == 0 )); then
+        warn "No he podido medir el espacio en disco para el backup (${label})."
+        warn "  Sigo adelante SIN esa comprobacion. Un fallo al medir no debe"
+        warn "  dejarte sin copias, pero conviene mirar el disco a mano."
+    else
+        # Antes de rendirnos, hacemos sitio nosotros mismos.
+        #
+        # La rotacion vive al final de esta funcion, o sea DETRAS de este
+        # `return 1`. Sin este bloque, quedarse sin espacio deja el sistema sin
+        # forma de recuperarse solo: la limpieza esta detras de un backup que ya
+        # no puede ocurrir, y bajar BACKUP_KEEP en el .env no libera ni un byte
+        # porque nadie llega a aplicarlo.
+        if (( free_kb < need_kb )); then
+            warn "Espacio justo para el backup (${label}); roto los antiguos antes de rendirme."
+            rotate_backups
+            free_kb="$(backup_free_kb)"
+            [[ "$free_kb" =~ ^[0-9]+$ ]] || free_kb=0
+        fi
+
+        if (( free_kb < need_kb )); then
+            warn "Backup (${label}) CANCELADO por falta de espacio."
+            warn "  necesita ~$(( need_kb / 1024 )) MB y quedan $(( free_kb / 1024 )) MB en ${BACKUP_DIR}."
+            warn "  Se cancela a proposito: llenar el disco dejaria al servidor sin"
+            warn "  poder guardar el mundo. Libera espacio y repite el backup."
+            return 1
+        fi
     fi
 
     log "Respaldando (${label}): ${items[*]}"
@@ -525,19 +650,40 @@ do_backup() {
     #   cada BACKUP_INTERVAL_HOURS con la gente jugando, y comerse la maquina
     #   entera durante la compresion se nota en el servidor.
     #
-    # El `if !` no es estilo: dentro de una condicion, `set -e` no aborta, y eso
-    # es lo que permite limpiar el fichero a medias antes de salir. Comprobado
-    # que hace falta: un tar interrumpido DEJA el fichero parcial en disco, con
-    # nombre y fecha de uno bueno, y solo se descubre que esta roto al intentar
-    # restaurarlo. Un backup ausente es honesto; uno roto que parece bueno es
-    # peor que no tener ninguno.
-    if ! ( umask 077; tar --use-compress-program='zstd -6 -T4' \
-             -cf "$out" -C "$DATA_DIR" "${items[@]}" ); then
+    # El codigo de salida se recoge en una variable en vez de usar `if !` porque
+    # tar distingue tres desenlaces y solo uno es un fallo:
+    #
+    #   0  todo bien
+    #   1  "some files differ": el caso tipico es `file changed as we read it`,
+    #      que salta cuando un fichero cambia de tamano o fecha mientras tar lo
+    #      lee. Con el servidor en marcha sobre ~22.000 ficheros que el motor
+    #      esta escribiendo, es el resultado NORMAL, y el archivo queda entero.
+    #      Comprobado: tar sale 1, `zstd -t` da OK y la extraccion devuelve todo.
+    #   2  error fatal de verdad.
+    #
+    # Tratar el 1 como fallo borraba backups perfectamente validos, justo los
+    # que se hacen mientras la gente juega, que son los que mas valen.
+    #
+    # Un tar interrumpido si DEJA el fichero parcial en disco, con nombre y
+    # fecha de uno bueno, y solo se descubre al intentar restaurarlo. Por eso se
+    # limpia en el caso 2 y por eso todo pasa despues por `zstd -t`: un backup
+    # ausente es honesto, uno roto que parece bueno es peor que no tener ninguno.
+    local tar_rc=0
+    ( umask 077; tar --use-compress-program='zstd -6 -T4' \
+        -cf "$out" -C "$DATA_DIR" "${items[@]}" ) || tar_rc=$?
+
+    if (( tar_rc > 1 )); then
         rm -f "$out"
-        warn "El backup (${label}) fallo durante la compresion."
+        warn "El backup (${label}) fallo durante la compresion (tar salio ${tar_rc})."
         warn "  Se ha borrado el fichero incompleto para que nadie lo confunda"
         warn "  con una copia valida."
         return 1
+    fi
+
+    if (( tar_rc == 1 )); then
+        log "tar aviso de ficheros que cambiaron mientras los leia. Es lo esperado"
+        log "  con el servidor en marcha y no implica que el archivo este roto."
+        log "  Quien decide eso es la verificacion de aqui abajo."
     fi
 
     # ---- Verificacion: no damos por bueno lo que no hemos comprobado ----
@@ -555,8 +701,9 @@ do_backup() {
 
     # Aviso temprano: cuando el margen se estrecha conviene enterarse antes de
     # que el backup empiece a cancelarse solo.
-    free_kb=$(df -Pk "$BACKUP_DIR" | awk 'NR==2 {print $4}')
-    if (( need_kb > 0 && free_kb < need_kb * 3 )); then
+    free_kb="$(backup_free_kb)"
+    [[ "$free_kb" =~ ^[0-9]+$ ]] || free_kb=0
+    if (( need_kb > 0 && free_kb > 0 && free_kb < need_kb * 3 )); then
         warn "Queda poco espacio: $(( free_kb / 1024 )) MB libres para backups de ~$(( need_kb / 1024 )) MB."
         warn "Con menos de un backup de margen, el proximo se cancelara."
     fi
@@ -602,9 +749,55 @@ destruiria los datos. Para el servidor primero:  docker compose down"
 
     log "Restaurando desde $(basename "$file")"
 
+    # Verificar ANTES de tocar el mundo actual. La comprobacion de integridad
+    # importa mas al leer que al escribir: si el archivo esta roto, enterarse
+    # despues de haber apartado el mundo bueno deja al operador con las dos
+    # copias inservibles delante y sin saber cual era cual.
+    log "Comprobando la integridad del archivo antes de tocar nada..."
+    if ! zstd -t "$file" >/dev/null 2>&1; then
+        die_loud \
+"EL BACKUP ESTA CORRUPTO - NO HE TOCADO NADA
+
+    $(basename "$file")
+
+No pasa la verificacion de zstd, asi que restaurarlo destruiria el mundo
+actual a cambio de uno que no se puede leer. El mundo que hay ahora sigue
+intacto.
+
+Prueba con otra copia:  ./scripts/restore.sh"
+    fi
+
     # Antes de pisar nada, respaldamos lo que hay. Si la restauracion resulta
     # ser el error, esto es lo unico que permite deshacerla.
-    do_backup "pre-restore"
+    #
+    # Este `if !` es imprescindible: la llamada desnuda mataba la restauracion
+    # entera por `set -e` cuando el backup se cancelaba, y el disco lleno es
+    # justo el dia en que quieres restaurar. Quedarse sin marcha atras por culpa
+    # del mecanismo que existe para darte marcha atras es el peor final posible.
+    if ! do_backup "pre-restore"; then
+        if is_true "${FORCE_RESTORE:-false}"; then
+            warn "Sigo sin copia previa porque FORCE_RESTORE=true."
+            warn "  El mundo actual se aparta igualmente (no se borra), asi que"
+            warn "  la marcha atras existe aunque no haya tarball."
+        else
+            die_loud \
+"NO HE PODIDO RESPALDAR EL MUNDO ACTUAL - RESTAURACION CANCELADA
+
+El backup previo (pre-restore) fallo; el motivo esta en las lineas de
+AVISO de aqui arriba, y casi siempre es falta de espacio en disco.
+
+No he tocado nada. Tienes dos salidas:
+
+  1. Libera espacio y repite la restauracion. Es la recomendable.
+  2. Restaura sin copia previa, si tienes claro que el mundo actual es
+     el que quieres tirar:
+
+         FORCE_RESTORE=true ./scripts/restore.sh $(basename "$file")
+
+     Aun asi el mundo actual no se borra: se aparta a una carpeta
+     .pre-restore-<fecha> dentro del volumen de datos."
+        fi
+    fi
 
     # Apartar en vez de borrar: si la extraccion falla a medias, el estado
     # anterior sigue existiendo y es recuperable a mano.
@@ -615,9 +808,26 @@ destruiria los datos. Para el servidor primero:  docker compose down"
         [[ -e "${DATA_DIR}/${d}" ]] && mv "${DATA_DIR}/${d}" "${aside}/"
     done
 
-    tar --use-compress-program='zstd -d' -xf "$file" -C "$DATA_DIR"
+    # La extraccion tambien va protegida. Si falla y dejamos que `set -e` mate
+    # el proceso, las dos lineas que dicen donde quedo el mundo anterior no se
+    # llegan a imprimir, y son justo las que hacen falta en ese momento.
+    if ! tar --use-compress-program='zstd -d' -xf "$file" -C "$DATA_DIR"; then
+        warn "LA EXTRACCION HA FALLADO. Los datos en ${DATA_DIR} estan a medias."
+        warn ""
+        warn "El mundo anterior NO se ha perdido: esta entero, sin tocar, en"
+        warn "    ${DATA_DIR}/$(basename "$aside")"
+        warn ""
+        warn "Para deshacer, con el contenedor parado:"
+        warn "    rm -rf ${DATA_DIR}/{Saves,db,Server,.pz-buildid}"
+        warn "    mv ${DATA_DIR}/$(basename "$aside")/* ${DATA_DIR}/"
+        warn ""
+        warn "NO arranques el servidor antes de hacerlo."
+        return 1
+    fi
 
     log "Restauracion completada."
     log "El estado anterior quedo apartado en $(basename "$aside") por si acaso."
     log "Borralo cuando hayas comprobado que el mundo restaurado carga bien."
+    log "Ocupa lo mismo que el mundo entero sin comprimir, asi que no lo olvides:"
+    log "    rm -rf ${DATA_DIR}/.pre-restore-*"
 }
