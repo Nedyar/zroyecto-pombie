@@ -1,8 +1,14 @@
 # 001 — Los cadáveres no aparecen como contenedor y no se pueden registrar
 
-**Estado:** diagnosticada · propuesta lista · **nada aplicado todavía**
-**Componente:** mod `StarvingZombies` (Workshop `3396867685`)
+**Estado:** **DIAGNÓSTICO REFUTADO** el 13/08/2026 · no retirar nada · síntoma abierto
+**Componente:** ~~mod `StarvingZombies`~~ → sin identificar
 **Detectada:** 11/08/2026, primera sesión con 4 jugadores
+
+> **Lee esto antes que nada.** La causa que propone este documento es falsa. El
+> síntoma sigue abierto, pero **no lo produce `StarvingZombies`** y retirarlo no
+> habría arreglado nada. El desenlace está al final, en *La prueba en vanilla*.
+> El resto se conserva sin tocar porque el razonamiento es correcto hasta donde
+> llegaban los datos, y porque el error de método merece quedar a la vista.
 
 ## Síntoma
 
@@ -109,14 +115,59 @@ de produccion: reproducir el sintoma alli.
 
 Es mas barato que un ciclo de retirada, y no toca produccion.
 
-## Propuesta
+## Propuesta ~~(anulada)~~
 
-Retirar `StarvingZombies` (`3396867685`) siguiendo el procedimiento de
+~~Retirar `StarvingZombies` (`3396867685`)~~ siguiendo el procedimiento de
 [MODS.md](../MODS.md). Es el único candidato con mecanismo leído en código,
 asociación estadística y correspondencia con la descripción de los jugadores,
 incluido el detalle del movimiento.
 
-Requiere reinicio. El mundo es reciente y ningún otro mod depende de este.
+~~Requiere reinicio. El mundo es reciente y ningún otro mod depende de este.~~
+
+**No se aplica. Ver abajo.**
+
+---
+
+## La prueba en vanilla: el diagnóstico era falso
+
+La sección anterior planteaba la comprobación y su criterio de decisión. Se hizo
+el 13/08/2026, sobre los logs del servidor vanilla, y salió el resultado que
+invalidaba la hipótesis.
+
+`ItemPickInfo -> cannot get ID for container`, en tasa por hora:
+
+| Servidor | `StarvingZombies` | Fallos/h |
+| --- | --- | ---: |
+| Producción, 10-08, 22,7 h | **sí** | 14,4 |
+| Vanilla, 11-08, 2,4 h | **no** | **32,8** |
+| Vanilla, 11-08, 6,7 h | **no** | **38,9** |
+| Vanilla, 12-08, 18 h | no | 13,1 |
+
+**Más del doble de frecuente sin el mod acusado que con él.** El servidor
+vanilla no ha tenido `StarvingZombies` ni un solo minuto, y el síntoma está ahí
+igual. La línea base que este documento echaba en falta ya existe, y dice que el
+fenómeno es del juego base.
+
+### Qué falló en el razonamiento
+
+Nada de lo escrito arriba es incorrecto en sí: el mecanismo del código está bien
+leído, la asociación temporal se calculó contra un modelo nulo y el exceso sobre
+el 28% esperado era real. El error fue de **inferencia**: una asociación real
+entre dos cosas no significa que una cause la otra, y el propio documento
+señalaba que **el 60% de los fallos no caía cerca de ninguna conversión**. Ese
+60% no era ruido pendiente de explicar: era la señal de que había una causa
+mayor, y resultó ser la única.
+
+La lección, que vale para la siguiente: **cuando tu hipótesis explica la minoría
+de los casos, es candidata a ser un efecto colateral, no la causa.**
+
+### Qué queda
+
+El síntoma sigue abierto y sin causa. La diferencia es que ahora se sabe que hay
+que buscarla en el juego base y no en la lista de mods. Ver
+[005](005-desincronizacion-al-conducir.md), que documenta otra firma de
+desincronización de estado de mundo con el mismo perfil: presente en todas las
+sesiones, y **más frecuente sin mods**.
 
 **Criterio de éxito:** que `cannot get ID for container` baje sustancialmente.
 Si baja pero no desaparece, queda confirmada la segunda fuente y el log queda
