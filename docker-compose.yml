@@ -133,15 +133,21 @@ services:
     restart: "no"
 
     environment:
-      # OJO: staging usa EL MISMO PZ_SERVER_NAME que produccion, a proposito.
+      # OJO: staging usa EL MISMO PZ_SERVER_NAME que el mundo del que se copia.
       #
       # El nombre del servidor da nombre a la carpeta de guardado
-      # (Saves/Multiplayer/<nombre>) y a la base de datos. Si aqui pusieramos un
-      # nombre distinto, staging restauraria la copia de produccion y luego
-      # generaria un mundo nuevo y vacio a su lado, ignorandola. Es decir,
-      # estariamos probando los mods sobre un mundo recien creado en vez de
-      # sobre el mundo real, que es exactamente lo que staging existe para
-      # evitar. El aislamiento lo dan los volumenes separados, no el nombre.
+      # (Saves/Multiplayer/<nombre>) y a la base de datos. Si no coincidieran,
+      # staging restauraria la copia y luego generaria un mundo nuevo y vacio a
+      # su lado, ignorandola. Es decir, estariamos probando los mods sobre un
+      # mundo recien creado en vez de sobre el mundo real, que es exactamente
+      # lo que staging existe para evitar. El aislamiento lo dan los volumenes
+      # separados, no el nombre.
+      #
+      # Desde que hay mas de un mundo, el origen ya no es siempre produccion:
+      # stage.sh exporta STAGING_SERVER_NAME con el nombre del mundo elegido
+      # (--from pz-vanilla). Sin la variable, el default anidado cae en el
+      # nombre de produccion y el uso clasico no cambia.
+      PZ_SERVER_NAME: "${STAGING_SERVER_NAME:-${PZ_SERVER_NAME}}"
       PZ_PUBLIC: "false"
 
       # Los puertos INTERNOS de staging tienen que coincidir con los que

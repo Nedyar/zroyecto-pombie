@@ -1,20 +1,36 @@
 #!/usr/bin/env bash
-# Levanta el servidor de ENSAYO con una copia del mundo de produccion.
+# Levanta el servidor de ENSAYO con una copia de un mundo real.
 #
 # Este es el mecanismo que da la certeza de que un cambio no rompe nada: en vez
 # de razonar sobre si un mod nuevo va a corromper los guardados, se prueba
-# sobre una copia real y se mira. Produccion no se entera.
+# sobre una copia real y se mira. El mundo original no se entera.
 #
 # Uso:
-#   ./scripts/stage.sh            copia el mundo actual de produccion y arranca
-#   ./scripts/stage.sh --keep     arranca sin recopiar (sigue donde lo dejaste)
-#   ./scripts/stage.sh --down     para y BORRA los datos de staging
+#   ./scripts/stage.sh                        copia PRODUCCION y arranca
+#   ./scripts/stage.sh --from pz-vanilla      copia el mundo VANILLA y arranca
+#   ./scripts/stage.sh --keep [--from ...]    arranca sin recopiar
+#   ./scripts/stage.sh --down                 para y BORRA los datos de staging
+#
+# Con --keep hay que repetir el --from que se uso al copiar: staging necesita
+# saber que nombre de mundo debe cargar, y eso no queda guardado en ningun sitio.
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
-MODE="${1:-fresh}"
+# ------------------------------------------------------------- argumentos ---
+MODE="fresh"
+SRC_SVC="pz"
+while (( $# )); do
+    case "$1" in
+        --down) MODE="--down" ;;
+        --keep) MODE="--keep" ;;
+        --from) shift; SRC_SVC="${1:-}" ;;
+        *)      die "Argumento desconocido: '$1'. Mira la cabecera del script." ;;
+    esac
+    shift
+done
 
+# ------------------------------------------------------------------- down ---
 if [[ "$MODE" == "--down" ]]; then
-    confirm "Vas a parar staging y BORRAR sus datos. Produccion no se toca."
+    confirm "Vas a parar staging y BORRAR sus datos. Los mundos reales no se tocan."
 
     # OJO: aqui NO vale `docker compose down`, ni siquiera con --profile.
     # `down` derriba el proyecto ENTERO, produccion incluida, sin avisar. Se
@@ -24,24 +40,55 @@ if [[ "$MODE" == "--down" ]]; then
     docker volume rm zroyecto-pombie_pz-data-staging 2>/dev/null || true
 
     say "Staging eliminado. El volumen del juego se conserva para no redescargar 8 GB."
-
-    if service_running pz; then
-        say "Produccion sigue corriendo, como debe ser."
-    else
-        warn "Produccion NO esta corriendo. Arrancala con: docker compose up -d"
-    fi
     exit 0
 fi
 
+# ------------------------------------------------------- origen de la copia ---
+#
+# Staging comparte a proposito el nombre de mundo con su ORIGEN: el nombre da
+# nombre a la carpeta de guardado, y si no coincidieran, staging restauraria la
+# copia y luego generaria un mundo vacio al lado, ignorandola — estarias
+# probando los mods sobre un mundo recien creado creyendo que es el tuyo.
+#
+# Por eso aqui se averigua el nombre del mundo origen y se exporta
+# STAGING_SERVER_NAME, que el compose usa para el PZ_SERVER_NAME de staging
+# (con el de produccion como valor por defecto, asi el uso clasico no cambia).
+#
+# Los nombres se leen del .env clave a clave, sin volcar el fichero: lleva
+# contrasenas.
+case "$SRC_SVC" in
+    pz)
+        SRC_DC=("${DC[@]}")
+        SRC_NAME="$(sed -n 's/^PZ_SERVER_NAME=//p' .env | tr -d '[:space:]')"
+        [[ -n "$SRC_NAME" ]] || die "No encuentro PZ_SERVER_NAME en .env"
+        # el prefijo de backup de produccion es pz-<nombre> (docker/ops.sh)
+        SRC_PREFIX="pz-${SRC_NAME}"
+        ;;
+    pz-vanilla)
+        # los comandos sobre un servicio con perfil necesitan el perfil activo
+        SRC_DC=("${DC[@]}" --profile vanilla)
+        SRC_NAME="$(sed -n 's/^VANILLA_SERVER_NAME=//p' .env | tr -d '[:space:]')"
+        SRC_NAME="${SRC_NAME:-pombie-vanilla}"
+        # el compose fija BACKUP_NAME_PREFIX=vanilla para este servicio
+        SRC_PREFIX="vanilla"
+        ;;
+    *)  die "Origen desconocido: '--from ${SRC_SVC}'. Usa 'pz' o 'pz-vanilla'." ;;
+esac
+
+export STAGING_SERVER_NAME="$SRC_NAME"
+
+# ------------------------------------------------------------------ copia ---
 if [[ "$MODE" != "--keep" ]]; then
-    say "Tomando una instantanea de produccion..."
-    if service_running pz; then
-        "${DC[@]}" exec -T pz /docker/run.sh backup "stage" || die "No pude respaldar produccion."
+    say "Tomando una instantanea de ${SRC_SVC} (mundo '${SRC_NAME}')..."
+    if [[ -n "$("${SRC_DC[@]}" ps -q --status running "$SRC_SVC" 2>/dev/null)" ]]; then
+        "${SRC_DC[@]}" exec -T "$SRC_SVC" /docker/run.sh backup "stage" || die "No pude respaldar ${SRC_SVC}."
     else
-        "${DC[@]}" run --rm --no-deps pz backup "stage" || die "No pude respaldar produccion."
+        "${SRC_DC[@]}" run --rm --no-deps "$SRC_SVC" backup "stage" || die "No pude respaldar ${SRC_SVC}."
     fi
 
-    LATEST="$(ls -1t backups/*-stage.tar.zst 2>/dev/null | head -1)"
+    # Solo instantaneas del ORIGEN elegido: cada instancia tiene su prefijo, y
+    # el ultimo *-stage.tar.zst a secas podria ser de otro mundo.
+    LATEST="$(ls -1t backups/"${SRC_PREFIX}"-*-stage.tar.zst 2>/dev/null | head -1)"
     [[ -n "$LATEST" ]] || die "No encuentro la instantanea recien creada."
     say "Instantanea: $(basename "$LATEST")"
 
@@ -53,21 +100,22 @@ if [[ "$MODE" != "--keep" ]]; then
     "${DC[@]}" run --rm --no-deps pz-staging restore "$(basename "$LATEST")"
 fi
 
-say "Arrancando staging..."
+say "Arrancando staging (mundo '${SRC_NAME}')..."
 "${DC[@]}" --profile staging up -d pz-staging
 
-STAGE_PORT="$(grep -E '^STAGING_GAME_PORT=' .env | cut -d= -f2 || true)"
+STAGE_PORT="$(sed -n 's/^STAGING_GAME_PORT=//p' .env | tr -d '[:space:]')"
 
 cat <<EOF
 
-  Staging levantandose. La primera vez descarga el juego (~8 GB).
+  Staging levantandose con una copia del mundo '${SRC_NAME}'.
+  La primera vez descarga el juego (~8 GB).
 
   Conectate a:  localhost:${STAGE_PORT:-16361}
   Logs:         docker compose --profile staging logs -f pz-staging
 
-  Produccion sigue corriendo sin enterarse.
+  El mundo original sigue donde estaba, sin enterarse.
 
-  Que comprobar antes de aplicar el cambio en produccion:
+  Que comprobar antes de aplicar el cambio en el mundo real:
     - El mundo carga sin errores en el log.
     - Tu personaje sigue existiendo, con su inventario.
     - Las construcciones y los contenedores de tu base estan intactos.
