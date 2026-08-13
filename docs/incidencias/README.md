@@ -52,7 +52,9 @@ entero.
 
 **Sin línea base no hay anomalía.** Decir que 172 errores por hora es mucho
 exige saber cuántos tiene un servidor sano. Si no se tiene esa referencia, se
-dice que no se tiene.
+dice que no se tiene. *(Esa referencia ya existe: **~16 `ERROR`/h y ~2 causas
+distintas** en cliente, medida sobre la sesión del 11/08 en el vanilla con cero
+mods. Detalle y salvedades en la [004](004-sintomas-sin-diagnosticar.md).)*
 
 **Calcula el azar antes de declarar una correlación.** Un 40% de coincidencia
 parece mucho y puede ser menos de lo que da el azar si las ventanas cubren media

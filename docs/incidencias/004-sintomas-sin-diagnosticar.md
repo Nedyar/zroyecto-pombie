@@ -115,13 +115,46 @@ Unas 49 veces más por hora, y con un jugador frente a cuatro. **Pero sin línea
 base no se podía afirmar que fuera anormal**: se desconocía cuántos errores por
 hora produce un B42.20 multijugador sano.
 
-**Ese hueco probablemente ya está tapado sin saberlo.** El plan era jugar en el
-vanilla limpio y contar errores por hora; pues **esa sesión ya se jugó**: la del
-11/08, ~6 h en el vanilla con cero mods, y sus logs siguen en la máquina del
-jugador analizado para la 005. Falta solo pedir el recuento total de `ERROR` por
-hora de esa sesión, que el informe del cliente no llegó a dar. Ojo: el vanilla
-lleva mods desde el 12/08, así que **la línea base es esa sesión archivada, no
-una futura**.
+## La línea base, medida (14/08/2026)
+
+El hueco estaba tapado sin saberlo: la sesión del 11/08 fueron ~5 h de cliente
+en el vanilla con **cero mods**, y sus logs seguían archivados en la máquina del
+jugador analizado para la 005. Extraída con la misma metodología (solo `ERROR`,
+en partida, excluyendo `f:0`, tiempo jugado real por `connections.txt`):
+
+| Sesión | Mods | Min jugados | `ERROR`/h | Causas distintas |
+| --- | ---: | ---: | ---: | ---: |
+| 11/08 vanilla | **0** | 304,6 | **16,0** | **~2** |
+| 12/08 tarde vanilla | 7 UI | 267,6 | 57,8 | 4 |
+| 12/08 noche vanilla | 7 UI | 256,4 | 39,1 | 5 |
+
+**Un cliente B42.20 multijugador sano produce ~16 `ERROR`/h, con ~2 causas
+distintas.** Y la composición importa más que el total: **77 de los 81 errores
+de la sesión limpia son `ItemContainer.AddItem: container already has id`** — la
+firma del síntoma 2. El 95% del error de fondo de un cliente sin un solo mod es
+exactamente el conflicto de identificadores de contenedor. Confirmación
+definitiva de que esa firma es del juego base.
+
+Con la referencia, las demás cifras pasan a significar algo:
+
+- **Los 172/h del cliente en producción son ~11 veces la línea base.** Ahora sí
+  se puede decir que es anómalo. Lo que no se sabe aún es *qué* lo compone: hace
+  falta el desglose por firmas de aquella sesión antes de atribuirlo a nada.
+- Las sesiones con 7 mods de interfaz dan 39–58/h, pero **el exceso sobre la
+  línea base no es difuso, son episodios**: los 124 `IsoDoor` de la tarde caen
+  en 3 minutos, y 116 de los 167 errores de la noche caen en 21 minutos
+  (00:02–00:23, excepciones de inventario en `mainLoopDealWithNetData`, aún sin
+  investigar). Quitando esos dos episodios, ambas sesiones quedan en 12–30/h,
+  es decir, alrededor de la línea base.
+
+**Salvedades de la medición**, que el propio informe declara: la línea base
+mezcla 41 min pre-reinicio y 264 min sobre el mundo recién regenerado —cotejado
+con el log del servidor: el reinicio de las 21:02 que vio el cliente es la
+regeneración del mundo de las 20:59:53 del 11/08, así que **el grueso de la
+línea base corrió sobre el mundo exacto que se juega ahora**—, y un mundo recién
+creado puede producir menos conflictos de identificadores que uno con estado
+acumulado, lo que sesgaría la referencia a la baja. Es una sesión, un jugador:
+n=1.
 
 Además, servidor y cliente fallan en cosas casi disjuntas: de las firmas del
 servidor, solo `ReceiveEatBody` aparece también en el cliente (19 frente a 686).
