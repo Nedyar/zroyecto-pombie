@@ -11,14 +11,18 @@ name: zroyecto-pombie
 #   pz-staging  ensayo. Se levanta con una copia del mundo real, en otros
 #               puertos, para probar mods y ajustes de riesgo antes de tocar
 #               produccion. Perfil `staging`, asi que no arranca por defecto.
-#   pz-vanilla  referencia sin mods. Mismo mapa, misma semilla y mismos ajustes
-#               que produccion, pero mundo generado de cero y CERO mods. Sirve
-#               para distinguir "esto falla por un mod" de "esto es asi en
-#               Build 42". Perfil `vanilla`.
 #
 # Levantar produccion:   docker compose up -d
 # Levantar staging:      ./scripts/stage.sh
-# Levantar vanilla:      docker compose --profile vanilla up -d pz-vanilla
+#
+# HUBO UN TERCER SERVICIO, `pz-vanilla`, retirado el 13/08/2026. Nacio como
+# referencia sin mods para distinguir "esto lo rompe un mod" de "esto es asi en
+# Build 42", y cumplio: respondio cuatro veces y las cuatro dijo que no eran los
+# mods (ver docs/incidencias/). Despues la gente se puso a jugar en el, se le
+# anadieron mods, y acabo siendo el mundo bueno — asi que paso a ser PRODUCCION
+# y el servicio dejo de tener sentido: dos servicios sobre el mismo volumen es
+# la forma mas directa de corromper un mundo. Sus volumenes siguen llamandose
+# "-vanilla" a proposito; renombrarlos exigiria mover los guardados.
 # ============================================================================
 
 x-pz-common: &pz-common
@@ -120,8 +124,17 @@ services:
       - "127.0.0.1:${HOST_RCON_PORT:-27015}:27015/tcp"
 
     volumes:
-      - pz-game:/opt/pz-server        # instalacion (~8 GB), desechable
-      - pz-data:/home/steam/Zomboid   # SAVES, db, config runtime: irremplazable
+      # OJO A LOS NOMBRES: los volumenes se llaman "-vanilla" por herencia, no
+      # porque el mundo lo sea. El 13/08/2026 el mundo bueno paso a ser este y
+      # produccion lo adopto TAL CUAL, sin moverlo: reasignar un volumen no
+      # toca ni un byte de los guardados, mientras que copiarlos o restaurarlos
+      # si. Con 285 MB de partida jugada dentro, la opcion que no los manipula
+      # gana a la que deja los nombres bonitos.
+      #
+      # El mundo anterior (33 mods) vivia en pz-data/pz-game y se retiro con
+      # backup. Ver docs/DECISIONES.md.
+      - pz-game-vanilla:/opt/pz-server   # instalacion (~7 GB), desechable
+      - pz-data-vanilla:/home/steam/Zomboid  # SAVES, db: irremplazable
       - ./config:/config              # fuente de verdad de la configuracion
       - ./backups:/backups            # tarballs, y vehiculo de migracion
 
@@ -143,10 +156,9 @@ services:
       # lo que staging existe para evitar. El aislamiento lo dan los volumenes
       # separados, no el nombre.
       #
-      # Desde que hay mas de un mundo, el origen ya no es siempre produccion:
-      # stage.sh exporta STAGING_SERVER_NAME con el nombre del mundo elegido
-      # (--from pz-vanilla). Sin la variable, el default anidado cae en el
-      # nombre de produccion y el uso clasico no cambia.
+      # stage.sh exporta STAGING_SERVER_NAME con el nombre del mundo origen.
+      # Sin la variable, el default anidado cae en el nombre de produccion, que
+      # es el caso normal ahora que solo queda un mundo real.
       PZ_SERVER_NAME: "${STAGING_SERVER_NAME:-${PZ_SERVER_NAME}}"
       PZ_PUBLIC: "false"
 
@@ -194,111 +206,6 @@ services:
       # produccion esta usando ahora mismo. El disco es mas barato que eso.
       - pz-game-staging:/opt/pz-server
       - pz-data-staging:/home/steam/Zomboid
-      - ./config:/config
-      - ./backups:/backups
-
-  # ==========================================================================
-  # pz-vanilla - el MISMO mundo, con lista de mods corta y propia.
-  #
-  # No es staging y no lo sustituye. Staging existe para ensayar un cambio
-  # antes de meterlo en produccion; esto nacio para responder una pregunta
-  # distinta: cuando algo se comporta raro en juego, saber si la causa son los
-  # mods o es el juego base.
-  #
-  # Nacio sin ningun mod, que era lo que permitia distinguir "esto falla" de
-  # "esto es asi en Build 42". Se le anadieron siete de interfaz a peticion de
-  # quienes juegan aqui, asi que esa funcion queda a medias: sirve para
-  # descartar los 26 que no lleva, no para medir la linea base del juego limpio.
-  #
-  # Por eso tiene NOMBRE PROPIO, al reves que staging: aqui no queremos una
-  # copia indistinguible, queremos poder tener las dos y comparar.
-  #
-  # Levantar:  docker compose --profile vanilla up -d pz-vanilla
-  # ==========================================================================
-  pz-vanilla:
-    <<: *pz-common
-    container_name: pombie-vanilla
-    hostname: pombie-vanilla
-    profiles: ["vanilla"]
-    restart: "no"
-
-    environment:
-      # Nombre distinto al de produccion. Da nombre a la carpeta de guardado y
-      # a la base de datos, asi que el mundo copiado hay que renombrarlo dentro
-      # del volumen para que este servidor lo encuentre; si no, generaria uno
-      # nuevo y vacio al lado e ignoraria la copia.
-      PZ_SERVER_NAME: "${VANILLA_SERVER_NAME:-pombie-vanilla}"
-      PZ_PUBLIC_NAME: "Zroyecto Pombie (vanilla)"
-      PZ_PUBLIC: "false"
-
-      # Lista PROPIA de mods. El default de aqui es el minimo (7 de interfaz
-      # pura, cero definiciones); la lista real de esta instancia vive en el
-      # .env (VANILLA_WORKSHOP_ITEMS / VANILLA_MODS), igual que la de
-      # produccion. Se define aqui y no heredando del .env de produccion porque
-      # `environment` tiene prioridad sobre `env_file`: asi produccion conserva
-      # su lista intacta pase lo que pase aqui.
-      #
-      # PZ_USE_STAGING_MODS queda en false a proposito: con true, una lista
-      # vacia significaria "replica los mods de produccion", que es justo lo
-      # contrario de lo que queremos aqui.
-      #
-      # ---- Criterio de admision ----
-      #
-      # Este mundo estaba EMPEZADO cuando entraron mods, y sobre un mundo
-      # empezado la pregunta no es "este mod es bueno" sino "puedo deshacerlo".
-      # Entra lo REVERSIBLE: mods sin definiciones persistentes (items,
-      # recetas, vehiculos, entidades) medido fichero a fichero sobre lo
-      # descargado, no leyendo el Workshop. Quitar uno de esos no deja
-      # referencias colgando en el WorldDictionary.
-      #
-      # La clasificacion completa, las oleadas y lo vetado (Bicycle!) estan en
-      # docs/MODS-LISTA.md seccion 0. Los de via unica (Common Sense, Take A
-      # Bath, Trailers!...) solo entran tras probarse en staging sobre una
-      # copia de ESTE mundo, y sabiendo que entran para quedarse.
-      #
-      # ORDEN DE CARGA: derivado filtrando la cadena de produccion, que ya
-      # respeta las siete reglas documentadas (NeatUI_Framework primero,
-      # nested antes que Proximity, etc.).
-      PZ_USE_STAGING_MODS: "false"
-      PZ_WORKSHOP_ITEMS: "${VANILLA_WORKSHOP_ITEMS:-3508537032;3536052310;3502080466;3451167732;2734705913;2544353492;3399645148}"
-      PZ_MODS: "${VANILLA_MODS:-NeatUI_Framework;Neat_Building_UIOnly;Neat_Crafting;ModernStatus;MapSymbolSizeSlider;P4HasBeenRead;MapSymbolsPlusDeonHand}"
-
-      # Los puertos INTERNOS deben coincidir con los publicados. El servidor le
-      # anuncia al cliente los suyos: si dentro dijera 16261, el cliente
-      # acabaria hablando con PRODUCCION a mitad del handshake.
-      PZ_PORT: "${VANILLA_GAME_PORT:-16461}"
-      PZ_UDP_PORT: "${VANILLA_GAME_PORT_2:-16462}"
-
-      # Sin mods consume bastante menos, y asi caben los dos en la maquina si
-      # algun dia hace falta compararlos en caliente.
-      PZ_MEMORY: "${VANILLA_MEMORY:-3g}"
-      PZ_MEMORY_MIN: "1g"
-
-      # Prefijo propio para que sus backups no se confundan con los de
-      # produccion en la carpeta compartida. La rotacion es por prefijo, asi
-      # que ninguna instancia puede borrar los backups de otra.
-      BACKUP_NAME_PREFIX: "vanilla"
-
-      # Nacio sin backup automatico —"mundo de comparacion, desechable por
-      # definicion"— y esa premisa dejo de ser cierta: se juega en el, tiene
-      # cuatro personajes y un mundo mas grande que el de produccion. Un mundo
-      # en el que alguien invierte horas no es desechable por mucho que asi se
-      # concibiera, asi que hereda de .env lo mismo que produccion.
-      #
-      # Staging si conserva la exencion: ahi el mundo es literalmente una copia
-      # que stage.sh rehace cuando quiere.
-
-      # Es una copia: aceptamos abrirla con otra version si hiciera falta.
-      ALLOW_BUILD_CHANGE: "true"
-
-    ports:
-      - "${HOST_BIND_IP:-0.0.0.0}:${VANILLA_GAME_PORT:-16461}:${VANILLA_GAME_PORT:-16461}/udp"
-      - "${HOST_BIND_IP:-0.0.0.0}:${VANILLA_GAME_PORT_2:-16462}:${VANILLA_GAME_PORT_2:-16462}/udp"
-      - "127.0.0.1:${VANILLA_RCON_PORT:-27215}:27015/tcp"
-
-    volumes:
-      - pz-game-vanilla:/opt/pz-server
-      - pz-data-vanilla:/home/steam/Zomboid
       - ./config:/config
       - ./backups:/backups
 

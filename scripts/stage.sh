@@ -6,13 +6,17 @@
 # sobre una copia real y se mira. El mundo original no se entera.
 #
 # Uso:
-#   ./scripts/stage.sh                        copia PRODUCCION y arranca
-#   ./scripts/stage.sh --from pz-vanilla      copia el mundo VANILLA y arranca
-#   ./scripts/stage.sh --keep [--from ...]    arranca sin recopiar
-#   ./scripts/stage.sh --down                 para y BORRA los datos de staging
+#   ./scripts/stage.sh              copia PRODUCCION y arranca
+#   ./scripts/stage.sh --keep       arranca sin recopiar (sigue donde lo dejaste)
+#   ./scripts/stage.sh --down       para y BORRA los datos de staging
 #
-# Con --keep hay que repetir el --from que se uso al copiar: staging necesita
-# saber que nombre de mundo debe cargar, y eso no queda guardado en ningun sitio.
+# `--from <servicio>` existe para elegir el mundo origen. Hoy solo vale `pz`,
+# porque desde el 13/08/2026 solo hay un mundo: el servicio pz-vanilla se
+# retiro cuando su mundo paso a ser produccion. La maquinaria se conserva
+# porque el dia que vuelva a haber dos mundos, anadir un caso al `case` de
+# abajo es todo lo que hace falta — y porque lo que resuelve (que staging use
+# el NOMBRE de mundo de su origen, y que elija la instantanea por PREFIJO y no
+# la ultima de cualquiera) sigue siendo necesario con un solo mundo.
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 # ------------------------------------------------------------- argumentos ---
@@ -64,15 +68,11 @@ case "$SRC_SVC" in
         # el prefijo de backup de produccion es pz-<nombre> (docker/ops.sh)
         SRC_PREFIX="pz-${SRC_NAME}"
         ;;
-    pz-vanilla)
-        # los comandos sobre un servicio con perfil necesitan el perfil activo
-        SRC_DC=("${DC[@]}" --profile vanilla)
-        SRC_NAME="$(sed -n 's/^VANILLA_SERVER_NAME=//p' .env | tr -d '[:space:]')"
-        SRC_NAME="${SRC_NAME:-pombie-vanilla}"
-        # el compose fija BACKUP_NAME_PREFIX=vanilla para este servicio
-        SRC_PREFIX="vanilla"
-        ;;
-    *)  die "Origen desconocido: '--from ${SRC_SVC}'. Usa 'pz' o 'pz-vanilla'." ;;
+    # Si algun dia vuelve a haber un segundo mundo, su caso va aqui: hace falta
+    # su nombre de mundo (para que staging cargue la copia y no genere uno
+    # vacio al lado) y su prefijo de backup (para no restaurar la instantanea
+    # de otro). Si el servicio lleva perfil, SRC_DC necesita --profile <x>.
+    *)  die "Origen desconocido: '--from ${SRC_SVC}'. Hoy solo existe 'pz'." ;;
 esac
 
 export STAGING_SERVER_NAME="$SRC_NAME"

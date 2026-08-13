@@ -66,11 +66,9 @@
       // 16262  produccion, NO se teclea nunca: lo usa el motor por su
       //        cuenta, pero sin permiso la conexion se queda a medias sin
       //        dar ningun error claro
-      // 16461  mundo vanilla (perfil `vanilla`), mismo criterio
-      // 16462  su puerto de motor
       //
       // Si cambias los puertos en el .env, cambialos tambien aqui.
-      "ip": ["udp:16261", "udp:16262", "udp:16461", "udp:16462"],
+      "ip": ["udp:16261", "udp:16262"],
 
       // Si algun dia se invita a alguien a probar en staging, se anaden
       // sus puertos igual. Por defecto staging no se comparte con nadie.

@@ -70,9 +70,8 @@ Lo que sigue vivo bajo la regla:
 - **StarvingZombies**: reversible y exonerado por la incidencia 001. Solo
   pendiente de votación porque cambia jugabilidad, no por riesgo técnico.
 - **Cualquier candidato nuevo**, si pasa la medición de reversibilidad. El
-  procedimiento: meterlo en `STAGING_*`, `./scripts/stage.sh --from
-  pz-vanilla`, y escanear lo descargado con el método de esta sección. Cero
-  scripts = admisible.
+  procedimiento: meterlo en `STAGING_*`, lanzar `./scripts/stage.sh` y escanear
+  lo descargado con el método de esta sección. Cero scripts = admisible.
 
 Evaluado y descartado bajo esta regla el 15/08: los **mods-parche de
 sincronización de vehículos**. Ninguno reunía atacar vehículos + estar

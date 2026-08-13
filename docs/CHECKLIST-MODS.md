@@ -9,7 +9,7 @@ casi ninguno de estos autores tiene un servidor para probar.
 
 Marca lo que falle y dilo, aunque parezca una tontería.
 
-**Nota (13/08/2026):** el mundo activo es ahora el **vanilla** (16461), que
+**Nota (13/08/2026):** el mundo activo (puerto 16261) es el que
 lleva la oleada 1: los mods de esta lista **salvo** Common Sense, Take A Bath,
 Manage Containers, Realistic Temperature, Trailers!, Bicycle! y Starving
 Zombies. Las marcas de verificación de abajo vienen del mundo anterior; los

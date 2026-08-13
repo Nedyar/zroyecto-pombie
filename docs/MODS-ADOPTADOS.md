@@ -1,6 +1,6 @@
 # Mods del servidor
 
-Esto es lo que lleva **el mundo en el que jugamos ahora** (el del puerto 16461).
+Esto es lo que lleva **el mundo en el que jugamos ahora** (el del puerto 16261).
 **25 mods**, todos probados y funcionando en la versión actual del juego
 (Build 42.20).
 

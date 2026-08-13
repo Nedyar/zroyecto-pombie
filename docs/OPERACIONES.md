@@ -302,7 +302,7 @@ docker compose run --rm --no-deps pz bash -c 'rm -rf /home/steam/Zomboid/.pre-re
 
 ```bash
 ./scripts/stage.sh                     # copia el mundo de PRODUCCION y lo levanta aparte
-./scripts/stage.sh --from pz-vanilla   # copia el mundo VANILLA
+./scripts/stage.sh --from pz         # explicito, mismo efecto
 ./scripts/stage.sh --keep              # arranca sin recopiar (repite el --from)
 ./scripts/stage.sh --down              # para y borra los datos de staging
 ```
@@ -323,7 +323,7 @@ sin `--from`, todo funciona como siempre.
 1. En `.env`, poner en `STAGING_WORKSHOP_ITEMS` / `STAGING_MODS` la lista del
    vanilla **mas el candidato**, respetando su posicion de insercion
    ([MODS-LISTA.md](MODS-LISTA.md) seccion 0).
-2. `./scripts/stage.sh --from pz-vanilla`
+2. `./scripts/stage.sh`
 3. Probar en `localhost:16361` con la checklist de abajo, mas lo especifico
    del candidato.
 4. `./scripts/stage.sh --down`, y decidir: si entra, entra sabiendo que es
@@ -343,71 +343,54 @@ Que mirar antes de dar por bueno un cambio:
 
 ---
 
-## Mundo vanilla: el mundo ligero
+## El mundo unico, y por que se llama "vanilla"
 
-```bash
-docker compose --profile vanilla up -d pz-vanilla     # levantar
-docker compose --profile vanilla stop pz-vanilla      # parar
-```
+Desde el 13/08/2026 **hay un solo mundo**: `pombie-vanilla`, servido por
+produccion en el puerto **16261**.
 
-Se conecta al **puerto 16461**, no al 16261.
+El nombre es herencia. Ese mundo nacio como referencia SIN mods para distinguir
+"esto lo rompe un mod" de "esto es asi en Build 42" —y cumplio: respondio
+cuatro veces y las cuatro dijo que no eran los mods (ver `docs/incidencias/`)—.
+Despues la gente empezo a jugar ahi, pidio interfaz, acabo con 25 mods y
+resulto ser mejor mundo que el original de 33. Asi que paso a ser produccion.
 
-Es el mismo mapa (Knox Country), la misma semilla y los mismos ajustes de
-partida que produccion, pero con el mundo generado desde cero y con **siete
-mods de interfaz** en vez de los 33 de produccion.
+**Produccion lo adopto tal cual, sin moverlo**: se reasignaron los volumenes
+`pz-data-vanilla` y `pz-game-vanilla` al servicio `pz` en el compose. Reasignar
+un volumen no toca ni un byte; copiar o restaurar 285 MB de partida jugada, si.
+Por eso los volumenes y el mundo conservan el sufijo `-vanilla` aunque ya no
+describa nada. El porque completo, en [DECISIONES.md](DECISIONES.md).
 
-Nacio literalmente sin ninguno, para responder una pregunta que sin el no tiene
-respuesta: cuando algo se comporta raro en juego, si la causa son los mods o es
-el juego base. **Esa funcion la ha perdido en parte**, y conviene saberlo: la
-linea base de errores por hora de un B42.20 sano, que era el dato que faltaba
-para calificar las cifras de la incidencia 004, ya no se puede medir aqui
-limpiamente. Se cambio a peticion de quienes juegan en el.
-
-Lo que sigue siendo cierto es que su lista es corta, conocida y **sin una sola
-entidad**, asi que sigue sirviendo para descartar: si un fallo aparece aqui, no
-lo causa ninguno de los 26 mods que este no lleva.
-
-No confundir con staging, que es otra cosa: staging levanta una **copia del
-mundo real CON todos sus mods** para ensayar un cambio antes de meterlo en
-produccion. Este es un mundo aparte con lista propia.
+El servicio `pz-vanilla` se elimino a la vez. **Dos servicios sobre el mismo
+volumen es la forma mas directa de corromper un mundo**, y despues de la
+adopcion habrian apuntado los dos a `pz-data-vanilla`.
 
 ### Su lista de mods: solo lo reversible
 
-La lista vive en el `.env` (`VANILLA_WORKSHOP_ITEMS` / `VANILLA_MODS`); el
-default del compose es el minimo de 7 de interfaz pura para quien monte el
-repo de cero. Desde el 13/08 lleva la **oleada 1**: 25 mods (24 del Workshop +
-Tariq's Beards local).
+25 mods (24 del Workshop + `Tariq's Beards` local), en `PZ_WORKSHOP_ITEMS` /
+`PZ_MODS` del `.env`.
 
 El criterio, con su medicion y las oleadas siguientes, esta en
 [MODS-LISTA.md](MODS-LISTA.md) seccion 0. El resumen: sobre un mundo empezado
-solo entra directo lo que **no declara nada persistente** —ni items, ni
-recetas, ni vehiculos, ni entidades— porque eso es lo que se puede quitar sin
-dejar referencias rotas. Verificado fichero a fichero sobre lo descargado.
+solo entra lo que **no declara nada persistente** —ni items, ni recetas, ni
+vehiculos, ni entidades— porque eso es lo que se puede quitar sin dejar
+referencias rotas. Verificado fichero a fichero sobre lo descargado.
 
-Los seis de inventario, que estuvieron fuera por la sospecha de la incidencia
-004, entraron en la oleada 1: los sintomas de esa incidencia se reprodujeron el
-12/08 en este mismo mundo **sin** ninguno de ellos, asi que quedaron exonerados
-con datos.
+**Regla vigente desde el 15/08: nada irreversible.** Congela la oleada 2
+(Common Sense, Take A Bath, Manage Containers, Realistic Temperature) y
+descarta Trailers!. Si algun dia se descongela, se ensayan en staging con
+`./scripts/stage.sh`.
 
-Los de **via unica** (Common Sense, Take A Bath, Manage Containers, Realistic
-Temperature) solo entran tras probarse en staging sobre una copia de este
-mundo: `./scripts/stage.sh --from pz-vanilla`. Trailers! y StarvingZombies son
-decisiones de grupo; Bicycle! esta vetado (defectuoso e irreversible).
+### Ya no hay mundo de referencia limpio
 
-Los 25 llevan semanas corriendo juntos en produccion y estan marcados como
-comprobados en juego en [CHECKLIST-MODS.md](CHECKLIST-MODS.md).
+Consecuencia de la promocion que conviene no olvidar: **no queda ninguna
+instancia sin mods**. Para descartar mods de via unica sirve staging sobre una
+copia; para medir la linea base del juego base, lo que vale es la sesion
+archivada del 11/08 (incidencia 004). Si hiciera falta una referencia limpia
+otra vez, hay que crear una instancia nueva.
 
-Cuidado con la memoria: no conviene tener produccion y vanilla arriba a la vez
-salvo que haga falta comparar en caliente. Miden ~4,5 GB y ~4,1 GB, asi que
-caben en una maquina de 14 GB pero sin margen para picos. Comprueba antes con
-`docker stats`.
+### Regenerar el mundo desde cero
 
-**Tiene backups propios**, con prefijo `vanilla-`, igual que produccion: al
-arrancar y cada 6 horas. No los tuvo al principio, cuando se concibio como
-mundo de usar y tirar. Dejo de serlo en cuanto la gente empezo a jugar en el, y
-un mundo con personajes dentro no es desechable por mucho que asi se pensara.
-
-Para regenerar su mundo desde cero, con el servicio parado:
+Con el servicio parado:
 
 ```bash
 docker run --rm -v zroyecto-pombie_pz-data-vanilla:/data \
@@ -415,12 +398,11 @@ docker run --rm -v zroyecto-pombie_pz-data-vanilla:/data \
   -c 'rm -rf /data/Saves/* /data/db/* /data/Server/*'
 ```
 
-**Ese comando borra personajes y bases.** Cuando el vanilla era una referencia
-vacia daba igual; ahora no. Haz antes `./scripts/backup.sh` sobre el, o
+**Ese comando borra personajes y bases.** Haz antes `./scripts/backup.sh`, o
 asegurate de que el ultimo backup automatico te sirve:
 
 ```bash
-docker exec pombie-vanilla /docker/run.sh status | grep 'Ultimo backup'
+docker compose run --rm --no-deps pz status | grep 'Ultimo backup'
 ```
 
 ---

@@ -11,12 +11,13 @@ forma del despliegue, no sus valores.
 
 ## Estado en una linea
 
-**Donde se juega ahora es el mundo VANILLA (puerto 16461). Produccion (16261)
-esta parada desde el 12/08 y su mundo intacto. Ambos sanos; hay bugs de
-jugabilidad abiertos, y ya se sabe que no los causan los mods.**
+**Queda UN solo mundo. El 13/08 se reorganizo todo: el mundo original (33 mods)
+se retiro con backup, y el mundo bueno —el que nacio vanilla y hoy lleva 25
+mods— paso a ser PRODUCCION. Produccion NO esta desplegada; ahora mismo lo
+unico en marcha es STAGING (puerto 16361) con una copia de ese mundo.**
 
-Levantar produccion cuando toque: `docker compose up -d`. No conviene tener las
-dos a la vez sin mirar antes `docker stats`.
+Levantar produccion cuando toque: `docker compose up -d` (puerto 16261). Antes,
+bajar staging: `./scripts/stage.sh --down`.
 
 ## Que hay montado
 
@@ -26,10 +27,15 @@ dos a la vez sin mirar antes `docker stats`.
 | Docker | **rootless**, daemon de usuario, sin grupo `docker` |
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
 | Juego | Build 42, `buildid` registrado y coincidente con el instalado |
-| Mods en produccion | 33 elementos del Workshop + 1 local (`TariqsBeardsB42`) |
-| Mods en vanilla | **25** (oleada 1): todos reversibles, sin definiciones persistentes |
-| Memoria | produccion heap 6g / vanilla 3g, `mem_limit` 10g |
-| Backups | automatico al arrancar + cada 6 h, **en las dos instancias** |
+| Mundos | **uno**: `pombie-vanilla`, 285 MB, 5 jugadores con datos |
+| Mods | **25** (oleada 1): todos reversibles, sin definiciones persistentes |
+| Memoria | heap 6g, `mem_limit` 10g |
+| Backups | automatico al arrancar + cada 6 h |
+
+**El nombre `pombie-vanilla` y los volumenes `*-vanilla` son herencia, no
+descripcion**: ese mundo lleva 25 mods. Se conservaron a proposito — renombrar
+exigiria mover 285 MB de guardados, y mover guardados es justo lo que este
+montaje evita cuando no hace falta.
 
 ## Verificado en la maquina
 
@@ -91,41 +97,40 @@ emparejadas hasta que se saca su distribucion por minuto; y una ventana con mas
 lineas de log tendra mas de todo, asi que se normaliza en tasa. Los tres estan
 detallados en el README de `docs/incidencias/`.
 
-## El mundo vanilla: de referencia a mundo propio
+## La historia del mundo que hay, y por que se llama como se llama
 
-Existe un tercer servidor, perfil `vanilla`, con el **mismo mapa, la misma
-semilla y los mismos ajustes** que produccion pero con el mundo generado desde
-cero. Puerto 16461.
+Hubo dos mundos y hoy queda uno. Conviene saber como se llego aqui, porque los
+nombres despistan.
 
-Nacio **sin un solo mod**, y no era un capricho: sin el no habia forma de
-distinguir "esto lo rompe un mod" de "esto es asi en Build 42", y varias
-incidencias abiertas estaban bloqueadas por eso.
+**El mundo original** (33 mods, `pombie`) se creo el 10/08 y se jugo dos dias.
+Se retiro el 13/08 con backup etiquetado
+(`pz-pombie-*-antes-de-retirar-mundo-33mods`, 22.647 ficheros dentro,
+verificado aparte). Sus volumenes se borraron y liberaron 7 GB.
 
-**Ha dejado de ser eso.** La gente se puso a jugar ahi y pidio mods: el 12/08
-entraron 7 de interfaz y el 13/08 la **oleada 1** completa —25 mods, todos
-reversibles, criterio y medicion en MODS-LISTA.md seccion 0—. Antes se le
-habian activado los backups. Todo responde al mismo hecho: es un mundo
-habitado.
+**El mundo que queda** nacio el 11/08 como *referencia sin mods*, para poder
+distinguir "esto lo rompe un mod" de "esto es asi en Build 42". Cumplio ese
+papel: se le pregunto **cuatro veces y las cuatro respondio que no eran los
+mods** (incidencias 001, 002, 004 y 005). Despues la gente se puso a jugar en
+el, pidio interfaz, y acabo llevando 25 mods y siendo mejor mundo que el
+original. El 13/08 paso a ser **produccion**.
 
-La linea base de errores de un B42.20 limpio **ya no se puede volver a medir
-aqui** —el vanilla dejo de estar limpio el 12/08— pero **se rescato a tiempo**
-de los logs archivados de la sesion del 11/08, cuando aun no llevaba nada:
-**~16 `ERROR`/h en cliente, ~2 causas distintas**. Detalle y salvedades en la
-incidencia 004. Para descartar mods de via unica el vanilla sigue sirviendo;
-para medir el juego base, lo que vale es esa sesion archivada.
+**Por eso se sigue llamando `pombie-vanilla` y sus volumenes llevan `-vanilla`
+en el nombre.** Es herencia, no descripcion. Renombrarlo exigiria mover 285 MB
+de guardados dentro del volumen, y mover guardados sin necesidad es justo lo
+que este montaje evita. Produccion lo **adoptó tal cual**: se reasigno el
+volumen en el compose, sin tocar un byte.
 
-Detalle en [OPERACIONES.md](OPERACIONES.md), seccion *Mundo vanilla*.
+El servicio `pz-vanilla` se elimino en el mismo movimiento. Dos servicios
+apuntando al mismo volumen es la forma mas directa de corromper un mundo.
 
-**Ya no es desechable, y tiene backups propios.** Nacio sin ellos por ser un
-mundo de comparacion, pero la gente se puso a jugar ahi: cuatro personajes y un
-mundo mas grande que el de produccion. Se le activaron los automaticos (al
-arrancar y cada 6 h, prefijo `vanilla-`) el 2026-08-12. Merece la pena recordar
-el patron: la premisa que justifica saltarse una salvaguarda puede caducar sin
-que nadie lo anuncie.
+**Consecuencia que hay que tener presente**: ya no existe un mundo limpio de
+referencia. Para descartar mods de via unica sigue valiendo staging sobre una
+copia; para medir la **linea base del juego base**, lo que vale es la sesion
+archivada del 11/08 (~16 `ERROR`/h en cliente, ~2 causas distintas — detalle en
+la incidencia 004). Si algun dia hiciera falta una referencia limpia de nuevo,
+hay que crear una instancia aparte.
 
-**Solo uno a la vez.** Produccion y vanilla consumen ~4,5 GB y ~4,1 GB sobre una
-maquina de 14 GB: caben los dos, pero sin margen para picos. Mira `docker stats`
-antes de levantar el segundo.
+Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
 
 ## NO verificado
 

@@ -151,14 +151,50 @@ ahorraria 7,5 GB de disco y una descarga, pero romperia el aislamiento justo
 donde importa: al descargar mods del Workshop, Steam actualizaria tambien los
 que produccion esta usando en ese momento. El disco es mas barato que eso.
 
-**Y desde que hay mas de un mundo, staging necesita saber de cual se copia.**
-El nombre del servidor da nombre a la carpeta de guardado, y staging debe usar
-el MISMO nombre que su origen: si no coinciden, restaura la copia y luego genera
-un mundo vacio al lado, ignorandola — estarias ensayando sobre un mundo recien
-creado creyendo que es el tuyo, sin ningun error que lo delate. Es la misma
-trampa documentada para el nombre de staging clasico, en su variante multi-mundo.
-Por eso `stage.sh --from` exporta `STAGING_SERVER_NAME` y el compose lo usa con
-el nombre de produccion como default anidado: el uso clasico no cambia.
+**Staging necesita saber de que mundo se copia.** El nombre del servidor da
+nombre a la carpeta de guardado, y staging debe usar el MISMO nombre que su
+origen: si no coinciden, restaura la copia y luego genera un mundo vacio al
+lado, ignorandola — estarias ensayando sobre un mundo recien creado creyendo
+que es el tuyo, sin ningun error que lo delate. Por eso `stage.sh` exporta
+`STAGING_SERVER_NAME` y el compose lo usa con el nombre de produccion como
+default anidado. Y por eso la instantanea se elige por **prefijo del origen** y
+no cogiendo el ultimo `*-stage.tar.zst`: con dos mundos en `backups/`, el glob
+a secas restauraba el equivocado. Ambas piezas siguen haciendo falta con un
+solo mundo, y estan listas si vuelve a haber dos.
+
+---
+
+## 6bis. Adoptar un volumen en vez de mover un mundo (13/08/2026)
+
+Hubo dos mundos: el original con 33 mods, y otro que nacio como referencia sin
+mods para poder distinguir "esto lo rompe un mod" de "esto es asi en Build 42".
+El segundo cumplio esa funcion —respondio cuatro veces, y las cuatro dijo que
+no eran los mods— y por el camino la gente se puso a jugar en el. Acabo con 25
+mods, mas explorado y mas querido que el original. Asi que se decidio retirar
+el original y que **el bueno pasara a ser produccion**.
+
+La pregunta interesante fue *como*. Habia tres formas:
+
+1. **Reasignar el volumen** al servicio de produccion en el compose.
+2. **Restaurar** el mundo bueno dentro del volumen de produccion, via el
+   backup/restore ya probado.
+3. **Renombrar** ademas la carpeta de guardado y el fichero `db` para que todo
+   se llamase `pombie`.
+
+Se eligio la 1, y el motivo es el requisito que manda sobre todo: **reasignar
+un volumen no toca ni un byte de los guardados**; restaurar 285 MB de partida
+jugada, si. La 3 anadia cirugia de datos que ningun script del repo cubre, a
+cambio de un nombre bonito.
+
+El precio es cosmetico y hay que asumirlo sabiendolo: **el mundo se sigue
+llamando `pombie-vanilla` y sus volumenes llevan `-vanilla`**, aunque lleve 25
+mods y sea el mundo principal. Los nombres son herencia, no descripcion. Es
+mejor un nombre que miente que un guardado manipulado sin necesidad.
+
+**El servicio `pz-vanilla` se elimino en el mismo movimiento**, y esto no era
+opcional: tras la reasignacion, `pz` y `pz-vanilla` habrian apuntado los dos a
+`pz-data-vanilla`. Dos servidores sobre el mismo mundo es la forma mas directa
+de corromperlo, y bastaba con que alguien levantase el perfil por costumbre.
 
 ---
 
