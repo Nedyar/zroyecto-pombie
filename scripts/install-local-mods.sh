@@ -2,7 +2,7 @@
 # Instala en el servidor un mod que NO viene del Workshop.
 #
 # Uso:
-#   ./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging]
+#   ./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging|pz-vanilla]
 #
 # Ejemplos:
 #   ./scripts/install-local-mods.sh ~/Descargas/TariqsBeardsB42.zip
@@ -23,7 +23,7 @@ SVC="${2:-pz}"
 if [[ -z "$SRC" ]]; then
     cat <<'EOF'
 
-Uso: ./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging]
+Uso: ./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging|pz-vanilla]
 
 Instala un mod local en la carpeta Zomboid/mods del servidor indicado.
 Por defecto instala en produccion (pz).
@@ -37,7 +37,8 @@ fi
 case "$SVC" in
     pz)         VOL="zroyecto-pombie_pz-data" ;;
     pz-staging) VOL="zroyecto-pombie_pz-data-staging" ;;
-    *)          die "Servicio desconocido: '${SVC}'. Usa 'pz' o 'pz-staging'." ;;
+    pz-vanilla) VOL="zroyecto-pombie_pz-data-vanilla" ;;
+    *)          die "Servicio desconocido: '${SVC}'. Usa 'pz', 'pz-staging' o 'pz-vanilla'." ;;
 esac
 
 # Instalar por debajo de un servidor vivo es pedir problemas: el juego indexa los

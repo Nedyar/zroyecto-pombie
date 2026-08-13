@@ -28,7 +28,17 @@ if service_running pz; then
 fi
 
 say "Restaurando..."
-"${DC[@]}" run --rm --no-deps pz restore "$(basename "$FILE")"
+
+# FORCE_RESTORE hay que reenviarlo a mano: las variables del shell del host no
+# entran solas en el contenedor, y sin este -e la puerta de emergencia que
+# documentamos no haria absolutamente nada.
+#
+# Sirve para cuando el backup previo no se puede hacer (tipicamente, disco
+# lleno). El mundo actual se aparta igualmente, asi que sigue habiendo marcha
+# atras; lo que se pierde es el tarball.
+"${DC[@]}" run --rm --no-deps \
+    -e FORCE_RESTORE="${FORCE_RESTORE:-false}" \
+    pz restore "$(basename "$FILE")"
 
 say "Restauracion terminada. Arranca cuando quieras:"
 echo "    docker compose up -d"

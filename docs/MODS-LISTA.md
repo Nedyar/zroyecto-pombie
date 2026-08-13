@@ -11,6 +11,74 @@ Referencia temporal: **Build 42 estable (42.20) salió el 29/07/2026.**
 
 ---
 
+# 0. El mundo vanilla y las oleadas (14/08/2026)
+
+El mundo activo pasó a ser **pombie-vanilla** y el grupo quiere ir añadiéndole
+mods. Las cuatro investigaciones de `docs/incidencias/` (rama
+`docs/incidencias-jugabilidad`) demostraron que los mods no causan los bugs
+abiertos, así que no hay motivo técnico para frenarse. Lo que sí hay es una
+asimetría que manda sobre todo lo demás: **sobre un mundo ya empezado, la
+pregunta no es "¿este mod es bueno?" sino "¿puedo deshacerlo?"**.
+
+## El criterio: reversibilidad medida, no leída
+
+Se escaneó **lo realmente descargado** en el volumen de producción, no las
+descripciones del Workshop: ficheros bajo `media/scripts/` (definiciones de
+items, recetas, vehículos, entidades) y packs de tiles/sprites, agregando por
+Mod ID real para esquivar las carpetas de variantes.
+
+Resultado: **28 de los 35 mods de producción no declaran nada persistente**.
+Se pueden quitar de un mundo jugado sin dejar referencias rotas. Los 7
+restantes son de **vía única** — al quitarlos, lo que crearon queda huérfano:
+
+| Mod | Declara | Gravedad al quitarlo |
+| --- | --- | --- |
+| `KI5trailers` (+su dependencia `damnlib`) | **66 vehículos** | La mayor: vehículos construidos quedan rotos |
+| `RC_RealisticColdMod` | **estufas colocables** (`Mov_RC*Heater`) | Objetos puestos en el mundo persisten |
+| `BicycleMod` | items + recetas | Bicis desaparecen de inventarios |
+| `TakeABathAndShowerNew` | items + fluidos | Ídem |
+| `BB_CommonSenseFix` | items + recetas | Ídem |
+| `manageContainers` | un huevo de pascua (gorro + sonido) | Mínima, pero técnicamente persiste |
+
+Dos matices que salieron de mirar el contenido y no solo contar ficheros:
+`Buttstroke` declara únicamente un **sonido** (no persiste → reversible), y
+ninguno de los 35 declara **construibles** (`entities`), que es el caso grave
+documentado en la sección 5 — el que puede impedir que un mundo cargue.
+
+## Las oleadas
+
+| Oleada | Qué | Condición |
+| --- | --- | --- |
+| **1 — aplicada** | Los 17 reversibles de interfaz/QoL + `Tariq's Beards` (local, elegido por el grupo) | Ninguna: si molesta, se quita |
+| **2 — preparada** | Common Sense, Take A Bath (+DepthMap), Manage Containers, Realistic Temperature (+LuaDigitalWatchUI) | **Solo tras probarse en staging sobre copia del vanilla.** Entran para quedarse |
+| **Decisión de grupo** | `Trailers!` (KI5trailers+damnlib) | Irreversible de verdad; que se decida sabiéndolo |
+| **Decisión de grupo** | `StarvingZombies` | Reversible y exonerado (incidencia 001), pero cambia jugabilidad, no interfaz |
+| **Nunca** | `Bicycle!` | Defectuoso en 42.20 (incidencia 002) **e** irreversible: la peor combinación. Se reevalúa si el autor publica para 42.20 |
+
+## Reglas de inserción para la oleada 2
+
+El orden de carga del vanilla se derivó **filtrando la cadena de producción**
+(sección 1), que ya respeta las siete reglas de la sección 4. Al añadir los de
+la oleada 2 hay que devolverlos a su posición relativa:
+
+- `ATakeABathAndShowerDepthMap` → **primero de toda la lista**.
+- `BB_CommonSenseFix` → **antes de `CleanUI`** (regla 3bis, se descubrió
+  rompiendo la interfaz).
+- `LuaDigitalWatchUI` → antes de `RC_RealisticColdMod`.
+- `manageContainers` → entre `CleanUI` y `BetterSortCC` (posición original).
+
+## Por qué la oleada 1 entró en bloque y no de uno en uno
+
+La regla 4 de `AGENTS.md` («un mod se añade de uno en uno y pasando por
+staging») existe para mods **sin historial**: si el mundo falla con tres
+nuevos, no sabes cuál fue. Estos 18 llevan semanas corriendo **juntos** en
+producción con el checklist en juego mayormente pasado: su compatibilidad
+entre sí es un hecho observado, no una apuesta. Y son reversibles: el peor
+caso es una molestia, no un daño. Un conjunto probado en otra instancia entra
+como bloque; lo que entre sin ese historial sigue yendo de uno en uno.
+
+---
+
 # 1. Lo que está activo ahora
 
 **Corriendo en producción**, sobre un mundo creado ya con esta lista. Verificado

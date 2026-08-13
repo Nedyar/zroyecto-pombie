@@ -133,15 +133,21 @@ services:
     restart: "no"
 
     environment:
-      # OJO: staging usa EL MISMO PZ_SERVER_NAME que produccion, a proposito.
+      # OJO: staging usa EL MISMO PZ_SERVER_NAME que el mundo del que se copia.
       #
       # El nombre del servidor da nombre a la carpeta de guardado
-      # (Saves/Multiplayer/<nombre>) y a la base de datos. Si aqui pusieramos un
-      # nombre distinto, staging restauraria la copia de produccion y luego
-      # generaria un mundo nuevo y vacio a su lado, ignorandola. Es decir,
-      # estariamos probando los mods sobre un mundo recien creado en vez de
-      # sobre el mundo real, que es exactamente lo que staging existe para
-      # evitar. El aislamiento lo dan los volumenes separados, no el nombre.
+      # (Saves/Multiplayer/<nombre>) y a la base de datos. Si no coincidieran,
+      # staging restauraria la copia y luego generaria un mundo nuevo y vacio a
+      # su lado, ignorandola. Es decir, estariamos probando los mods sobre un
+      # mundo recien creado en vez de sobre el mundo real, que es exactamente
+      # lo que staging existe para evitar. El aislamiento lo dan los volumenes
+      # separados, no el nombre.
+      #
+      # Desde que hay mas de un mundo, el origen ya no es siempre produccion:
+      # stage.sh exporta STAGING_SERVER_NAME con el nombre del mundo elegido
+      # (--from pz-vanilla). Sin la variable, el default anidado cae en el
+      # nombre de produccion y el uso clasico no cambia.
+      PZ_SERVER_NAME: "${STAGING_SERVER_NAME:-${PZ_SERVER_NAME}}"
       PZ_PUBLIC: "false"
 
       # Los puertos INTERNOS de staging tienen que coincidir con los que
@@ -192,13 +198,17 @@ services:
       - ./backups:/backups
 
   # ==========================================================================
-  # pz-vanilla - el MISMO mundo, sin un solo mod.
+  # pz-vanilla - el MISMO mundo, con lista de mods corta y propia.
   #
   # No es staging y no lo sustituye. Staging existe para ensayar un cambio
-  # antes de meterlo en produccion; esto existe para responder una pregunta
+  # antes de meterlo en produccion; esto nacio para responder una pregunta
   # distinta: cuando algo se comporta raro en juego, saber si la causa son los
-  # mods o es el juego base. Sin una referencia sin mods, "esto falla" no se
-  # puede distinguir de "esto es asi en Build 42".
+  # mods o es el juego base.
+  #
+  # Nacio sin ningun mod, que era lo que permitia distinguir "esto falla" de
+  # "esto es asi en Build 42". Se le anadieron siete de interfaz a peticion de
+  # quienes juegan aqui, asi que esa funcion queda a medias: sirve para
+  # descartar los 26 que no lleva, no para medir la linea base del juego limpio.
   #
   # Por eso tiene NOMBRE PROPIO, al reves que staging: aqui no queremos una
   # copia indistinguible, queremos poder tener las dos y comparar.
@@ -221,17 +231,37 @@ services:
       PZ_PUBLIC_NAME: "Zroyecto Pombie (vanilla)"
       PZ_PUBLIC: "false"
 
-      # SIN MODS. Es la razon de ser de este servicio.
-      #
-      # Van vacias aqui y no en el .env porque `environment` tiene prioridad
-      # sobre `env_file`: asi produccion conserva su lista intacta.
+      # Lista PROPIA de mods. El default de aqui es el minimo (7 de interfaz
+      # pura, cero definiciones); la lista real de esta instancia vive en el
+      # .env (VANILLA_WORKSHOP_ITEMS / VANILLA_MODS), igual que la de
+      # produccion. Se define aqui y no heredando del .env de produccion porque
+      # `environment` tiene prioridad sobre `env_file`: asi produccion conserva
+      # su lista intacta pase lo que pase aqui.
       #
       # PZ_USE_STAGING_MODS queda en false a proposito: con true, una lista
-      # vacia significa "replica los mods de produccion", que es justo lo
+      # vacia significaria "replica los mods de produccion", que es justo lo
       # contrario de lo que queremos aqui.
+      #
+      # ---- Criterio de admision ----
+      #
+      # Este mundo estaba EMPEZADO cuando entraron mods, y sobre un mundo
+      # empezado la pregunta no es "este mod es bueno" sino "puedo deshacerlo".
+      # Entra lo REVERSIBLE: mods sin definiciones persistentes (items,
+      # recetas, vehiculos, entidades) medido fichero a fichero sobre lo
+      # descargado, no leyendo el Workshop. Quitar uno de esos no deja
+      # referencias colgando en el WorldDictionary.
+      #
+      # La clasificacion completa, las oleadas y lo vetado (Bicycle!) estan en
+      # docs/MODS-LISTA.md seccion 0. Los de via unica (Common Sense, Take A
+      # Bath, Trailers!...) solo entran tras probarse en staging sobre una
+      # copia de ESTE mundo, y sabiendo que entran para quedarse.
+      #
+      # ORDEN DE CARGA: derivado filtrando la cadena de produccion, que ya
+      # respeta las siete reglas documentadas (NeatUI_Framework primero,
+      # nested antes que Proximity, etc.).
       PZ_USE_STAGING_MODS: "false"
-      PZ_WORKSHOP_ITEMS: ""
-      PZ_MODS: ""
+      PZ_WORKSHOP_ITEMS: "${VANILLA_WORKSHOP_ITEMS:-3508537032;3536052310;3502080466;3451167732;2734705913;2544353492;3399645148}"
+      PZ_MODS: "${VANILLA_MODS:-NeatUI_Framework;Neat_Building_UIOnly;Neat_Crafting;ModernStatus;MapSymbolSizeSlider;P4HasBeenRead;MapSymbolsPlusDeonHand}"
 
       # Los puertos INTERNOS deben coincidir con los publicados. El servidor le
       # anuncia al cliente los suyos: si dentro dijera 16261, el cliente
@@ -245,11 +275,18 @@ services:
       PZ_MEMORY_MIN: "1g"
 
       # Prefijo propio para que sus backups no se confundan con los de
-      # produccion en la carpeta compartida, y sin backup automatico: es un
-      # mundo de comparacion, desechable por definicion.
+      # produccion en la carpeta compartida. La rotacion es por prefijo, asi
+      # que ninguna instancia puede borrar los backups de otra.
       BACKUP_NAME_PREFIX: "vanilla"
-      BACKUP_INTERVAL_HOURS: "0"
-      BACKUP_ON_START: "false"
+
+      # Nacio sin backup automatico —"mundo de comparacion, desechable por
+      # definicion"— y esa premisa dejo de ser cierta: se juega en el, tiene
+      # cuatro personajes y un mundo mas grande que el de produccion. Un mundo
+      # en el que alguien invierte horas no es desechable por mucho que asi se
+      # concibiera, asi que hereda de .env lo mismo que produccion.
+      #
+      # Staging si conserva la exencion: ahi el mundo es literalmente una copia
+      # que stage.sh rehace cuando quiere.
 
       # Es una copia: aceptamos abrirla con otra version si hiciera falta.
       ALLOW_BUILD_CHANGE: "true"

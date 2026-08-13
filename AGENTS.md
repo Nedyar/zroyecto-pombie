@@ -31,7 +31,10 @@ escribes una guarda, que aborte, no que continue con un aviso.
    hornean en la imagen con `COPY`. Editarlos no surte efecto hasta reconstruir,
    y el fallo es silencioso.
 4. **Un mod se anade de uno en uno y pasando por staging.** Si el mundo falla
-   con tres mods nuevos, no sabras cual fue.
+   con tres mods nuevos, no sabras cual fue. Excepcion acotada: un conjunto que
+   ya corrio JUNTO en otra instancia y es reversible (sin definiciones
+   persistentes) puede entrar en bloque; el criterio esta en
+   docs/MODS-LISTA.md, seccion 0.
 5. **Los secretos no entran en git.** Viven en `.env`, que esta ignorado. Antes
    de escribir cualquier cosa en `config/reference/`, comprueba que el filtro de
    redaccion de `docker/ops.sh` la cubre.
@@ -78,7 +81,20 @@ docker compose run --rm --no-deps pz status    # ejercita entrypoint y permisos
 docker compose logs pz | grep "required mod"   # mods que faltan
 ./scripts/rcon.sh players                      # el servidor responde de verdad
 ss -ulpn | grep 1626                           # escucha donde crees que escucha
+./docker/selftest-backups.sh                   # salvaguardas de backup/restore
 ```
+
+Las salvaguardas de backup y restauracion **tienen pruebas propias** en
+`docker/selftest-backups.sh`: no tocan nada real y se pueden lanzar con el
+servidor en marcha. Si tocas `do_backup`, `do_restore` o `rotate_backups`,
+lanzalas, y si anades una salvaguarda anade tambien su caso. Se escribieron
+despues de que una tanda de arreglos "obviamente correctos" introdujera dos
+regresiones —borrar backups validos y bloquear la restauracion— que solo
+aparecieron al ejecutarlas.
+
+**Recuerda reconstruir la imagen** antes de comprobar cambios en `docker/`: esos
+ficheros se copian dentro y el contenedor sigue corriendo los viejos hasta que
+se recrea.
 
 Cuidado con `docker compose config` sin `-q`: imprime el `PZ_RCON_PASSWORD` del
 healthcheck por pantalla.

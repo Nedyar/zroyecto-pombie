@@ -151,6 +151,15 @@ ahorraria 7,5 GB de disco y una descarga, pero romperia el aislamiento justo
 donde importa: al descargar mods del Workshop, Steam actualizaria tambien los
 que produccion esta usando en ese momento. El disco es mas barato que eso.
 
+**Y desde que hay mas de un mundo, staging necesita saber de cual se copia.**
+El nombre del servidor da nombre a la carpeta de guardado, y staging debe usar
+el MISMO nombre que su origen: si no coinciden, restaura la copia y luego genera
+un mundo vacio al lado, ignorandola — estarias ensayando sobre un mundo recien
+creado creyendo que es el tuyo, sin ningun error que lo delate. Es la misma
+trampa documentada para el nombre de staging clasico, en su variante multi-mundo.
+Por eso `stage.sh --from` exporta `STAGING_SERVER_NAME` y el compose lo usa con
+el nombre de produccion como default anidado: el uso clasico no cambia.
+
 ---
 
 ## 7. Backups: que se rota y que no

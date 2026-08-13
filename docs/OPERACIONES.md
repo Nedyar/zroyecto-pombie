@@ -132,11 +132,121 @@ restaurar. Manual:
 ```
 
 La rotacion solo borra los automaticos (`prestart`, `periodic`), conservando
-los ultimos `BACKUP_KEEP`. Los `manual`, `pre-update` y `pre-restore` **no se
-borran nunca**: son justo los que quieres tener cuando algo ha salido mal.
+los ultimos `BACKUP_KEEP` **de cada tipo** — con el valor por defecto son 20
+`periodic` y 20 `prestart`, no 20 en total. A 6 horas, eso son unos 5 dias de
+historial. Todo lo demas **no se borra nunca**: son justo los que quieres tener
+cuando algo ha salido mal.
+
+Ademas la rotacion es **por instancia**: produccion, staging y vanilla usan
+prefijos distintos y ninguna puede borrar los backups de otra.
+
+Los generan **produccion y vanilla**. Staging no: lleva
+`BACKUP_INTERVAL_HOURS=0` y `BACKUP_ON_START=false` porque su mundo es
+literalmente una copia que `stage.sh` rehace cuando quiere. Vanilla tenia esa
+misma exencion y se le quito en cuanto dejo de ser cierto que fuera desechable:
+se juega en el.
+
+### Lo que se acumula sin limite
+
+Los que no rotan crecen para siempre, y no son solo los que tecleas tu:
+
+| Etiqueta | Cuando aparece | Ritmo real |
+| --- | --- | --- |
+| `manual` y las tuyas | `./scripts/backup.sh [etiqueta]` | cuando lo pides |
+| `stage` | **cada** `./scripts/stage.sh` | el mas frecuente de los automaticos |
+| `pre-update` | cada actualizacion del juego | unas pocas al ano |
+| `pre-restore` | cada restauracion | raro |
+
+Y hay uno **mas grande que todos, que no esta en `backups/`**: cada
+restauracion aparta el mundo entero a una carpeta `.pre-restore-<fecha>`
+**dentro del volumen de datos**. No son ~14 MB comprimidos, son los ~110 MB del
+mundo sin comprimir, en el mismo disco, y nadie los borra. Una restauracion
+cuesta unas ocho veces mas espacio que un backup.
+
+Revision periodica, que son dos comandos:
+
+```bash
+du -sh backups/
+docker compose run --rm --no-deps pz bash -c 'du -sh /home/steam/Zomboid/.pre-restore-* 2>/dev/null'
+```
+
+La parte acotada, en cambio, no preocupa. Con los tamanos de hoy —produccion
+~14 MB comprimidos, vanilla ~26 MB— el techo son 40 ficheros por instancia:
+~550 MB de produccion mas ~1 GB de vanilla, y ahi se queda.
+
+### Que pasa si no hay espacio
+
+El backup **se cancela antes de escribir nada** y avisa en el log. No es por
+cuidar la copia, es por cuidar el mundo: `backups/` y los volumenes de datos
+comparten sistema de ficheros, asi que un backup que llenara el disco dejaria
+al servidor en marcha sin sitio donde guardar. Es preferible quedarse sin copia
+de hoy.
+
+Antes de rendirse **intenta rotar los antiguos** para hacer sitio. Importa
+porque la rotacion normal vive al final del backup, o sea detras de la
+cancelacion: sin ese intento, bajar `BACKUP_KEEP` en el `.env` no liberaria
+nada, porque la limpieza estaria detras de un backup que ya no puede ocurrir.
+
+Si no puede medir el espacio (un fallo de `du` o `df`), **sigue adelante
+avisando** en vez de cancelar. Un fallo al medir no debe dejarte sin copias,
+pero tampoco puede apagar la guarda en silencio.
+
+### Como se decide que un backup vale
+
+Cada backup se verifica con `zstd -t` nada mas crearlo, y si no pasa **se
+borra**. La regla es que en `backups/` no llegue a quedarse nunca un archivo
+roto con aspecto de bueno: se descubriria el dia de la restauracion, que es el
+peor momento posible.
+
+Ojo con una sutileza que costo un backup bueno: **`tar` sale con codigo 1
+cuando un fichero cambia mientras lo lee** (`file changed as we read it`), y con
+el servidor en marcha sobre ~22.000 ficheros eso es lo *normal*, no un fallo —
+el archivo queda entero. Solo el codigo 2 es un error de verdad. Quien decide
+si un archivo vale es siempre `zstd -t`, nunca el codigo de salida de `tar`.
+
+Comprobar a mano un backup concreto (con `run`, que funciona este el servidor
+levantado o parado; `exec` falla si el contenedor no esta corriendo):
+
+```bash
+docker compose run --rm --no-deps pz zstd -t /backups/<fichero>.tar.zst
+```
+
+### Detectar que han dejado de hacerse
+
+Contar backups no sirve: los que no rotan sostienen la cifra, asi que un
+servidor que lleva nueve dias sin copiar ensena el mismo numero que uno sano. Lo
+que lo delata es la **edad**:
+
+```bash
+docker compose run --rm --no-deps pz status
+```
+
+La linea `Ultimo backup` da nombre y antiguedad, y marca `<-- REVISAR` si supera
+el doble del intervalo configurado.
+
+### Detalles de funcionamiento
+
+- **Solo un backup a la vez.** Hay un cerrojo (`backups/.backup.lock`) que
+  serializa incluso entre contenedores distintos, porque los tres comparten
+  `./backups`. Si el bucle periodico salta mientras haces uno a mano, el segundo
+  espera y se salta si tarda demasiado.
+- **El `prestart` se salta si ya hay uno reciente** (por defecto 60 min,
+  `BACKUP_PRESTART_MIN_GAP_MINUTES`). Sin eso, un bucle de reinicios haria 20
+  backups del estado roto y expulsaria por rotacion los 20 buenos.
 
 Los backups viven en `backups/` en el disco del host, no dentro de un volumen
 de Docker. Un `docker volume rm` accidental no se los lleva.
+
+### Probar que todo esto funciona
+
+Un mecanismo de seguridad que nunca se ha visto funcionar es una suposicion.
+Las salvaguardas de arriba tienen pruebas propias, que no tocan nada real y se
+pueden lanzar con el servidor en marcha:
+
+```bash
+./docker/selftest-backups.sh                                  # desde el host
+docker compose run --rm --no-deps --entrypoint bash pz /docker/selftest-backups.sh
+```
 
 ---
 
@@ -148,15 +258,42 @@ de Docker. Un `docker volume rm` accidental no se los lleva.
 docker compose up -d
 ```
 
-Pide confirmacion escribiendo `SI`, para el servidor si hacia falta, respalda
-el estado actual (`pre-restore`) y **aparta** los datos anteriores en una
-carpeta `.pre-restore-<fecha>` dentro del volumen en vez de borrarlos.
+Pide confirmacion escribiendo `SI`, para el servidor si hacia falta, y por este
+orden:
 
-Cuando hayas comprobado que el mundo restaurado carga bien, esa carpeta se
-puede borrar:
+1. **Verifica el archivo con `zstd -t` antes de tocar nada.** Si esta roto,
+   aborta con el mundo actual intacto. Comprobar al leer importa mas que al
+   escribir: enterarse despues de haber apartado el mundo bueno te deja con dos
+   copias inservibles y sin saber cual era cual.
+2. Respalda el estado actual (`pre-restore`).
+3. **Aparta** los datos anteriores en una carpeta `.pre-restore-<fecha>` dentro
+   del volumen, en vez de borrarlos.
+
+Si la extraccion falla, el mensaje dice exactamente donde quedo el mundo
+anterior y como devolverlo a su sitio. **No arranques el servidor antes de
+hacerlo.**
+
+### Si el backup previo no se puede hacer
+
+La restauracion **se cancela**. Suele ser falta de espacio, y es una situacion
+incomoda: el disco lleno es justo el dia en que quieres restaurar. La salida,
+que el propio mensaje te da:
 
 ```bash
-docker compose exec pz bash -c 'rm -rf /home/steam/Zomboid/.pre-restore-*'
+FORCE_RESTORE=true ./scripts/restore.sh <fichero>.tar.zst
+```
+
+Aun asi el mundo actual no se borra: se aparta igualmente a `.pre-restore-*`.
+Lo que pierdes es el tarball, no el mundo.
+
+### Limpiar despues
+
+Cuando hayas comprobado que el mundo restaurado carga bien, borra la carpeta
+apartada. **Ocupa lo mismo que el mundo entero sin comprimir** y nadie la borra
+por ti:
+
+```bash
+docker compose run --rm --no-deps pz bash -c 'rm -rf /home/steam/Zomboid/.pre-restore-*'
 ```
 
 ---
@@ -164,16 +301,38 @@ docker compose exec pz bash -c 'rm -rf /home/steam/Zomboid/.pre-restore-*'
 ## Staging: probar sin arriesgar
 
 ```bash
-./scripts/stage.sh          # copia el mundo de produccion y lo levanta aparte
-./scripts/stage.sh --keep   # arranca sin recopiar
-./scripts/stage.sh --down   # para y borra los datos de staging
+./scripts/stage.sh                     # copia el mundo de PRODUCCION y lo levanta aparte
+./scripts/stage.sh --from pz-vanilla   # copia el mundo VANILLA
+./scripts/stage.sh --keep              # arranca sin recopiar (repite el --from)
+./scripts/stage.sh --down              # para y borra los datos de staging
 ```
 
 Staging usa **volumenes propios**, incluido el del juego. Comparte la carpeta
 `config/`, asi que un cambio en la plantilla afecta a los dos al reiniciar; lo
 que no comparte son los datos, que es lo que importa.
 
-Se conecta en `localhost:16361`. Produccion sigue corriendo sin enterarse.
+Se conecta en `localhost:16361`. El mundo original sigue sin enterarse.
+
+`--from` existe porque staging comparte el **nombre de mundo** con su origen
+—el nombre da nombre a la carpeta de guardado— y con mas de un mundo ya no
+siempre es produccion. stage.sh averigua el nombre del origen y lo exporta;
+sin `--from`, todo funciona como siempre.
+
+### Ensayar un mod de via unica sobre el vanilla (procedimiento oleada 2)
+
+1. En `.env`, poner en `STAGING_WORKSHOP_ITEMS` / `STAGING_MODS` la lista del
+   vanilla **mas el candidato**, respetando su posicion de insercion
+   ([MODS-LISTA.md](MODS-LISTA.md) seccion 0).
+2. `./scripts/stage.sh --from pz-vanilla`
+3. Probar en `localhost:16361` con la checklist de abajo, mas lo especifico
+   del candidato.
+4. `./scripts/stage.sh --down`, y decidir: si entra, entra sabiendo que es
+   para quedarse.
+
+**Ojo con los mods locales** (Tariq's Beards): la instantanea solo lleva
+`Saves/db/Server`, los mods locales **no viajan**. O se excluyen de
+`STAGING_MODS` (lo normal: no afectan a lo que se ensaya), o se instalan a
+mano en staging tras el paso 2 con `install-local-mods.sh <src> pz-staging`.
 
 Que mirar antes de dar por bueno un cambio:
 
@@ -184,7 +343,7 @@ Que mirar antes de dar por bueno un cambio:
 
 ---
 
-## Mundo vanilla: la referencia sin mods
+## Mundo vanilla: el mundo ligero
 
 ```bash
 docker compose --profile vanilla up -d pz-vanilla     # levantar
@@ -194,23 +353,59 @@ docker compose --profile vanilla stop pz-vanilla      # parar
 Se conecta al **puerto 16461**, no al 16261.
 
 Es el mismo mapa (Knox Country), la misma semilla y los mismos ajustes de
-partida que produccion, pero con el mundo generado desde cero y **sin un solo
-mod**: ni lista de Workshop, ni mods locales, ni contenido descargado en su
-instalacion.
+partida que produccion, pero con el mundo generado desde cero y con **siete
+mods de interfaz** en vez de los 33 de produccion.
 
-Existe para responder una pregunta que sin el no tiene respuesta: cuando algo se
-comporta raro en juego, saber si la causa son los mods o es el juego base. Se
-reproduce el fallo aqui; si tambien pasa, no es de los mods.
+Nacio literalmente sin ninguno, para responder una pregunta que sin el no tiene
+respuesta: cuando algo se comporta raro en juego, si la causa son los mods o es
+el juego base. **Esa funcion la ha perdido en parte**, y conviene saberlo: la
+linea base de errores por hora de un B42.20 sano, que era el dato que faltaba
+para calificar las cifras de la incidencia 004, ya no se puede medir aqui
+limpiamente. Se cambio a peticion de quienes juegan en el.
+
+Lo que sigue siendo cierto es que su lista es corta, conocida y **sin una sola
+entidad**, asi que sigue sirviendo para descartar: si un fallo aparece aqui, no
+lo causa ninguno de los 26 mods que este no lleva.
 
 No confundir con staging, que es otra cosa: staging levanta una **copia del
-mundo real CON sus mods** para ensayar un cambio antes de meterlo en
-produccion. Este levanta un mundo **limpio SIN mods** para comparar
-comportamiento.
+mundo real CON todos sus mods** para ensayar un cambio antes de meterlo en
+produccion. Este es un mundo aparte con lista propia.
+
+### Su lista de mods: solo lo reversible
+
+La lista vive en el `.env` (`VANILLA_WORKSHOP_ITEMS` / `VANILLA_MODS`); el
+default del compose es el minimo de 7 de interfaz pura para quien monte el
+repo de cero. Desde el 13/08 lleva la **oleada 1**: 25 mods (24 del Workshop +
+Tariq's Beards local).
+
+El criterio, con su medicion y las oleadas siguientes, esta en
+[MODS-LISTA.md](MODS-LISTA.md) seccion 0. El resumen: sobre un mundo empezado
+solo entra directo lo que **no declara nada persistente** —ni items, ni
+recetas, ni vehiculos, ni entidades— porque eso es lo que se puede quitar sin
+dejar referencias rotas. Verificado fichero a fichero sobre lo descargado.
+
+Los seis de inventario, que estuvieron fuera por la sospecha de la incidencia
+004, entraron en la oleada 1: los sintomas de esa incidencia se reprodujeron el
+12/08 en este mismo mundo **sin** ninguno de ellos, asi que quedaron exonerados
+con datos.
+
+Los de **via unica** (Common Sense, Take A Bath, Manage Containers, Realistic
+Temperature) solo entran tras probarse en staging sobre una copia de este
+mundo: `./scripts/stage.sh --from pz-vanilla`. Trailers! y StarvingZombies son
+decisiones de grupo; Bicycle! esta vetado (defectuoso e irreversible).
+
+Los 25 llevan semanas corriendo juntos en produccion y estan marcados como
+comprobados en juego en [CHECKLIST-MODS.md](CHECKLIST-MODS.md).
 
 Cuidado con la memoria: no conviene tener produccion y vanilla arriba a la vez
 salvo que haga falta comparar en caliente. Miden ~4,5 GB y ~4,1 GB, asi que
 caben en una maquina de 14 GB pero sin margen para picos. Comprueba antes con
 `docker stats`.
+
+**Tiene backups propios**, con prefijo `vanilla-`, igual que produccion: al
+arrancar y cada 6 horas. No los tuvo al principio, cuando se concibio como
+mundo de usar y tirar. Dejo de serlo en cuanto la gente empezo a jugar en el, y
+un mundo con personajes dentro no es desechable por mucho que asi se pensara.
 
 Para regenerar su mundo desde cero, con el servicio parado:
 
@@ -218,6 +413,14 @@ Para regenerar su mundo desde cero, con el servicio parado:
 docker run --rm -v zroyecto-pombie_pz-data-vanilla:/data \
   --entrypoint bash zroyecto-pombie:latest \
   -c 'rm -rf /data/Saves/* /data/db/* /data/Server/*'
+```
+
+**Ese comando borra personajes y bases.** Cuando el vanilla era una referencia
+vacia daba igual; ahora no. Haz antes `./scripts/backup.sh` sobre el, o
+asegurate de que el ultimo backup automatico te sirve:
+
+```bash
+docker exec pombie-vanilla /docker/run.sh status | grep 'Ultimo backup'
 ```
 
 ---
