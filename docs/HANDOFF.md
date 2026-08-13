@@ -106,11 +106,12 @@ el 2026-08-12 se le anadieron **siete mods de interfaz** —los unicos que pasan
 el filtro de no declarar ninguna entidad— y antes se le habian activado los
 backups. Los dos cambios responden al mismo hecho: es un mundo habitado.
 
-Consecuencia que hay que tener presente antes de apoyarse en el: **la linea base
-de errores por hora de un B42.20 limpio ya no se puede medir aqui**, y ese era
-el dato que le faltaba a la incidencia 004. Para descartar sigue sirviendo (26
-mods que no lleva), para medir el juego base ya no. Si hiciera falta esa
-medicion, hay que levantar una cuarta instancia limpia o regenerar esta.
+La linea base de errores de un B42.20 limpio **ya no se puede volver a medir
+aqui** —el vanilla dejo de estar limpio el 12/08— pero **se rescato a tiempo**
+de los logs archivados de la sesion del 11/08, cuando aun no llevaba nada:
+**~16 `ERROR`/h en cliente, ~2 causas distintas**. Detalle y salvedades en la
+incidencia 004. Para descartar mods el vanilla sigue sirviendo (26 que no
+lleva); para medir el juego base, lo que vale es esa sesion archivada.
 
 Detalle en [OPERACIONES.md](OPERACIONES.md), seccion *Mundo vanilla*.
 
@@ -133,11 +134,11 @@ antes de levantar el segundo.
    unless-stopped` deberia recuperarlo.
 2. **Que los mods hagan lo que prometen en juego.** Para eso esta
    [CHECKLIST-MODS.md](CHECKLIST-MODS.md), que ya lleva buena parte marcada.
-3. **Cual es la linea base de errores** de un B42.20 multijugador sano. Sin ese
-   dato no se puede calificar de anomalo el volumen de errores del cliente, y
-   eso condiciona varias de las incidencias abiertas. **Y ya no se puede medir
-   aqui**: el vanilla dejo de estar limpio el 12/08. Haria falta una cuarta
-   instancia o regenerar esa.
+3. ~~Cual es la linea base de errores de un B42.20 multijugador sano.~~
+   **Resuelto el 14/08**: ~16 `ERROR`/h y ~2 causas distintas, medido sobre la
+   sesion archivada del 11/08 en el vanilla con cero mods. Con ella, los 172/h
+   del cliente en produccion pasan a ser ~11 veces la referencia: anomalo, y
+   pendiente de desglosar por firmas. Detalle en la incidencia 004.
 4. **Si el mapa que no carga deja rastro en algun sitio.** Ni el servidor ni el
    cliente instrumentan la entrega de chunks, asi que cero errores de carga es
    igual de compatible con "no paso" que con "paso y no se registra". Es el
