@@ -154,13 +154,19 @@ antes de levantar el segundo.
 - **Que alguien anote la hora** la proxima vez que ocurra. Es la pieza que mas
   falta: hay dos logs senalando momentos distintos y ninguno captura lo que
   vivieron los jugadores.
-- **Oleada 2 de mods del vanilla** (Common Sense, Take A Bath, Manage
-  Containers, Realistic Temperature): probar cada uno en staging sobre copia
-  del vanilla (`./scripts/stage.sh --from pz-vanilla`) y decidir. Son de via
-  unica: entran para quedarse. Criterio y orden de insercion en MODS-LISTA.md
-  seccion 0.
-- **Dos decisiones de grupo**: Trailers! (irreversible de verdad, 66 vehiculos)
-  y StarvingZombies (reversible y exonerado, pero cambia jugabilidad).
+- **REGLA VIGENTE: no entra ningun mod irreversible.** Decision del grupo
+  (15/08). Deja CONGELADA la oleada 2 (Common Sense, Take A Bath, Manage
+  Containers, Realistic Temperature) y descarta Trailers!. No es por calidad:
+  los cuatro son buenos, pero declaran definiciones persistentes y no se
+  pueden sacar de un mundo jugado. Criterio y medicion en MODS-LISTA.md
+  seccion 0, por si la regla cambia.
+- **Revisar hacia mediados de septiembre**: los mods-parche de sincronizacion
+  de vehiculos. Se evaluaron el 15/08 y ninguno dio la talla —el que ataca
+  vehiculos exige instalacion manual en cada cliente, el mantenido para 42.20
+  no ataca el sintoma—. Cuadro completo y criterios de revision en la
+  incidencia 005.
+- **Una votacion de grupo**: StarvingZombies (reversible y exonerado, pero
+  cambia jugabilidad).
 - Cada jugador necesita su **propia copia del mod local** en su carpeta
   `Zomboid\mods`. El servidor no puede enviarselo. Quien jugo en el mundo
   anterior ya la tiene.

@@ -284,6 +284,44 @@ Honestidad que conviene retener, del propio autor de JaysSync: *"este mod no
 es un arreglo milagroso; PZ tiene problemas de sincronización a nivel de motor
 que ningún mod de Lua puede resolver"*. Coincide con la conclusión de esta
 incidencia y rebaja la expectativa de cualquiera de estos candidatos.
+
+### Decisión: no se instala ninguno (15/08/2026)
+
+Decisión del grupo tras ver el cuadro. **No se toca nada y se revisa más
+adelante.** El razonamiento, para no repetirlo:
+
+- El único que ataca vehículos y está documentado (**JaysSync**) exigiría que
+  **los cinco jugadores lo instalasen a mano**, como Tariq's Beards. Es un
+  coste real y recurrente —cada jugador nuevo, cada actualización— para un mod
+  cuyo propio autor no promete arreglarlo.
+- El único mantenido para 42.20 (**Forced Sync**) no ataca el síntoma.
+- El único que quedaba (**Custom Sync**) pediría instalar a ciegas algo sin
+  documentar que toca la capa de sincronización. Malo justo donde no conviene.
+
+No es resignación: es que **el remedio disponible hoy cuesta más que el
+síntoma**. Dos episodios de minutos en una sesión de 18 horas no justifican
+convertir el mantenimiento de mods en trabajo manual para cinco personas.
+
+### Cuándo volver a mirarlo
+
+**Revisar hacia mediados de septiembre de 2026**, o antes si el síntoma se
+agrava. Qué comprobar, en este orden:
+
+1. **Physiks MP DataSync Optimizer** — si publica versión para rama **estable**
+   (hoy es `[UNSTABLE ONLY]`). Sería el candidato ideal: Workshop, vehículos,
+   distribución automática.
+2. **Custom Sync** — si se actualiza a 42.20 **y** documenta qué hace.
+3. **JaysSync** — solo si el grupo acepta la instalación manual, o si el autor
+   lo publica en el Workshop.
+
+**Qué haría cambiar la decisión antes de esa fecha**: que la desincronización
+pase de episodios aislados a algo que cueste personajes con regularidad. En un
+juego con muerte permanente el coste de un fallo no se promedia, y si empieza a
+matar gente, la molestia de una instalación manual deja de ser cara.
+
+El procedimiento para evaluarlos está listo y no cuesta nada: staging ya sabe
+copiar el vanilla (`./scripts/stage.sh --from pz-vanilla`) y su volumen del
+juego está aprovisionado.
 Y si en ese momento hay una horda modificando decenas de objetos destructibles,
 los dos modelos de mundo divergen más rápido de lo que se reconcilian.
 

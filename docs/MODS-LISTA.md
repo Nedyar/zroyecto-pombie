@@ -55,6 +55,29 @@ documentado en la sección 5 — el que puede impedir que un mundo cargue.
 | **Decisión de grupo** | `StarvingZombies` | Reversible y exonerado (incidencia 001), pero cambia jugabilidad, no interfaz |
 | **Nunca** | `Bicycle!` | Defectuoso en 42.20 (incidencia 002) **e** irreversible: la peor combinación. Se reevalúa si el autor publica para 42.20 |
 
+## Regla vigente desde el 15/08/2026: nada irreversible
+
+Decisión del grupo: **no entra ningún mod que declare definiciones
+persistentes**. Congela la oleada 2 entera y descarta Trailers!.
+
+No es un juicio sobre su calidad —los cuatro de la oleada 2 son buenos— sino
+sobre la asimetría: en un mundo donde ya hay meses de partida, un mod que no
+se puede sacar es una apuesta sin marcha atrás, y la marcha atrás es
+precisamente lo que este montaje existe para conservar.
+
+Lo que sigue vivo bajo la regla:
+
+- **StarvingZombies**: reversible y exonerado por la incidencia 001. Solo
+  pendiente de votación porque cambia jugabilidad, no por riesgo técnico.
+- **Cualquier candidato nuevo**, si pasa la medición de reversibilidad. El
+  procedimiento: meterlo en `STAGING_*`, `./scripts/stage.sh --from
+  pz-vanilla`, y escanear lo descargado con el método de esta sección. Cero
+  scripts = admisible.
+
+Evaluado y descartado bajo esta regla el 15/08: los **mods-parche de
+sincronización de vehículos**. Ninguno reunía atacar vehículos + estar
+mantenido para 42.20 + distribuirse por Steam. Detalle en la incidencia 005.
+
 ## Reglas de inserción para la oleada 2
 
 El orden de carga del vanilla se derivó **filtrando la cadena de producción**
