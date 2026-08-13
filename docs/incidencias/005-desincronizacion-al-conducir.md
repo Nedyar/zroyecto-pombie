@@ -31,24 +31,63 @@ solo minuto) y **17:21–17:24** (35). Encaja con "un momento dado de la tarde".
 
 ## Qué dice el log exactamente
 
-Las dos firmas van emparejadas:
+Hay **dos** firmas, y conviene no confundirlas —esta primera versión del
+documento las presentó como emparejadas y **era falso**, ver *Rectificación*—:
 
 ```
 WARN : Multiplayer  PacketTypes$PacketType.onServerPacket> The packet ZombieHitThumpable is not valid.
 LOG  : General      ERROR: IsoThumpable not found on square 10675,9906,0.
 ```
 
-Un *thumpable* es un objeto destructible: puerta, ventana, barricada, valla. El
-cliente le dice al servidor "un zombi ha golpeado el objeto de esta casilla" y
-**el servidor no tiene ese objeto ahí**, así que descarta el paquete.
+Un *thumpable* es un objeto destructible: puerta, ventana, barricada, valla. La
+primera dice que el servidor descartó un paquete sobre uno de esos objetos; la
+segunda, que buscó el objeto de una casilla y no estaba.
 
-Eso es desincronización de estado de mundo, y es la misma familia que produce
-los dos síntomas: un objeto que el cliente cree que existe y el servidor no es,
-literalmente, un obstáculo invisible; y una corrección de posición tras un
-desacuerdo es, literalmente, un teletransporte.
+Las dos son desincronización de estado de mundo, que es la familia que produce
+los dos síntomas: un objeto que el cliente cree que existe y el servidor no es
+un obstáculo invisible, y una corrección de posición tras un desacuerdo es un
+teletransporte.
 
-**No es un objeto roto que se repite**: son **186 casillas distintas**. El
-desacuerdo es general, no un caso puntual.
+### Rectificación: no van juntas
+
+Al minuto, las dos firmas de la hora de las 17h resultan **casi disjuntas**:
+
+| Minuto | Paquetes rechazados | `IsoThumpable not found` |
+| --- | ---: | ---: |
+| 17:02 | 0 | **28** |
+| 17:03 | 0 | 4 |
+| 17:04 | 0 | 1 |
+| 17:05 | 0 | **62** |
+| 17:09 | 2 | 0 |
+| 17:10 | **33** | 0 |
+| 17:11 | **62** | 0 |
+| 17:12 | 11 | 1 |
+| 17:21 | 4 | 0 |
+| 17:23 | 13 | 0 |
+| 17:24 | 18 | 0 |
+| 17:45 | 0 | 18 |
+
+**Son dos sucesos distintos en momentos distintos.** Emparejarlos fue un error de
+lectura: se vieron cerca en un extracto y se dio por hecho el vínculo sin
+comprobar la distribución. Las 186 casillas del total de la sesión tampoco
+sostienen "desacuerdo general dentro de los episodios": dentro de V1 hay **una
+sola casilla**, y 160 de las 186 aparecen **una única vez** en toda la sesión.
+
+### Y tienen forma distinta
+
+- **`IsoThumpable not found` llega a ráfagas instantáneas.** Las 28 líneas de
+  17:02 caen en **6 milisegundos**, entre `17:02:55.487` y `.493`. Eso no es un
+  goteo de fallos: es **una operación en bloque** en la que muchos objetos de una
+  zona no se resuelven a la vez.
+- **Los paquetes rechazados llegan a ritmo de reintento**, uno cada 2-3
+  segundos. Es un cliente insistiendo sobre lo mismo.
+
+La ráfaga en bloque encaja mucho mejor con el síntoma tal y como lo describieron
+después los jugadores —**"a partir de una zona el mapa no cargaba y todo estaba
+negro"**, no un muro contra el que chocar— que la hipótesis original. Una zona
+entera cuyos objetos no se resuelven es exactamente eso.
+
+Y llega **95 segundos después de la primera alarma** (17:01:20 → 17:02:55).
 
 ## Qué lo desencadenó: hordas, no mods
 
@@ -114,10 +153,67 @@ avisos. En tasa, 17:11 da 15% de muestras lentas frente a un 3,1% de base — al
 elevado, pero **hay minutos sin ninguna queja que llegan al 29%, 33% y 40%**.
 No destaca. La correlación se deshace al normalizar.
 
+## Contraste con el cliente
+
+Se pidió a un agente en la máquina de **uno** de los jugadores que analizara sus
+logs sin conocer las conclusiones de aquí, con el encargo explícito de intentar
+refutarlas. Su máquina está en la misma zona horaria, así que las horas son
+directamente comparables.
+
+**Lo que confirma:**
+
+| | |
+| --- | --- |
+| Mods | `Lua((MOD:` aparece **0 veces** en toda la sesión del cliente |
+| Red | 0 timeouts, 0 `connection lost`, 0 `resend`. Las 3 desconexiones son `message="exiting"`, voluntarias |
+| Carga de horda | `removing stale zombie` a **×12 sobre la línea base** del día anterior, con picos en **17:03** y **20:49-20:52** |
+
+El pico de 17:03 cae dentro de la ráfaga de `IsoThumpable` (17:02-17:05), lo que
+refuerza el vínculo horda → fallo de resolución de objetos.
+
+**Lo que NO confirma, y es lo importante:**
+
+- **Cero fallos de carga de terreno.** Ni `LoadGridsquare`, ni `ChunkChecksum`,
+  ni `getOrCreateGridSquare`, ni excepciones con `chunk` o `cell`. Las únicas
+  apariciones de `WorldStreamer` y `CellLoader` son de nivel `LOG`, en `f:0`, y
+  **el mismo número exacto en las tres sesiones analizadas**: son líneas de
+  arranque, no sucesos de partida.
+- **Cero correcciones de posición.** Ni `teleport`, ni `setX/setY`, ni
+  `rubber`, ni `position mismatch`, ni `NetworkPlayerAI`.
+- **V1 y V2 están limpias en ese cliente**, y son justo donde el servidor
+  concentró 143 de sus 163 rechazos. El cliente estaba conectado en ambas.
+
+**Y aporta un episodio que el servidor no vio:**
+
+```
+ERROR: General  at IsoDoor.syncIsoObject > expected IsoDoor index is invalid
+  { "NetObject": { "objectId":1, "squareX":10664, "squareY":10409, "squareZ":0 } }
+```
+
+124 líneas, **una sola casilla**, de 20:50:01 a 20:52:57, exclusivo de esta
+sesión (0 en la noche siguiente, 0 en la línea base). Comprobado aquí: **el
+servidor no registró jamás la casilla `10664,10409`** —cero coincidencias— y sus
+propios rechazos de esa franja cesan a las **20:50:36**, dos minutos antes de que
+el cliente deje de insistir.
+
+Es decir: **cliente y servidor están fallando sobre objetos distintos, en
+momentos distintos.** El cliente se atasca en una puerta que el servidor no
+menciona; el servidor rechaza paquetes sobre casillas que el cliente no menciona.
+
+El agente descartó además, correctamente, el hallazgo de mayor volumen:
+`ObjectModDataPacket.parse: object is null`, 1.763 líneas sobre 680 casillas, es
+**indistinguible de la línea base** (6,44/min frente a 5,75/min). Es ruido de
+fondo permanente de este servidor.
+
 ## Causa
 
 **Desincronización de estado de mundo bajo carga de horda, propia de Build 42 en
 multijugador**, no de este despliegue ni de los mods.
+
+Con el matiz que impone el cliente: los dos extremos ven el desacuerdo, pero
+**no ven el mismo desacuerdo**, y ninguno de los dos registra lo que el jugador
+percibió. Es coherente con divergencia general de estado de mundo bajo carga, y
+descarta que haya un único objeto o una única causa puntual.
 
 El mecanismo que encaja con los dos síntomas: el servidor simula a ~10 ticks por
 segundo. Un coche a velocidad recorre mucha distancia entre dos actualizaciones,
@@ -127,13 +223,26 @@ los dos modelos de mundo divergen más rápido de lo que se reconcilian.
 
 ## Lo que NO está probado
 
-- **Que el muro de mapa negro tenga que ver con esto.** El servidor **no registra
-  ni un error de carga de celdas** en toda la sesión: solo dos
-  `CellLoader.LoadCellBinaryChunk start`. Es un síntoma que solo deja rastro en
-  el cliente, y esos logs están en las máquinas de los jugadores, no aquí.
+- **Que el mapa sin cargar deje rastro en algún sitio.** Ni el servidor ni el
+  cliente registran un solo error de carga de celdas. Y no es que no ocurriera:
+  **ninguno de los dos instrumenta la entrega de chunks.** Un chunk que nunca
+  llega produce ausencia de datos, y la ausencia no genera excepción. Cero
+  errores es igual de compatible con "no pasó" que con "pasó y no se registra".
+  Este es el agujero principal y no se cierra con estos logs.
 - **Que los episodios del log sean los momentos que sufrieron los jugadores.**
-  La ventana coincide con "por la tarde", pero nadie anotó una hora. Es la misma
-  carencia que ya pedía la [incidencia 004](004-sintomas-sin-diagnosticar.md).
+  Nadie anotó una hora. Es la misma carencia que ya pedía la
+  [incidencia 004](004-sintomas-sin-diagnosticar.md), y ahora se nota más: el
+  cliente analizado tiene su episodio a las 20:50 y está limpio en V1 y V2.
+- **Que el cliente analizado sea representativo.** Es **uno de varios**. Los 163
+  rechazos del servidor son la suma de todos los conectados, así que "V1 limpia
+  en este cliente" es perfectamente compatible con que el desacuerdo de esos
+  minutos lo generase otro jugador. Para cerrarlo hacen falta los `DebugLog` de
+  los demás.
+- **Que no fuera un tirón local.** El `DebugLog` del cliente **no instrumenta
+  rendimiento**: sin FPS, sin tiempos de fotograma, sin pausas de GC, sin
+  memoria. Es la vía por la que esta hipótesis podría caer sin que se vea.
+- **Que el jugador analizado fuera en coche durante las ventanas.** No hay traza
+  de posición ni de entrada/salida de vehículo.
 - **Que ~10 f/s sea bajo.** Es constante en las cuatro sesiones y en producción,
   así que es el ritmo nominal de este servidor, pero no hay referencia externa
   de a cuánto va un B42.20 sano.
@@ -149,8 +258,13 @@ los dos modelos de mundo divergen más rápido de lo que se reconcilian.
 disparó— pero elimina una variable de la siguiente investigación y es una línea.
 
 **2. Pedir una hora, no una prueba.** Que la próxima vez que ocurra alguien
-anote la hora aproximada. Con eso se cruzan los segundos concretos del log del
-servidor con el del cliente, en vez de rastrear 7.000 líneas a ciegas.
+anote la hora aproximada. Es ahora la pieza más valiosa que falta: con dos logs
+que señalan momentos distintos, sin una hora real no hay forma de saber cuál de
+los dos —si alguno— corresponde a lo que se vivió.
+
+**2 bis. Recoger los logs de los demás clientes.** Con uno solo no se puede
+distinguir "este jugador no tuvo el problema" de "el problema fue de otro". Se
+les pasa el mismo encargo y se cruzan.
 
 **3. Medir pérdida extremo a extremo**, que es el único hueco real que queda:
 
