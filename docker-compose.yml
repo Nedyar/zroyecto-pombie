@@ -225,39 +225,34 @@ services:
       PZ_PUBLIC_NAME: "Zroyecto Pombie (vanilla)"
       PZ_PUBLIC: "false"
 
-      # Lista PROPIA de mods, corta y deliberada. Se define aqui y no en el .env
-      # porque `environment` tiene prioridad sobre `env_file`: asi produccion
-      # conserva su lista de 33 intacta pase lo que pase aqui.
+      # Lista PROPIA de mods. El default de aqui es el minimo (7 de interfaz
+      # pura, cero definiciones); la lista real de esta instancia vive en el
+      # .env (VANILLA_WORKSHOP_ITEMS / VANILLA_MODS), igual que la de
+      # produccion. Se define aqui y no heredando del .env de produccion porque
+      # `environment` tiene prioridad sobre `env_file`: asi produccion conserva
+      # su lista intacta pase lo que pase aqui.
       #
       # PZ_USE_STAGING_MODS queda en false a proposito: con true, una lista
       # vacia significaria "replica los mods de produccion", que es justo lo
       # contrario de lo que queremos aqui.
       #
-      # ---- Criterio de admision, y por que es tan estrecho ----
+      # ---- Criterio de admision ----
       #
-      # Este mundo estaba EMPEZADO cuando se anadieron. La regla que lo hace
-      # seguro es que ninguno declare entidades: sin `media/scripts`, un mod no
-      # puede meter objetos, construibles, vehiculos ni tiles en el mundo, asi
-      # que ni al ponerlo ni al quitarlo puede dejar referencias colgando en el
-      # WorldDictionary. Comprobado fichero a fichero sobre lo que hay
-      # descargado, no leyendo descripciones del Workshop: los siete dan cero
-      # scripts, cero items, cero entities y cero tiles.
+      # Este mundo estaba EMPEZADO cuando entraron mods, y sobre un mundo
+      # empezado la pregunta no es "este mod es bueno" sino "puedo deshacerlo".
+      # Entra lo REVERSIBLE: mods sin definiciones persistentes (items,
+      # recetas, vehiculos, entidades) medido fichero a fichero sobre lo
+      # descargado, no leyendo el Workshop. Quitar uno de esos no deja
+      # referencias colgando en el WorldDictionary.
       #
-      # Contraste que lo ilustra: la variante `Neat_Building` completa trae 441
-      # ficheros de entidades; `Neat_Building_UIOnly`, que es la que va aqui,
-      # trae 0. Su propio autor avisa de que quitar una variante con
-      # construibles de un mundo existente puede impedir que el mundo cargue.
+      # La clasificacion completa, las oleadas y lo vetado (Bicycle!) estan en
+      # docs/MODS-LISTA.md seccion 0. Los de via unica (Common Sense, Take A
+      # Bath, Trailers!...) solo entran tras probarse en staging sobre una
+      # copia de ESTE mundo, y sabiendo que entran para quedarse.
       #
-      # Quedan FUERA los seis de inventario y contenedores (CleanUI, Proximity
-      # Inventory, Nested Containers, Manage Containers, Better Sorting y Split
-      # Items) pese a ser tambien de interfaz: son la "zona de riesgo" que
-      # documenta MODS-LISTA.md y, sobre todo, la incidencia 004 tiene como
-      # mejor indicio 54 casos de `ItemContainer.AddItem: container already has
-      # id`, que es un problema de contenedores. Mientras no se descarte, no se
-      # puede afirmar que no sean responsables.
-      #
-      # ORDEN DE CARGA: NeatUI_Framework va el primero. Lo exigen Neat Crafting,
-      # Neat Building y Modern Status.
+      # ORDEN DE CARGA: derivado filtrando la cadena de produccion, que ya
+      # respeta las siete reglas documentadas (NeatUI_Framework primero,
+      # nested antes que Proximity, etc.).
       PZ_USE_STAGING_MODS: "false"
       PZ_WORKSHOP_ITEMS: "${VANILLA_WORKSHOP_ITEMS:-3508537032;3536052310;3502080466;3451167732;2734705913;2544353492;3399645148}"
       PZ_MODS: "${VANILLA_MODS:-NeatUI_Framework;Neat_Building_UIOnly;Neat_Crafting;ModernStatus;MapSymbolSizeSlider;P4HasBeenRead;MapSymbolsPlusDeonHand}"
