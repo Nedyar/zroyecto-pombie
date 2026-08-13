@@ -13,22 +13,29 @@ separadas en el historial.
 | [001](001-cadaveres-no-looteables.md) | Cadáveres que no aparecen como contenedor y no se pueden registrar | **Diagnóstico REFUTADO**, síntoma abierto |
 | [002](002-bicycle-api-inexistente.md) | Bicycle! llama a una API que 42.20 eliminó | Diagnosticada, impacto sin determinar |
 | [003](003-mtu-tailscale-fragmentacion.md) | MTU del contenedor mayor que el de la ruta real | Confirmada, **descartada** como causa de 005 |
-| [004](004-sintomas-sin-diagnosticar.md) | Tres síntomas más, sin causa identificada | Abierta |
+| [004](004-sintomas-sin-diagnosticar.md) | Tres síntomas más, sin causa identificada | Abierta, **reproducida sin los mods sospechosos** |
 | [005](005-desincronizacion-al-conducir.md) | Teletransportes y muros de mapa sin cargar al conducir por ciudad | Analizada, causa acotada, **no son los mods** |
 
 ## Lo que el servidor vanilla ya ha resuelto
 
 Se levantó para poder distinguir "esto lo rompe un mod" de "esto es así en Build
-42". Ha respondido las dos primeras veces que se le ha preguntado, y **las dos
-veces la respuesta fue que no eran los mods**:
+42". Ha respondido **cuatro veces, y las cuatro la respuesta fue que no eran los
+mods**:
 
 - La 001 culpaba a `StarvingZombies` de los cadáveres no registrables. En vanilla,
   sin ese mod, el fallo es **más del doble de frecuente**.
 - La 005 investigaba si los teletransportes venían de los mods. En vanilla, sin
   ninguno, la desincronización es **varias veces más frecuente**.
+- La 002 apoyaba su sospecha sobre `Bicycle!` en una firma de 4.541 líneas. Esa
+  firma aparece a tasa comparable en el vanilla **sin ningún mod**.
+- La 004 tenía como sospechosos naturales a los seis mods de inventario. Los
+  síntomas 1 y 2 **se reprodujeron el 12/08 en el vanilla**, que no lleva
+  ninguno de los seis.
 
-Merece la pena retener el patrón: en las dos, la reacción natural habría sido
-retirar mods, y en las dos habría costado tiempo sin arreglar nada.
+Merece la pena retener el patrón: **cuatro de cuatro**. Cada vez que una firma
+llamativa se atribuyó a un mod, resultó igual o más frecuente sin él. La
+reacción natural habría sido retirar mods, y las cuatro veces habría costado
+tiempo sin arreglar nada.
 
 ## Cómo se investiga aquí
 

@@ -1,6 +1,6 @@
 # 004 — Tres síntomas reportados sin causa identificada
 
-**Estado:** abierta · sin causa · **no confundir con [001](001-cadaveres-no-looteables.md)**
+**Estado:** abierta · sin causa · **reproducida sin los mods sospechosos** · no confundir con [001](001-cadaveres-no-looteables.md)
 
 ## Síntomas
 
@@ -11,6 +11,55 @@ forma: **una acción empieza y nunca termina**, y el personaje se queda en ella.
 2. Se coge un objeto para meterlo al inventario y **se queda trasladándose
    indefinidamente**, sin guardarse.
 3. Se pone una venda y **no se aplica nunca**.
+
+## Reproducida el 12/08 en el mundo vanilla (actualización 13/08)
+
+Los jugadores reportan que en la sesión del 12/08 —el mundo vanilla, que lleva
+**siete mods de interfaz y ninguno de inventario ni de acciones**— ocurrieron
+**los síntomas 1 y 2**, con menos intensidad y no todo el rato. El 3 no se pudo
+comprobar.
+
+Consecuencia directa: **los seis mods de inventario de producción quedan
+exonerados del síntoma 2** (CleanUI, Proximity Inventory, Nested Containers,
+Manage Containers, Better Sorting, Split Items). Eran los sospechosos naturales
+por ser los que tocan contenedores, y el síntoma aparece en un mundo que no
+lleva ninguno. Es el cuarto caso del patrón que documentan la
+[001](001-cadaveres-no-looteables.md), la [002](002-bicycle-api-inexistente.md)
+y la [005](005-desincronizacion-al-conducir.md): la familia entera de síntomas
+es del **juego base**.
+
+La firma asociada al síntoma 2 apunta igual. Del análisis de logs del cliente
+hecho para la 005:
+
+| Sesión | Mods | `ItemContainer dup id` |
+| --- | --- | ---: |
+| 11/08, vanilla | **0** | 77 casos — 0,21/min |
+| 12/08, vanilla | 7 de interfaz | 131 casos — 0,48/min |
+
+Ya estaba ahí **con cero mods**.
+
+### Un candidato nuevo para el síntoma 1
+
+La sesión del 12/08 dejó, en el cliente analizado, un episodio que encaja con
+"atascado en una puerta" mejor que el único indicio anterior (aquel
+`CloseWindowState` que además era una ventana):
+
+```
+ERROR: IsoDoor.syncIsoObject > expected IsoDoor index is invalid
+```
+
+**124 líneas sobre una única puerta** (casilla `10664,10409`), de 20:50 a 20:52,
+a ritmo de reintento (~0,7/s). Un cliente insistiendo tres minutos sobre una
+puerta cuyo estado no consigue sincronizar es, mecánicamente, un personaje que
+no consigue terminar de cruzarla. El servidor, además, registró 15 paquetes
+`Thump` inconsistentes esa tarde (19:47–22:36), la familia de golpear/forzar
+puertas.
+
+**Sin confirmar**: nadie anotó a qué hora se quedó atascado nadie, así que no se
+puede afirmar que ese episodio sea uno de los atascos reportados. Es el mejor
+candidato disponible, no una causa probada. Si un atasco coincidiera alguna vez
+con esta firma, el síntoma 1 quedaría capturado de principio a fin, que es lo
+que esta incidencia lleva pidiendo desde que se abrió.
 
 ## Lo que se descartó
 
@@ -66,10 +115,13 @@ Unas 49 veces más por hora, y con un jugador frente a cuatro. **Pero sin línea
 base no se podía afirmar que fuera anormal**: se desconocía cuántos errores por
 hora produce un B42.20 multijugador sano.
 
-**Ese hueco ya tiene cómo taparse.** Existe el servidor vanilla (puerto 16461):
-mismo mapa, misma semilla, mismos ajustes y cero mods. Jugando un rato allí y
-contando errores por hora se obtiene la referencia que falta, y con ella estas
-cifras pasan a significar algo. Mientras no se haga, siguen sin significar nada.
+**Ese hueco probablemente ya está tapado sin saberlo.** El plan era jugar en el
+vanilla limpio y contar errores por hora; pues **esa sesión ya se jugó**: la del
+11/08, ~6 h en el vanilla con cero mods, y sus logs siguen en la máquina del
+jugador analizado para la 005. Falta solo pedir el recuento total de `ERROR` por
+hora de esa sesión, que el informe del cliente no llegó a dar. Ojo: el vanilla
+lleva mods desde el 12/08, así que **la línea base es esa sesión archivada, no
+una futura**.
 
 Además, servidor y cliente fallan en cosas casi disjuntas: de las firmas del
 servidor, solo `ReceiveEatBody` aparece también en el cliente (19 frente a 686).
