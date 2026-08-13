@@ -1,10 +1,16 @@
 # Mods del servidor
 
-Esto es lo que llevamos puesto ahora mismo. **34 mods**, todos probados y
-funcionando en la versión actual del juego (Build 42.20).
+Esto es lo que lleva **el mundo en el que jugamos ahora** (el del puerto 16461).
+**25 mods**, todos probados y funcionando en la versión actual del juego
+(Build 42.20).
 
 No tenéis que hacer nada para instalarlos: al entrar al servidor, el juego los
-descarga automáticamente.
+descarga automáticamente. La única excepción son las barbas, al final.
+
+Veréis que faltan algunos que estaban en el mundo anterior. No es un descuido:
+los que faltan **dejan huella permanente en el mundo** (objetos, recetas,
+vehículos), así que si entran es para siempre. Por eso se prueban antes con
+calma. Están listados al final.
 
 ---
 
@@ -13,36 +19,26 @@ descarga automáticamente.
 - **[Proximity Inventory](https://steamcommunity.com/sharedfiles/filedetails/?id=2847184718)** — Saquea de golpe todo lo que tengas alrededor, en vez de ir contenedor por contenedor y cadáver por cadáver.
 - **[CleanUI](https://steamcommunity.com/sharedfiles/filedetails/?id=3437629766)** — Rehace los paneles de inventario y saqueo: más compactos, rápidos y fáciles de leer.
 - **[Nested Containers](https://steamcommunity.com/sharedfiles/filedetails/?id=3410947298)** — Puedes ver lo que hay dentro de una bolsa guardada en otra bolsa, sin sacarla.
-- **[Manage Containers](https://steamcommunity.com/sharedfiles/filedetails/?id=2650547917)** — Le dices a cada mueble de la base qué categoría acepta y el juego reparte el botín solo.
 - **[Better Sorting](https://steamcommunity.com/sharedfiles/filedetails/?id=2313387159)** — Reorganiza las categorías de objetos y arregla un montón de nombres.
 - **[Split Items](https://steamcommunity.com/sharedfiles/filedetails/?id=3147428398)** — Dividir pilas de objetos.
 - **[Modern Status](https://steamcommunity.com/sharedfiles/filedetails/?id=3451167732)** — Los indicadores de estado del personaje, en círculos y barras configurables.
 
-## Manitas y sentido común
-
-- **[Common Sense](https://steamcommunity.com/sharedfiles/filedetails/?id=3717968421)** — Un montón de cosas que el juego debería hacer y no hace: forzar puertas y ventanas con una palanca, ver munición y estado del arma que llevas equipada, equiparte cosas del suelo con clic derecho, colgarte la linterna del cinturón, abrir latas con un cuchillo o un destornillador, desinfectar vendas con alcohol y fabricar sábanas con ropa vieja.
-
 ## Construir, fabricar y cocinar
 
-- **[Neat Building](https://steamcommunity.com/sharedfiles/filedetails/?id=3536052310)** — Menú de construcción ordenado por categorías, con mejores iconos y filtros.
+- **[Neat Building](https://steamcommunity.com/sharedfiles/filedetails/?id=3536052310)** — Menú de construcción ordenado por categorías, con mejores iconos y filtros. Llevamos la variante *solo interfaz*: no añade piezas nuevas.
 - **[Neat Crafting](https://steamcommunity.com/sharedfiles/filedetails/?id=3502080466)** — Lo mismo para la artesanía, y encima te deja saltar de una receta a la que necesitas para hacerla.
 - **[Project Cook](https://steamcommunity.com/sharedfiles/filedetails/?id=3490188370)** — Pantalla de cocina de verdad, sobre todo para sopas, guisos, ensaladas y demás.
 
-## Supervivencia
+## Descanso y salud
 
-- **[Realistic Temperature](https://steamcommunity.com/sharedfiles/filedetails/?id=3600401184)** — El frío y el calor pasan a importar de verdad, también dentro de los edificios. En invierno hay que abrigarse y cerrar puertas; en verano puedes sufrir un golpe de calor por ir demasiado tapado.
-- **[Starving Zombies](https://steamcommunity.com/sharedfiles/filedetails/?id=3396867685)** — Los zombis huelen los cadáveres y van a comérselos. También te huelen a ti, y más si vas manchado de sangre. El viento lleva el olor más lejos.
 - **[Comfy Sleeping](https://steamcommunity.com/sharedfiles/filedetails/?id=2998737588)** — Dormir descansa más o menos según la ropa que lleves, cómo estés de ánimo y de limpio. Acostarse con la mochila puesta se paga.
-- **[Take A Bath And Shower](https://steamcommunity.com/sharedfiles/filedetails/?id=3592172476)** — Bañarse y ducharse de verdad, con su papel en el día a día.
 - **[Replace Bandage](https://steamcommunity.com/sharedfiles/filedetails/?id=2944344655)** — Cambiar un vendaje sucio por uno limpio de una vez, sin quitar y volver a poner.
 - **[Cat's eye in the Dark](https://steamcommunity.com/sharedfiles/filedetails/?id=3402513620)** — El rasgo _Cat's Eye_ ahora sí deja ver algo en la oscuridad.
 
-## Combate y moverse por el mapa
+## Combate y movimiento
 
 - **[Buttstroke](https://steamcommunity.com/sharedfiles/filedetails/?id=3394044313)** — Puedes dar culatazos con el arma de fuego.
 - **[Run and Reload](https://steamcommunity.com/sharedfiles/filedetails/?id=3397207461)** — Recargar mientras corres.
-- **[Bicycle!](https://steamcommunity.com/sharedfiles/filedetails/?id=3461415167)** — Bicicleta. Se dirige con el botón derecho o Ctrl.
-- **[Trailers!](https://steamcommunity.com/sharedfiles/filedetails/?id=3330403100)** — Siete remolques para enganchar al coche, con piezas que puedes quitar, poner y fabricar: lonas, cajas de herramientas, bidones.
 
 ## Ropa y aspecto
 
@@ -59,14 +55,33 @@ descarga automáticamente.
 - **[Map Symbol Size Slider](https://steamcommunity.com/sharedfiles/filedetails/?id=2734705913)** — Cambiar el tamaño de los símbolos y las notas del mapa.
 - **[Map Symbols Plus](https://steamcommunity.com/sharedfiles/filedetails/?id=3399645148)** — Símbolos de mapa dibujados a mano, con chinchetas de "seguro", "peligro" y "desconocido".
 
-## Y cuatro más que no vais a notar
+## Y dos más que no vais a notar
 
-Estos no añaden nada por sí solos: hacen funcionar a los de arriba.
+No añaden nada por sí solos: hacen funcionar a los de arriba.
 
 - **[NeatUI Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=3508537032)**
-- **[that DAMN Library](https://steamcommunity.com/sharedfiles/filedetails/?id=3171167894)**
 - **[Fluffy Hair](https://steamcommunity.com/sharedfiles/filedetails/?id=2447729538)** — este además hace que el peinado no se deforme al llevar sombrero
-- **[Lua Digital Watch Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=3676456221)**
+
+---
+
+## Los que aún no están, y por qué
+
+Estos estaban en el mundo anterior y **todavía no** en este. Todos dejan huella
+permanente (objetos, recetas o vehículos): quitarlos después rompe cosas, así
+que si entran es para quedarse. Antes de eso se prueban en un servidor de
+ensayo con una copia de nuestro mundo.
+
+| Mod | Estado |
+| --- | --- |
+| **Common Sense** (palanca, abrir latas con cuchillo...) | En cola para probarse |
+| **Take A Bath And Shower** | En cola para probarse |
+| **Manage Containers** | En cola para probarse |
+| **Realistic Temperature** | En cola para probarse |
+| **Trailers!** (remolques) | Decisión de grupo: es el más irreversible de todos (vehículos) |
+| **Starving Zombies** (los zombis os huelen) | Reversible, pero cambia la jugabilidad: se vota |
+| **Bicycle!** | **No va a entrar**: está roto en la versión actual del juego. Si su autor lo actualiza, se reevalúa |
+
+Si echáis de menos alguno o queréis proponer otro, decidlo.
 
 ---
 
@@ -77,7 +92,8 @@ lleva sin actualizarse desde 2023 y ya no funciona con la versión actual del
 juego, así que lo hemos arreglado nosotros. Son las mismas 47 barbas del
 original, sin tocar nada del contenido.
 
-Como no viene de Steam, hay que copiarlo a mano una vez:
+**Si ya jugaste en el mundo anterior, ya lo tienes instalado y no hay que hacer
+nada.** Si eres nuevo:
 
 1. Descarga **`TariqsBeardsB42.zip`**.
 2. Abre la carpeta `Zomboid\mods` de tu usuario. La forma rápida: pulsa

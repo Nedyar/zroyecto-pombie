@@ -27,7 +27,7 @@ dos a la vez sin mirar antes `docker stats`.
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
 | Juego | Build 42, `buildid` registrado y coincidente con el instalado |
 | Mods en produccion | 33 elementos del Workshop + 1 local (`TariqsBeardsB42`) |
-| Mods en vanilla | **7**, solo interfaz, sin una sola entidad declarada |
+| Mods en vanilla | **25** (oleada 1): todos reversibles, sin definiciones persistentes |
 | Memoria | produccion heap 6g / vanilla 3g, `mem_limit` 10g |
 | Backups | automatico al arrancar + cada 6 h, **en las dos instancias** |
 
@@ -101,17 +101,18 @@ Nacio **sin un solo mod**, y no era un capricho: sin el no habia forma de
 distinguir "esto lo rompe un mod" de "esto es asi en Build 42", y varias
 incidencias abiertas estaban bloqueadas por eso.
 
-**Ha dejado de ser eso.** La gente se puso a jugar ahi y pidio interfaz, asi que
-el 2026-08-12 se le anadieron **siete mods de interfaz** —los unicos que pasan
-el filtro de no declarar ninguna entidad— y antes se le habian activado los
-backups. Los dos cambios responden al mismo hecho: es un mundo habitado.
+**Ha dejado de ser eso.** La gente se puso a jugar ahi y pidio mods: el 12/08
+entraron 7 de interfaz y el 13/08 la **oleada 1** completa —25 mods, todos
+reversibles, criterio y medicion en MODS-LISTA.md seccion 0—. Antes se le
+habian activado los backups. Todo responde al mismo hecho: es un mundo
+habitado.
 
 La linea base de errores de un B42.20 limpio **ya no se puede volver a medir
 aqui** —el vanilla dejo de estar limpio el 12/08— pero **se rescato a tiempo**
 de los logs archivados de la sesion del 11/08, cuando aun no llevaba nada:
 **~16 `ERROR`/h en cliente, ~2 causas distintas**. Detalle y salvedades en la
-incidencia 004. Para descartar mods el vanilla sigue sirviendo (26 que no
-lleva); para medir el juego base, lo que vale es esa sesion archivada.
+incidencia 004. Para descartar mods de via unica el vanilla sigue sirviendo;
+para medir el juego base, lo que vale es esa sesion archivada.
 
 Detalle en [OPERACIONES.md](OPERACIONES.md), seccion *Mundo vanilla*.
 
@@ -153,8 +154,16 @@ antes de levantar el segundo.
 - **Que alguien anote la hora** la proxima vez que ocurra. Es la pieza que mas
   falta: hay dos logs senalando momentos distintos y ninguno captura lo que
   vivieron los jugadores.
+- **Oleada 2 de mods del vanilla** (Common Sense, Take A Bath, Manage
+  Containers, Realistic Temperature): probar cada uno en staging sobre copia
+  del vanilla (`./scripts/stage.sh --from pz-vanilla`) y decidir. Son de via
+  unica: entran para quedarse. Criterio y orden de insercion en MODS-LISTA.md
+  seccion 0.
+- **Dos decisiones de grupo**: Trailers! (irreversible de verdad, 66 vehiculos)
+  y StarvingZombies (reversible y exonerado, pero cambia jugabilidad).
 - Cada jugador necesita su **propia copia del mod local** en su carpeta
-  `Zomboid\mods`. El servidor no puede enviarselo.
+  `Zomboid\mods`. El servidor no puede enviarselo. Quien jugo en el mundo
+  anterior ya la tiene.
 - Dar de alta a los invitados que falten: son **tres** pasos independientes, ver
   [TAILSCALE.md](TAILSCALE.md). Ojo con Tailnet Lock, que fue lo que mas tiempo
   costo de todo el despliegue.

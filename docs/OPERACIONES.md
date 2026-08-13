@@ -349,40 +349,30 @@ No confundir con staging, que es otra cosa: staging levanta una **copia del
 mundo real CON todos sus mods** para ensayar un cambio antes de meterlo en
 produccion. Este es un mundo aparte con lista propia.
 
-### Los siete, y por que solo esos
+### Su lista de mods: solo lo reversible
 
-El criterio fue: interfaz, compatible con un mundo ya empezado y sin
-responsabilidad conocida en ningun fallo abierto.
+La lista vive en el `.env` (`VANILLA_WORKSHOP_ITEMS` / `VANILLA_MODS`); el
+default del compose es el minimo de 7 de interfaz pura para quien monte el
+repo de cero. Desde el 13/08 lleva la **oleada 1**: 25 mods (24 del Workshop +
+Tariq's Beards local).
 
-| Mod | Mod ID |
-| --- | --- |
-| NeatUI Framework | `NeatUI_Framework` |
-| Neat Building (solo interfaz) | `Neat_Building_UIOnly` |
-| Neat Crafting | `Neat_Crafting` |
-| Modern Status | `ModernStatus` |
-| Map Symbol Size Slider | `MapSymbolSizeSlider` |
-| Has Been Read | `P4HasBeenRead` |
-| Map Symbols Plus | `MapSymbolsPlusDeonHand` |
+El criterio, con su medicion y las oleadas siguientes, esta en
+[MODS-LISTA.md](MODS-LISTA.md) seccion 0. El resumen: sobre un mundo empezado
+solo entra directo lo que **no declara nada persistente** —ni items, ni
+recetas, ni vehiculos, ni entidades— porque eso es lo que se puede quitar sin
+dejar referencias rotas. Verificado fichero a fichero sobre lo descargado.
 
-**Lo que los hace seguros en un mundo empezado** es que ninguno declara
-entidades. Sin `media/scripts` un mod no puede meter objetos, construibles,
-vehiculos ni tiles, asi que ni al ponerlo ni al quitarlo deja referencias
-colgando en el `WorldDictionary`. Verificado fichero a fichero sobre lo
-descargado, no leyendo el Workshop: los siete dan cero scripts, cero items,
-cero entities y cero tiles.
+Los seis de inventario, que estuvieron fuera por la sospecha de la incidencia
+004, entraron en la oleada 1: los sintomas de esa incidencia se reprodujeron el
+12/08 en este mismo mundo **sin** ninguno de ellos, asi que quedaron exonerados
+con datos.
 
-El contraste que lo ilustra: `Neat_Building` completa trae 441 ficheros de
-entidades y `Neat_Building_UIOnly` trae 0.
+Los de **via unica** (Common Sense, Take A Bath, Manage Containers, Realistic
+Temperature) solo entran tras probarse en staging sobre una copia de este
+mundo: `./scripts/stage.sh --from pz-vanilla`. Trailers! y StarvingZombies son
+decisiones de grupo; Bicycle! esta vetado (defectuoso e irreversible).
 
-**Los seis de inventario quedan fuera a proposito**, aunque tambien sean de
-interfaz: CleanUI, Proximity Inventory, Nested Containers, Manage Containers,
-Better Sorting y Split Items son la *zona de riesgo* de
-[MODS-LISTA.md](MODS-LISTA.md), y la incidencia 004 tiene como mejor indicio 54
-casos de `ItemContainer.AddItem: container already has id`, que es exactamente
-un problema de contenedores. Mientras no se descarte, no se puede afirmar que no
-sean responsables, y el encargo era casi-certeza.
-
-Los siete llevan ademas meses corriendo en produccion y estan marcados como
+Los 25 llevan semanas corriendo juntos en produccion y estan marcados como
 comprobados en juego en [CHECKLIST-MODS.md](CHECKLIST-MODS.md).
 
 Cuidado con la memoria: no conviene tener produccion y vanilla arriba a la vez
