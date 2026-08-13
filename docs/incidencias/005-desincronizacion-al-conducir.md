@@ -259,6 +259,31 @@ fenómeno es general, no de este servidor.
 Consecuencia práctica nueva: si el síntoma se vuelve molesto, el camino no es
 tocar la infraestructura sino **evaluar esos mods-parche en staging**, como
 cualquier otro candidato.
+
+### Los mods-parche, evaluados (15/08/2026)
+
+Se evaluaron sus fichas **antes** de descargar nada, contra la API pública del
+Workshop (`ISteamRemoteStorage/GetPublishedFileDetails`) en lugar de las
+descripciones de las guías, que resultaron engañosas en tres de cuatro casos.
+
+| Mod | Workshop | Sincroniza | Última act. | Veredicto |
+| --- | --- | --- | --- | --- |
+| Physiks MP DataSync Optimizer **B42** | `3725078880` | jugadores + vehículos | 10/06/2026 | **DESCARTADO**: su título dice `[UNSTABLE ONLY]` — es para la rama inestable, no para estable. Y es anterior a 42.20 |
+| Custom Sync `[42.18]` | `3646815505` | etiquetado *Vehicles* | 26/05/2026 | **Dudoso**: su descripción entera son tres líneas sin explicar qué hace. Declara 42.18, dos meses y medio sin tocar |
+| sch1zk's Forced Sync | `3264178130` | **solo jugadores** | 06/08/2026 | **Único mantenido para nuestra versión** ("Works on Stable 42.20!", 39.600 suscriptores) pero **no ataca el síntoma**, y su autor avisa: *"puede aumentar significativamente la carga del servidor"* y *"no está bien probado, úsalo bajo tu responsabilidad"* |
+| JaysSync | GitHub, no Workshop | **jugadores, zombis y vehículos**, con *dead reckoning* | v1.6 | **El único que ataca el síntoma y está documentado**. Lua puro, sin definiciones → reversible por construcción. **Coste: hay que instalarlo a mano en el servidor Y en cada cliente**; no hay distribución automática de Steam |
+| Better Vehicle Dynamics | `3728775267` | — | — | **DESCARTADO**: exige versiones idénticas en servidor y en cada cliente, y un desajuste **produce** desync. El remedio puede causar la enfermedad |
+| HDCP Better Sync | `3654675857` | — | — | **DESCARTADO**: reportado incompatible con la versión actual |
+| Multiplayer Bug Fixes | `3627047348` | nada de posiciones | — | **DESCARTADO**: arreglos cosméticos de interfaz |
+
+**El campo es más flojo de lo que sugerían las guías.** Ninguno reúne las tres
+cosas a la vez: atacar vehículos, estar mantenido para 42.20, y distribuirse
+solo por Steam. Hay que elegir cuál de las tres se sacrifica.
+
+Honestidad que conviene retener, del propio autor de JaysSync: *"este mod no
+es un arreglo milagroso; PZ tiene problemas de sincronización a nivel de motor
+que ningún mod de Lua puede resolver"*. Coincide con la conclusión de esta
+incidencia y rebaja la expectativa de cualquiera de estos candidatos.
 Y si en ese momento hay una horda modificando decenas de objetos destructibles,
 los dos modelos de mundo divergen más rápido de lo que se reconcilian.
 
