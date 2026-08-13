@@ -301,16 +301,38 @@ docker compose run --rm --no-deps pz bash -c 'rm -rf /home/steam/Zomboid/.pre-re
 ## Staging: probar sin arriesgar
 
 ```bash
-./scripts/stage.sh          # copia el mundo de produccion y lo levanta aparte
-./scripts/stage.sh --keep   # arranca sin recopiar
-./scripts/stage.sh --down   # para y borra los datos de staging
+./scripts/stage.sh                     # copia el mundo de PRODUCCION y lo levanta aparte
+./scripts/stage.sh --from pz-vanilla   # copia el mundo VANILLA
+./scripts/stage.sh --keep              # arranca sin recopiar (repite el --from)
+./scripts/stage.sh --down              # para y borra los datos de staging
 ```
 
 Staging usa **volumenes propios**, incluido el del juego. Comparte la carpeta
 `config/`, asi que un cambio en la plantilla afecta a los dos al reiniciar; lo
 que no comparte son los datos, que es lo que importa.
 
-Se conecta en `localhost:16361`. Produccion sigue corriendo sin enterarse.
+Se conecta en `localhost:16361`. El mundo original sigue sin enterarse.
+
+`--from` existe porque staging comparte el **nombre de mundo** con su origen
+—el nombre da nombre a la carpeta de guardado— y con mas de un mundo ya no
+siempre es produccion. stage.sh averigua el nombre del origen y lo exporta;
+sin `--from`, todo funciona como siempre.
+
+### Ensayar un mod de via unica sobre el vanilla (procedimiento oleada 2)
+
+1. En `.env`, poner en `STAGING_WORKSHOP_ITEMS` / `STAGING_MODS` la lista del
+   vanilla **mas el candidato**, respetando su posicion de insercion
+   ([MODS-LISTA.md](MODS-LISTA.md) seccion 0).
+2. `./scripts/stage.sh --from pz-vanilla`
+3. Probar en `localhost:16361` con la checklist de abajo, mas lo especifico
+   del candidato.
+4. `./scripts/stage.sh --down`, y decidir: si entra, entra sabiendo que es
+   para quedarse.
+
+**Ojo con los mods locales** (Tariq's Beards): la instantanea solo lleva
+`Saves/db/Server`, los mods locales **no viajan**. O se excluyen de
+`STAGING_MODS` (lo normal: no afectan a lo que se ensaya), o se instalan a
+mano en staging tras el paso 2 con `install-local-mods.sh <src> pz-staging`.
 
 Que mirar antes de dar por bueno un cambio:
 
