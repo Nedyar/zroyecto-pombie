@@ -15,6 +15,26 @@ Reportado por los jugadores:
 Dos síntomas distintos con la misma forma: **el cliente y el servidor no están
 de acuerdo sobre qué hay en el mundo.**
 
+### Precisión del síntoma principal (15/08, primera mano)
+
+El teletransporte no ocurre sobre todo peleando, sino **dentro del coche con
+varios jugadores**:
+
+- A unos y a otros **les muestra posiciones distintas del coche**, e incluso de
+  ellos mismos.
+- Al bajarse, el jugador aparece **donde el coche estaba, no donde está**.
+
+Es decir: el estado desincronizado es **el del vehículo y sus ocupantes**, no
+la posición de jugadores a pie. Esto coincide casi palabra por palabra con el
+caso típico que describe la comunidad (hilo *Multiplayer Desync on Stable*,
+foro de Steam): el conductor desaparece de la pantalla de los demás mientras el
+motor suena, el coche se queda atrás en las pantallas ajenas, y al subirse otro
+jugador el coche "se corrige" de golpe hacia donde ese jugador lo veía.
+
+Consecuencia para los remedios: un mod de sincronización que solo pida
+posiciones de **jugadores** (p. ej. al golpear con un arma) no ataca este
+síntoma. Hace falta uno que sincronice **vehículos**.
+
 ## La ventana, localizada en el log
 
 La sesión fue del 12-08 16:30 al 13-08 02:03. El servidor rechazó 163 paquetes
