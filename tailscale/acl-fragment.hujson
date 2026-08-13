@@ -70,8 +70,9 @@
       // Si cambias los puertos en el .env, cambialos tambien aqui.
       "ip": ["udp:16261", "udp:16262"],
 
-      // Si algun dia se invita a alguien a probar en staging, se anaden
-      // sus puertos igual. Por defecto staging no se comparte con nadie.
+      // Si se invita a alguien a jugar en staging, se anaden sus puertos
+      // igual. Son los de STAGING_GAME_PORT / STAGING_GAME_PORT_2 del .env
+      // (por defecto 16361/16362).
       // "ip": [..., "udp:16361", "udp:16362"],
     },
   ],

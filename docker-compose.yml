@@ -15,14 +15,9 @@ name: zroyecto-pombie
 # Levantar produccion:   docker compose up -d
 # Levantar staging:      ./scripts/stage.sh
 #
-# HUBO UN TERCER SERVICIO, `pz-vanilla`, retirado el 13/08/2026. Nacio como
-# referencia sin mods para distinguir "esto lo rompe un mod" de "esto es asi en
-# Build 42", y cumplio: respondio cuatro veces y las cuatro dijo que no eran los
-# mods (ver docs/incidencias/). Despues la gente se puso a jugar en el, se le
-# anadieron mods, y acabo siendo el mundo bueno — asi que paso a ser PRODUCCION
-# y el servicio dejo de tener sentido: dos servicios sobre el mismo volumen es
-# la forma mas directa de corromper un mundo. Sus volumenes siguen llamandose
-# "-vanilla" a proposito; renombrarlos exigiria mover los guardados.
+# Hubo un tercer servicio, `pz-vanilla`, retirado el 13/08/2026: su mundo paso
+# a ser el de produccion y dos servicios sobre el mismo volumen corrompen el
+# mundo. Historia completa en docs/DECISIONES.md seccion 6bis.
 # ============================================================================
 
 x-pz-common: &pz-common
@@ -124,15 +119,9 @@ services:
       - "127.0.0.1:${HOST_RCON_PORT:-27015}:27015/tcp"
 
     volumes:
-      # OJO A LOS NOMBRES: los volumenes se llaman "-vanilla" por herencia, no
-      # porque el mundo lo sea. El 13/08/2026 el mundo bueno paso a ser este y
-      # produccion lo adopto TAL CUAL, sin moverlo: reasignar un volumen no
-      # toca ni un byte de los guardados, mientras que copiarlos o restaurarlos
-      # si. Con 285 MB de partida jugada dentro, la opcion que no los manipula
-      # gana a la que deja los nombres bonitos.
-      #
-      # El mundo anterior (33 mods) vivia en pz-data/pz-game y se retiro con
-      # backup. Ver docs/DECISIONES.md.
+      # El sufijo "-vanilla" es herencia: produccion adopto este volumen tal
+      # cual el 13/08/2026 porque reasignar no toca los guardados y moverlos
+      # si. Ver docs/DECISIONES.md seccion 6bis.
       - pz-game-vanilla:/opt/pz-server   # instalacion (~7 GB), desechable
       - pz-data-vanilla:/home/steam/Zomboid  # SAVES, db: irremplazable
       - ./config:/config              # fuente de verdad de la configuracion
@@ -184,9 +173,11 @@ services:
 
       # Los backups de staging llevan otro prefijo para que no se confundan
       # nunca con los de produccion en la carpeta compartida ./backups.
+      # Y estan ACTIVADOS desde que el grupo juega aqui (13/08/2026): un mundo
+      # con gente dentro no es desechable, y `stage.sh --down` borra los datos.
       BACKUP_NAME_PREFIX: "staging"
-      BACKUP_INTERVAL_HOURS: "0"
-      BACKUP_ON_START: "false"
+      BACKUP_INTERVAL_HOURS: "${BACKUP_INTERVAL_HOURS:-6}"
+      BACKUP_ON_START: "true"
 
       # Aqui si aceptamos cambios de version: es el sitio para probarlos.
       ALLOW_BUILD_CHANGE: "true"

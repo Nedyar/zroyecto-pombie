@@ -10,13 +10,8 @@
 #   ./scripts/stage.sh --keep       arranca sin recopiar (sigue donde lo dejaste)
 #   ./scripts/stage.sh --down       para y BORRA los datos de staging
 #
-# `--from <servicio>` existe para elegir el mundo origen. Hoy solo vale `pz`,
-# porque desde el 13/08/2026 solo hay un mundo: el servicio pz-vanilla se
-# retiro cuando su mundo paso a ser produccion. La maquinaria se conserva
-# porque el dia que vuelva a haber dos mundos, anadir un caso al `case` de
-# abajo es todo lo que hace falta — y porque lo que resuelve (que staging use
-# el NOMBRE de mundo de su origen, y que elija la instantanea por PREFIJO y no
-# la ultima de cualquiera) sigue siendo necesario con un solo mundo.
+# `--from <servicio>` elige el mundo origen; hoy solo existe `pz`. Si vuelve a
+# haber un segundo mundo, se anade su caso al `case` de abajo.
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 # ------------------------------------------------------------- argumentos ---

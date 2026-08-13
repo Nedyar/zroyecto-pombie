@@ -311,7 +311,7 @@ Staging usa **volumenes propios**, incluido el del juego. Comparte la carpeta
 `config/`, asi que un cambio en la plantilla afecta a los dos al reiniciar; lo
 que no comparte son los datos, que es lo que importa.
 
-Se conecta en `localhost:16361`. El mundo original sigue sin enterarse.
+Se conecta en el puerto `STAGING_GAME_PORT` del `.env` (hoy **16461**, el que los jugadores ya tenian configurado). El mundo original sigue sin enterarse.
 
 `--from` existe porque staging comparte el **nombre de mundo** con su origen
 —el nombre da nombre a la carpeta de guardado— y con mas de un mundo ya no
@@ -324,7 +324,7 @@ sin `--from`, todo funciona como siempre.
    vanilla **mas el candidato**, respetando su posicion de insercion
    ([MODS-LISTA.md](MODS-LISTA.md) seccion 0).
 2. `./scripts/stage.sh`
-3. Probar en `localhost:16361` con la checklist de abajo, mas lo especifico
+3. Probar en el puerto de staging con la checklist de abajo, mas lo especifico
    del candidato.
 4. `./scripts/stage.sh --down`, y decidir: si entra, entra sabiendo que es
    para quedarse.

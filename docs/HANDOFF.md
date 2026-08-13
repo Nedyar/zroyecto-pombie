@@ -14,10 +14,13 @@ forma del despliegue, no sus valores.
 **Queda UN solo mundo. El 13/08 se reorganizo todo: el mundo original (33 mods)
 se retiro con backup, y el mundo bueno —el que nacio vanilla y hoy lleva 25
 mods— paso a ser PRODUCCION. Produccion NO esta desplegada; ahora mismo lo
-unico en marcha es STAGING (puerto 16361) con una copia de ese mundo.**
+unico en marcha es STAGING (puerto 16461, el que los jugadores ya tenian) con
+una copia de ese mundo. Ahi es donde juega el grupo ahora.**
 
 Levantar produccion cuando toque: `docker compose up -d` (puerto 16261). Antes,
-bajar staging: `./scripts/stage.sh --down`.
+bajar staging: `./scripts/stage.sh --down` — **OJO: eso borra el mundo de
+staging**, y ahora se juega ahi. Hacer backup antes o asumir que lo jugado en
+staging se pierde.
 
 ## Que hay montado
 
