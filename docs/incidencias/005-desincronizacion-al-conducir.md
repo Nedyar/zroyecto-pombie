@@ -218,6 +218,27 @@ descarta que haya un único objeto o una única causa puntual.
 El mecanismo que encaja con los dos síntomas: el servidor simula a ~10 ticks por
 segundo. Un coche a velocidad recorre mucha distancia entre dos actualizaciones,
 así que el cliente extrapola; cuando llega la corrección, el personaje salta.
+
+### Corroboración externa (14/08/2026)
+
+Buscando mods para el servidor apareció que la comunidad describe la
+desincronización de B42 multijugador **exactamente con el perfil de esta
+incidencia**: los hilos del foro oficial sitúan los problemas "sobre todo
+alrededor de coches", con "jugadores que se teletransportan a trocitos"
+(discusión *Multiplayer has gamebreaking desync issues*, foro de Steam), y
+existen mods-parche dedicados solo a esto: *sch1zk's Forced Sync [B42]*
+(Workshop `3264178130`, fuerza la resincronización de posiciones contra el
+servidor) y *Multiplayer Bug Fixes* (Workshop `3627047348`).
+
+Que exista un ecosistema de parches de terceros para este síntoma concreto es
+la confirmación independiente de la conclusión: **es Build 42, no este
+despliegue**. Los datos de aquí (mods descartados con tasas, red limpia con
+contadores) siguen siendo lo que sostiene la incidencia; esto añade que el
+fenómeno es general, no de este servidor.
+
+Consecuencia práctica nueva: si el síntoma se vuelve molesto, el camino no es
+tocar la infraestructura sino **evaluar esos mods-parche en staging**, como
+cualquier otro candidato.
 Y si en ese momento hay una horda modificando decenas de objetos destructibles,
 los dos modelos de mundo divergen más rápido de lo que se reconcilian.
 
