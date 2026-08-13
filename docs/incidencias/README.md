@@ -32,7 +32,7 @@ retirar mods, y en las dos habría costado tiempo sin arreglar nada.
 
 ## Cómo se investiga aquí
 
-Tres reglas que salieron de equivocarse en esta misma investigación, y que
+Reglas que salieron de equivocarse en estas mismas investigaciones, y que
 conviene respetar en la siguiente:
 
 **El error más numeroso no es el más importante.** Un fallo puede generar miles
@@ -47,6 +47,45 @@ entero.
 exige saber cuántos tiene un servidor sano. Si no se tiene esa referencia, se
 dice que no se tiene.
 
-Y para correlaciones temporales: calcula qué esperarías **por azar** antes de
-declarar que dos cosas van juntas. Un 40% de coincidencia parece mucho y puede
-ser menos de lo que da el azar si las ventanas cubren media línea temporal.
+**Calcula el azar antes de declarar una correlación.** Un 40% de coincidencia
+parece mucho y puede ser menos de lo que da el azar si las ventanas cubren media
+línea temporal.
+
+**Dos firmas juntas en un extracto no van emparejadas.** Se dio por hecho en la
+[005](005-desincronizacion-al-conducir.md) porque aparecían cerca al leer el log,
+y al sacar la distribución por minuto resultaron **casi disjuntas**. Si vas a
+afirmar que dos cosas ocurren juntas, sácalas por minuto y míralo.
+
+**Cuidado con el sesgo de detección.** Una ventana con más líneas de log tendrá
+más de todo, incluida la señal que buscas. Normaliza en tasa —sucesos entre
+muestras—, nunca en recuento absoluto. En la 005 esto casi produce la conclusión
+falsa de que el servidor se había atascado: el minuto sospechoso tenía 6 parones
+porque tenía 39 muestras, y en tasa no destacaba sobre minutos sin ninguna queja.
+
+**Normaliza también por actividad, no solo por tiempo.** Un servidor con 12 h de
+reloj y nadie dentro no es comparable con 2 h de cuatro jugadores. Mira las
+conexiones antes de dividir por horas.
+
+## Cómo conseguir datos del cliente
+
+La mitad de los síntomas de este proyecto **no dejan rastro en el servidor**: el
+mapa que no carga, los tirones, las correcciones de posición. Esos logs viven en
+`%USERPROFILE%\Zomboid\Logs\` de cada jugador y hay que pedirlos.
+
+Lo que funcionó en la 005 fue pasarle a un agente en la máquina del jugador un
+encargo con cuatro cosas:
+
+1. **Las ventanas horarias exactas** y en qué zona horaria están, para que las
+   pueda cruzar sin adivinar.
+2. **Qué se sabe ya desde el servidor**, para que no lo repita.
+3. **Las reglas de arriba**, explícitas. Sin ellas devuelve recuentos de líneas.
+4. **El encargo de REFUTAR**, con la lista concreta de hallazgos que tumbarían la
+   hipótesis. Pedirle que confirme produce confirmación.
+
+Dos avisos prácticos: **no hace falta administrador** —todo está en el perfil del
+usuario, y elevar con otra cuenta hace que no encuentre nada—, y conviene
+**cerrar el juego** antes, porque mantiene `console.txt` abierto en escritura.
+
+Y una limitación que hay que decir siempre: **un cliente es un cliente**. Los
+errores del servidor son la suma de todos los conectados, así que "aquí está
+limpio" no significa "no pasó".

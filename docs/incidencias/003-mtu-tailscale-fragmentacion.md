@@ -1,7 +1,14 @@
 # 003 — El contenedor anuncia un MTU mayor que el de la ruta real
 
-**Estado:** desajuste confirmado · **impacto sin determinar** · nada aplicado
+**Estado:** desajuste confirmado · **descartado como causa de la [005](005-desincronizacion-al-conducir.md)** · nada aplicado
 **Componente:** infraestructura de este despliegue, no el juego ni los mods
+
+> **Puesto a prueba el 13/08/2026 y no se disparó.** Durante la sesión completa
+> del 12/08 —18 h, cuatro jugadores, con los episodios que investiga la 005
+> dentro— el contador `FragOKs` del host **no se movió de 154**, con la máquina
+> arrancada desde hacía 6 días. Cero datagramas fragmentados en toda la sesión.
+> El desajuste sigue siendo real y sigue mereciendo arreglarse, pero **no explica
+> ninguno de los síntomas reportados**.
 
 ## Síntoma
 
@@ -53,8 +60,12 @@ flojo.
 
 - **Que se haya perdido un solo fragmento.** `FragFails=0` y no hay pérdidas en
   el socket. No hay medición de pérdida extremo a extremo.
-- Que la fragmentación tenga relación con ninguno de los síntomas reportados.
-- Cuántos de los paquetes del juego superan realmente 1280 bytes.
+- ~~Que la fragmentación tenga relación con ninguno de los síntomas reportados.~~
+  **Resuelto en negativo**: no hubo fragmentación durante la sesión que produjo
+  los síntomas, así que no puede ser la causa. Ver el aviso de arriba.
+- Cuántos de los paquetes del juego superan realmente 1280 bytes. El dato de que
+  `FragOKs` lleve clavado en 154 sugiere que **casi ninguno**, lo cual reduce
+  todavía más la urgencia del arreglo.
 
 ## Propuesta
 
