@@ -59,6 +59,30 @@ puede instanciar las bicicletas que el servidor le sincroniza— **pero no está
 demostrado**. El log no nombra al emisor de esos paquetes, y `KI5trailers`
 también crea objetos movibles.
 
+### La hipótesis se debilita mucho (13/08/2026)
+
+El análisis de logs de cliente para la [005](005-desincronizacion-al-conducir.md)
+midió esa misma firma en el **servidor vanilla**, que el 11/08 no tenía **ni un
+solo mod** —ni `BicycleMod`, ni `KI5trailers`, ni ningún otro—:
+
+```
+ObjectModDataPacket.parse: object is null    2.099 lineas    5,75/min
+```
+
+**La firma existe en abundancia sin Bicycle! y sin ningún mod que cree objetos
+movibles.** No puede ser exclusiva de ellos, así que la hipótesis de arriba deja
+de sostenerse como explicación completa.
+
+Lo que sí queda en pie, con la reserva de que son sesiones distintas y de
+distinta duración: en producción esa firma va **unas 3 veces más rápido** que en
+el vanilla limpio. Puede que los mods de objetos movibles aporten su parte, pero
+**la mayor parte del fenómeno es del juego base**.
+
+Consecuencia práctica: dejar de usar esas 4.541 líneas como argumento para tocar
+`BicycleMod`. Es el mismo patrón que tumbó la [001](001-cadaveres-no-looteables.md)
+—una firma llamativa atribuida a un mod, que luego resulta más frecuente sin él—
+y conviene reconocerlo antes de repetirlo por tercera vez.
+
 ## Lo que NO está probado
 
 - Que el fallo de registro tenga **alguna** consecuencia observable. Se sabe que
