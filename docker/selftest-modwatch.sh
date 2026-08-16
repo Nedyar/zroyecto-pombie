@@ -50,9 +50,17 @@ graceful_shutdown() { echo "1" >> "$LLAMADAS_SHUTDOWN"; return 0; }
 wait_for_ready()    { return "${FAKE_WAIT_FOR_READY_RC:-0}"; }
 wait_for_exit()     { return 0; }
 
+# El stub de players emite tambien los nombres (formato real: una linea
+# "-Nombre" por jugador) cuando FAKE_PLAYER_NAMES esta definido. Los casos que
+# solo fijan FAKE_PLAYER_COUNT sin nombres ejercitan a proposito la guarda de
+# "los nombres no cuadran con el recuento -> bloquear".
 rcon_cmd() {
     case "$1" in
-        players) printf 'Players connected (%s)\n' "${FAKE_PLAYER_COUNT:-0}" ;;
+        players)
+            printf 'Players connected (%s):\n' "${FAKE_PLAYER_COUNT:-0}"
+            local _n
+            for _n in ${FAKE_PLAYER_NAMES:-}; do printf -- '-%s\n' "$_n"; done
+            ;;
         *)       return 0 ;;
     esac
 }
@@ -74,7 +82,7 @@ nuevo_entorno() {
     DATA_DIR="$(mktemp -d)"
     BACKUP_DIR="$(mktemp -d)"
     export PZ_DIR DATA_DIR BACKUP_DIR
-    unset BACKUP_NAME_PREFIX MODS_FORCE_STALE FAKE_PLAYER_COUNT FAKE_WAIT_FOR_READY_RC
+    unset BACKUP_NAME_PREFIX MODS_FORCE_STALE FAKE_PLAYER_COUNT FAKE_WAIT_FOR_READY_RC FAKE_PLAYER_NAMES
     PZ_SERVER_NAME="pruebas"
     RESTART_FLAG="${DATA_DIR}/.pz-restart-requested"
     rm -f "$LLAMADAS_SHUTDOWN"; : > "$LLAMADAS_SHUTDOWN"
@@ -255,9 +263,17 @@ rcon_cmd() { printf 'algo irreconocible\n'; }
 # posterior que use player_count (via mods_watch_loop) heredaria esta
 # respuesta ilegible para SIEMPRE y "vacio" no se detectaria nunca. Exactamente
 # la misma clase de fuga que ya obligo a arreglar los casos de curl().
+# Y tiene que ser LA MISMA definicion que la de la cabecera (con nombres):
+# restaurar una version vieja del stub contamino los casos de players_in_game
+# con un "los nombres no cuadran" permanente. Tercera vez que muerde esta
+# clase de fuga; de ahi tanta insistencia en estos comentarios.
 rcon_cmd() {
     case "$1" in
-        players) printf 'Players connected (%s)\n' "${FAKE_PLAYER_COUNT:-0}" ;;
+        players)
+            printf 'Players connected (%s):\n' "${FAKE_PLAYER_COUNT:-0}"
+            local _n
+            for _n in ${FAKE_PLAYER_NAMES:-}; do printf -- '-%s\n' "$_n"; done
+            ;;
         *)       return 0 ;;
     esac
 }
@@ -550,6 +566,118 @@ campos="$(awk -F'\t' '{print NF}' <<<"$reporte")"
 verdicto="$(awk -F'\t' '{print $5}' <<<"$reporte")"
 [[ "$verdicto" == "desfasado" ]] && ok "el veredicto sigue en su campo" \
                                  || bad "el veredicto se perdio: '${verdicto}'"
+limpiar
+
+
+caso "players_in_game: distingue al que juega del que se quedo a medias"
+# Las firmas del fixture estan calcadas de eventos REALES del 16/08/2026: la
+# entrada buena de un jugador, su salida buena, y el rechazo por desfase que
+# dejo la conexion a medias y bloqueo el reinicio automatico para siempre.
+escribir_conexiones() {
+    cat > "${DATA_DIR}/Logs/2026-01-01_00-00_connections.txt"
+}
+nuevo_entorno
+escribir_conexiones <<'EOF'
+[01-01-26 10:00:00.000] event="receive-packet" message="client-connect" guid="111" ip="1.2.3.4" steam-id="1" role="user" username="Dentro" connection-type="UDPRakNet".
+[01-01-26 10:00:01.000] event="send-packet" message="connection-details" guid="111" ip="1.2.3.4" steam-id="1" role="user" username="Dentro" connection-type="UDPRakNet".
+[01-01-26 10:01:00.000] event="receive-packet" message="player-connect" guid="111" ip="1.2.3.4" steam-id="1" role="user" username="Dentro" connection-type="UDPRakNet".
+[01-01-26 10:05:00.000] event="receive-packet" message="client-connect" guid="222" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+[01-01-26 10:05:01.000] event="send-packet" message="connection-details" guid="222" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+[01-01-26 10:06:26.000] event="disconnect" message="receive-disconnect" guid="222" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="Disconnected".
+[01-01-26 10:07:00.000] event="receive-packet" message="client-connect" guid="333" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+[01-01-26 10:07:01.000] event="send-packet" message="connection-details" guid="333" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+[01-01-26 10:10:00.000] event="receive-packet" message="player-connect" guid="444" ip="1.2.3.6" steam-id="3" role="user" username="SeFue" connection-type="UDPRakNet".
+[01-01-26 10:20:00.000] event="disconnect" message="receive-disconnect" guid="444" ip="1.2.3.6" steam-id="3" role="user" username="SeFue" connection-type="Disconnected".
+EOF
+FAKE_PLAYER_COUNT=3 FAKE_PLAYER_NAMES="Dentro Fantasma SeFue"
+[[ "$(players_in_game)" == "1" ]] \
+    && ok "de 3 contados por RCON, solo 1 esta dentro del mundo" \
+    || bad "dio '$(players_in_game)', esperaba 1 (Dentro si; Fantasma y SeFue no)"
+
+FAKE_PLAYER_COUNT=1 FAKE_PLAYER_NAMES="Fantasma"
+[[ "$(players_in_game)" == "0" ]] \
+    && ok "solo el fantasma -> 0 (el caso real que bloqueaba todo)" \
+    || bad "dio '$(players_in_game)', esperaba 0"
+
+FAKE_PLAYER_COUNT=1 FAKE_PLAYER_NAMES="SinRastro"
+[[ "$(players_in_game)" == "1" ]] \
+    && ok "sin rastro en el log -> cuenta como dentro (conservador)" \
+    || bad "dio '$(players_in_game)', esperaba 1"
+
+FAKE_PLAYER_COUNT=2 FAKE_PLAYER_NAMES="Dentro"
+[[ "$(players_in_game)" == "2" ]] \
+    && ok "nombres que no cuadran con el recuento -> bloquea (conservador)" \
+    || bad "dio '$(players_in_game)', esperaba 2"
+
+rm -f "${DATA_DIR}/Logs/2026-01-01_00-00_connections.txt"
+FAKE_PLAYER_COUNT=1 FAKE_PLAYER_NAMES="Dentro"
+[[ "$(players_in_game)" == "1" ]] \
+    && ok "sin log de conexiones -> bloquea (conservador)" \
+    || bad "dio '$(players_in_game)', esperaba 1"
+unset FAKE_PLAYER_COUNT FAKE_PLAYER_NAMES
+limpiar
+
+
+caso "mods_watch_loop: el fantasma que RCON cuenta NO bloquea el reinicio"
+# El circulo vicioso completo, reproducido: desfase + un unico 'conectado' que
+# es un rechazo a medias. Antes de players_in_game, esto no reiniciaba jamas.
+#
+# El fixture replica el patron REAL del incidente: un intento que murio y un
+# reintento en curso. Importa que este el intento muerto: el PRIMER intento de
+# un fantasma (cd sin disconnect todavia) bloquea un sondeo a proposito
+# —indistinguible de alguien eligiendo personaje, y ahi se es conservador— y
+# deja de bloquear en cuanto ese intento muere (~85s) y el patron queda a la
+# vista.
+nuevo_entorno
+crear_mod_dir 1111111111
+PZ_WORKSHOP_ITEMS="1111111111"
+escribir_acf "1111111111:1000000000"
+escribir_conexiones <<'EOF'
+[01-01-26 10:05:00.000] event="receive-packet" message="client-connect" guid="222" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+[01-01-26 10:05:01.000] event="send-packet" message="connection-details" guid="222" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+[01-01-26 10:06:26.000] event="disconnect" message="receive-disconnect" guid="222" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="Disconnected".
+[01-01-26 10:07:00.000] event="receive-packet" message="client-connect" guid="333" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+[01-01-26 10:07:01.000] event="send-packet" message="connection-details" guid="333" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+EOF
+MODS_FORCE_STALE="1111111111"
+FAKE_PLAYER_COUNT=1
+FAKE_PLAYER_NAMES="Fantasma"
+MODS_CHECK_INTERVAL_SECONDS=1
+MODS_EMPTY_POLL_SECONDS=1
+mods_watch_loop >/dev/null 2>&1 &
+pid=$!
+esperado=0
+for i in $(seq 1 20); do
+    [[ -s "$LLAMADAS_SHUTDOWN" ]] && { esperado=1; break; }
+    sleep 0.5
+done
+kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+[[ "$esperado" -eq 1 ]] \
+    && ok "reinicia aunque RCON cuente al fantasma" \
+    || bad "el fantasma sigue bloqueando el reinicio"
+unset MODS_FORCE_STALE FAKE_PLAYER_COUNT FAKE_PLAYER_NAMES
+limpiar
+
+
+caso "mods_watch_loop: con UN jugador de verdad dentro, el fantasma no cambia nada"
+nuevo_entorno
+crear_mod_dir 1111111111
+PZ_WORKSHOP_ITEMS="1111111111"
+escribir_acf "1111111111:1000000000"
+escribir_conexiones <<'EOF'
+[01-01-26 10:01:00.000] event="receive-packet" message="player-connect" guid="111" ip="1.2.3.4" steam-id="1" role="user" username="Dentro" connection-type="UDPRakNet".
+[01-01-26 10:05:01.000] event="send-packet" message="connection-details" guid="222" ip="1.2.3.5" steam-id="2" role="user" username="Fantasma" connection-type="UDPRakNet".
+EOF
+MODS_FORCE_STALE="1111111111"
+FAKE_PLAYER_COUNT=2
+FAKE_PLAYER_NAMES="Dentro Fantasma"
+MODS_CHECK_INTERVAL_SECONDS=1
+MODS_EMPTY_POLL_SECONDS=1
+salida="$(mods_watch_loop 2>&1 & pid=$!; sleep 3; kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; true)"
+[[ ! -s "$LLAMADAS_SHUTDOWN" ]] \
+    && ok "quien esta jugando de verdad sigue mandando: NO reinicia" \
+    || bad "reinicio con un jugador real dentro"
+unset MODS_FORCE_STALE FAKE_PLAYER_COUNT FAKE_PLAYER_NAMES
 limpiar
 
 

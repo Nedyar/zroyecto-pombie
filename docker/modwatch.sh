@@ -266,6 +266,70 @@ player_count() {
     [[ "$out" =~ \(([0-9]+)\) ]] && printf '%s' "${BASH_REMATCH[1]}"
 }
 
+# Cuantos de los jugadores que cuenta RCON estan DE VERDAD dentro del mundo.
+# Devuelve el numero, o cadena vacia si no se puede saber.
+#
+# Existe por un caso real (16/08/2026): un cliente rechazado por el desfase de
+# mods deja la conexion a medias, y RCON lo cuenta en `players` durante ~85s
+# por intento. Como reintenta, el contador casi nunca baja a 0 y el reinicio
+# automatico —lo unico que arreglaria su problema— no se dispara jamas. El
+# sistema se cerraba sobre si mismo, comprobado con el servidor vacio de
+# verdad y el contador clavado en 1.
+#
+# El discriminador salio de comparar en el log de conexiones los tres casos
+# reales del mismo dia (entrada buena, salida buena y rechazo): el evento
+# `player-connect` marca el spawn dentro del mundo. Una entrada real es
+# `connection-details -> login-queue-* -> player-connect`; el rechazo muere en
+# `connection-details` y nunca llega. Quien no ha llegado a player-connect no
+# esta jugando —esta en un menu, cargando, o es un rechazo— y un reinicio no
+# le quita nada mas que una pantalla.
+#
+# Cada arranque del servidor crea su propio *_connections.txt y archiva el
+# anterior (comprobado tambien con el relanzamiento interno), asi que todo el
+# que este dentro AHORA tiene su player-connect en el fichero actual.
+#
+# Sesgo deliberado hacia bloquear: RCON caido, log ausente, nombres que no
+# cuadran con el recuento o un jugador sin rastro -> se cuenta como dentro.
+# "No lo se" nunca debe traducirse en echar a alguien.
+players_in_game() {
+    local out
+    out="$(rcon_cmd players 2>/dev/null)" || { printf ''; return 0; }
+    local first="${out%%$'\n'*}"
+    [[ "$first" =~ \(([0-9]+)\) ]] || { printf ''; return 0; }
+    local total="${BASH_REMATCH[1]}"
+    (( total == 0 )) && { printf '0'; return 0; }
+
+    local logf
+    logf="$(ls -t "${DATA_DIR}"/Logs/*_connections.txt 2>/dev/null | head -1 || true)"
+    [[ -n "$logf" && -f "$logf" ]] || { printf '%s' "$total"; return 0; }
+
+    local -a names=()
+    mapfile -t names < <(printf '%s\n' "$out" | sed -n 's/^-//p' | tr -d '\r')
+    # Si los nombres listados no cuadran con el recuento, algo no entendemos
+    # del formato: mejor bloquear que decidir sobre datos a medias.
+    (( ${#names[@]} == total )) || { printf '%s' "$total"; return 0; }
+
+    local name dentro=0 pc dc
+    for name in "${names[@]}"; do
+        [[ -n "$name" ]] || { dentro=$(( dentro + 1 )); continue; }
+        pc="$(grep -nF "username=\"${name}\"" "$logf" 2>/dev/null \
+              | grep -F 'message="player-connect"' | tail -1 | cut -d: -f1 || true)"
+        dc="$(grep -nF "username=\"${name}\"" "$logf" 2>/dev/null \
+              | grep -F 'event="disconnect"' | tail -1 | cut -d: -f1 || true)"
+        if [[ -z "$pc" && -z "$dc" ]]; then
+            # Sin rastro en el log de este arranque: no se sabe, cuenta.
+            dentro=$(( dentro + 1 ))
+        elif [[ -n "$pc" ]] && { [[ -z "$dc" ]] || (( pc > dc )); }; then
+            # Llego a spawnear y no ha desconectado despues: esta dentro.
+            dentro=$(( dentro + 1 ))
+        fi
+        # Resto: nunca spawneo (rechazo o menu), o ya desconecto y el
+        # contador de RCON aun no lo ha soltado. No esta en el mundo.
+    done
+
+    printf '%s' "$dentro"
+}
+
 # Bucle de fondo, gemelo de periodic_backup_loop. Vive todo el contenedor:
 # sigue vigilando aunque el propio bucle provoque un reinicio del mundo (no
 # hace `return` al reiniciar, solo `continue`), igual que el bucle de backups
@@ -346,7 +410,19 @@ mods_watch_loop() {
         fi
 
         local n; n="$(player_count || true)"
-        [[ "$n" == "0" ]] || continue
+        if [[ "$n" != "0" ]]; then
+            # RCON caido (n vacio): no se sabe, no se toca.
+            [[ -n "$n" ]] || continue
+            # RCON cuenta gente, pero ¿esta DE VERDAD alguien dentro del
+            # mundo? Un cliente rechazado por el propio desfase cuenta como
+            # conectado sin estar jugando, y bloquearia para siempre el unico
+            # remedio a su problema (ver players_in_game).
+            local dentro; dentro="$(players_in_game || true)"
+            [[ "$dentro" == "0" ]] || continue
+            log "RCON cuenta ${n} conectado(s) pero ninguno esta dentro del mundo:"
+            log "  son conexiones a medias (lo tipico: clientes rechazados por el"
+            log "  propio desfase). No bloquean el reinicio, que es su remedio."
+        fi
 
         log "Servidor vacio con mods desfasados (${stale_key%,}): reinicio automatico."
         touch "$RESTART_FLAG"

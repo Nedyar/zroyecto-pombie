@@ -3,7 +3,7 @@
 **Estado: implementado y verificado (16/08/2026).** Rama
 `feat/deteccion-mods-desfasados`. El servidor detecta el desfase solo, avisa
 por chat, y reinicia en cuanto queda vacío — nunca con gente dentro. Código en
-`docker/modwatch.sh`; 39 pruebas propias en `docker/selftest-modwatch.sh`.
+`docker/modwatch.sh`; 46 pruebas propias en `docker/selftest-modwatch.sh`.
 
 Este documento se escribió primero como estudio, con las tres decisiones que
 bloqueaban la implementación. Se deja el estudio completo debajo porque el
@@ -273,7 +273,31 @@ Aceptar lo que publique cada autor no se puede evitar, pero sí acotar:
    falta, quitar el mod de la lista, relanzar. Detalle completo en
    [OPERACIONES.md](OPERACIONES.md).
 
-## LIMITACIÓN CONOCIDA: el jugador rechazado cuenta como conectado
+## RESUELTA el mismo día: el jugador rechazado ya no bloquea
+
+La limitación de abajo se arregló el propio 16/08 con `players_in_game()` en
+`docker/modwatch.sh`. La clave salió de comparar, en el log de conexiones, los
+tres casos reales que dejó el incidente: una entrada buena, una salida buena y
+el rechazo. El evento **`player-connect` marca el spawn dentro del mundo** —
+una entrada real es `connection-details → login-queue-* → player-connect`; el
+rechazo muere en `connection-details` y nunca llega.
+
+La regla del grupo queda **intacta**: nunca se reinicia con alguien dentro del
+mundo. Lo que cambia es qué significa "dentro": quien nunca llegó a
+`player-connect` no está jugando —está en un menú, cargando, o es un rechazo—
+y un reinicio no le quita nada más que una pantalla.
+
+El sesgo es deliberadamente conservador, con sus 8 casos de prueba: RCON
+caído, log ausente, nombres que no cuadran con el recuento, o un jugador sin
+rastro → **cuenta como dentro** y bloquea. Y el primer intento de un fantasma
+(aún sin morir, indistinguible de alguien eligiendo personaje) bloquea un
+sondeo; en cuanto ese intento muere (~85 s) el patrón queda a la vista y deja
+de bloquear.
+
+Se conserva la limitación original escrita tal cual se encontró, porque
+explica el porqué del arreglo:
+
+## La limitación, tal como se encontró (16/08/2026)
 
 Encontrada en producción el **16/08/2026**, con gente esperando para jugar. No
 es teórica: pasó, y bloqueó el mecanismo por completo.
@@ -307,24 +331,13 @@ Se comprobó de la forma más directa: los otros dos jugadores salieron de verda
 y el contador se quedó en 1, con el único "conectado" siendo quien no podía
 jugar.
 
-**Cómo se sale hoy**: a mano. Backup etiquetado y `docker compose restart
-pz-staging`. Son ~90 s y arregla las dos cosas a la vez, porque el reinicio se
-lleva por delante la conexión fantasma.
-
-**Lo que habría que arreglar**, pendiente de decidir:
-
-- Que `player_count()` no se fíe solo del recuento de `players`. Habría que ver
-  si RCON ofrece alguna forma de distinguir una sesión viva de una a medias, o
-  si sirve cruzar con el log de conexiones.
-- O, más simple y probablemente mejor: un plazo máximo. Si el desfase lleva
-  detectado más de X tiempo y el recuento no baja de un número que no cambia,
-  avisar por chat y reiniciar igualmente. Es una versión acotada de la opción
-  que el grupo descartó el 15/08, y este caso da un argumento que entonces no
-  existía: el que "bloquea" el reinicio puede ser precisamente alguien que **no
-  está jugando**.
-
-Mientras no se decida, la señal a vigilar es un `Players connected` que no baja
-y un desfase que no se resuelve: casi seguro es esto.
+**Cómo se salió ese día**: a mano (backup etiquetado + `docker compose
+restart`, ~90 s, que de paso se lleva la conexión fantasma). De las dos vías
+de arreglo que se plantearon —distinguir sesiones vivas de conexiones a
+medias, o un plazo máximo tras el cual reiniciar avisando— se eligió la
+primera, porque mantiene intacta la regla del grupo: el plazo habría acabado
+echando también a jugadores reales, que es justo lo que la regla existe para
+impedir. El resultado es `players_in_game()`, arriba.
 
 ## Cómo se desactiva
 
@@ -334,7 +347,7 @@ sin aviso ni reinicio automático.
 
 ## Verificación hecha
 
-- 39 pruebas en `docker/selftest-modwatch.sh`, en verde tanto en el host
+- 46 pruebas en `docker/selftest-modwatch.sh`, en verde tanto en el host
   (gawk) como **dentro del contenedor real (mawk)** — la diferencia importa:
   el parseo del `.acf` evita a propósito el `match()` de 3 argumentos, una
   extensión de gawk que mawk no tiene.
