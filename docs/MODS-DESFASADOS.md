@@ -273,6 +273,59 @@ Aceptar lo que publique cada autor no se puede evitar, pero sí acotar:
    falta, quitar el mod de la lista, relanzar. Detalle completo en
    [OPERACIONES.md](OPERACIONES.md).
 
+## LIMITACIÓN CONOCIDA: el jugador rechazado cuenta como conectado
+
+Encontrada en producción el **16/08/2026**, con gente esperando para jugar. No
+es teórica: pasó, y bloqueó el mecanismo por completo.
+
+**El síntoma.** Modern Status se actualizó y el servidor se quedó atrás. Un
+jugador intentó entrar y le salió el aviso del Workshop, como es de esperar.
+Pero sus intentos dejaron rastro en el log de conexiones:
+
+```
+login → client-connect → connection-details    ...y ahí muere
+```
+
+El cliente llega hasta `connection-details` —justo donde compara versiones de
+mods—, rechaza la conexión y **la deja medio abierta**. El servidor lo sigue
+contando:
+
+```
+Players connected (1):
+-Nedyar        <- no puede jugar, pero cuenta
+```
+
+**Por qué es grave.** El vigilante solo reinicia con el servidor vacío. Con esa
+conexión fantasma, `player_count()` nunca devuelve 0, así que **el reinicio
+automático no se dispara jamás**. Y como el reinicio es lo único que arreglaría
+el desfase, el sistema se cierra sobre sí mismo:
+
+> no puede entrar porque hay desfase → sus reintentos lo cuentan como conectado
+> → no se reinicia porque cree que hay gente → sigue el desfase
+
+Se comprobó de la forma más directa: los otros dos jugadores salieron de verdad
+y el contador se quedó en 1, con el único "conectado" siendo quien no podía
+jugar.
+
+**Cómo se sale hoy**: a mano. Backup etiquetado y `docker compose restart
+pz-staging`. Son ~90 s y arregla las dos cosas a la vez, porque el reinicio se
+lleva por delante la conexión fantasma.
+
+**Lo que habría que arreglar**, pendiente de decidir:
+
+- Que `player_count()` no se fíe solo del recuento de `players`. Habría que ver
+  si RCON ofrece alguna forma de distinguir una sesión viva de una a medias, o
+  si sirve cruzar con el log de conexiones.
+- O, más simple y probablemente mejor: un plazo máximo. Si el desfase lleva
+  detectado más de X tiempo y el recuento no baja de un número que no cambia,
+  avisar por chat y reiniciar igualmente. Es una versión acotada de la opción
+  que el grupo descartó el 15/08, y este caso da un argumento que entonces no
+  existía: el que "bloquea" el reinicio puede ser precisamente alguien que **no
+  está jugando**.
+
+Mientras no se decida, la señal a vigilar es un `Players connected` que no baja
+y un desfase que no se resuelve: casi seguro es esto.
+
 ## Cómo se desactiva
 
 `MODS_CHECK_INTERVAL_MINUTES=0` en el `.env` apaga toda la vigilancia: el
