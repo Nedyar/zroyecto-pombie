@@ -77,7 +77,7 @@ Esto se ejecuto y se comprobo, no se dedujo:
   10 lineas de Lua sin acceso a red, sistema ni reflexion Java.
 - **Reinicio automatico ante mods desfasados**, de extremo a extremo: contra
   el volumen real de produccion (parado, sin exponer puertos) con un mod
-  forzado a desfasado, y desplegado de verdad en staging. 36 pruebas propias
+  forzado a desfasado, y desplegado de verdad en staging. 39 pruebas propias
   en `docker/selftest-modwatch.sh`, verificadas dentro del contenedor (que
   corre `mawk`, no el `gawk` del host). Una revision adversarial posterior
   corrigio 4 fallos (el grave: el backoff no se reseteaba y la SEGUNDA

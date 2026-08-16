@@ -3,7 +3,7 @@
 **Estado: implementado y verificado (16/08/2026).** Rama
 `feat/deteccion-mods-desfasados`. El servidor detecta el desfase solo, avisa
 por chat, y reinicia en cuanto queda vacío — nunca con gente dentro. Código en
-`docker/modwatch.sh`; 36 pruebas propias en `docker/selftest-modwatch.sh`.
+`docker/modwatch.sh`; 39 pruebas propias en `docker/selftest-modwatch.sh`.
 
 Este documento se escribió primero como estudio, con las tres decisiones que
 bloqueaban la implementación. Se deja el estudio completo debajo porque el
@@ -281,7 +281,7 @@ sin aviso ni reinicio automático.
 
 ## Verificación hecha
 
-- 36 pruebas en `docker/selftest-modwatch.sh`, en verde tanto en el host
+- 39 pruebas en `docker/selftest-modwatch.sh`, en verde tanto en el host
   (gawk) como **dentro del contenedor real (mawk)** — la diferencia importa:
   el parseo del `.acf` evita a propósito el `match()` de 3 argumentos, una
   extensión de gawk que mawk no tiene.

@@ -443,7 +443,7 @@ cmd_check_mods() {
             "$verdict" "$title"
     done
 
-    write_mods_status "$report"
+    write_mods_status "$report" "manual"
 
     local total stale api_fail
     total="$(printf '%s\n' "$report" | grep -c . || true)"

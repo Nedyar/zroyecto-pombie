@@ -480,8 +480,20 @@ El mismo resumen, sin red, esta en:
 docker compose exec pz /docker/run.sh status
 ```
 
-Linea `Mods (workshop)`: fecha del ultimo chequeo automatico, cuantos
-desfasados, y el desenlace del ultimo reinicio automatico si hubo alguno.
+Linea `Mods (workshop)`: fecha del ultimo chequeo, cuantos desfasados, y el
+desenlace del ultimo reinicio automatico si hubo alguno.
+
+El chequeo lleva marcado **quien lo hizo**, y conviene mirarlo:
+
+```
+chequeo: 2026-08-16 11:54:34 UTC (automatico)   <- el vigilante, por su cuenta
+chequeo: 2026-08-16 11:28:19 UTC (manual)       <- alguien lanzo check-mods
+```
+
+Sin esa marca, un `(manual)` reciente da la impresion de que el mecanismo esta
+trabajando solo cuando a lo mejor solo lo ha mirado una persona. Si lo que
+quieres saber es si la vigilancia esta viva, busca un `(automatico)` con menos
+de `MODS_CHECK_INTERVAL_MINUTES` de antiguedad.
 
 ### El aviso de "no reintento solo"
 

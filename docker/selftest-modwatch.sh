@@ -286,6 +286,36 @@ unset MODS_FORCE_STALE
 limpiar
 
 
+caso "write_mods_status: el chequeo dice si lo hizo el vigilante o una persona"
+# Sin esta marca el fichero registra QUE hubo un chequeo pero no de donde
+# vino, y entonces no responde a la unica pregunta que se le hace de verdad:
+# "¿esto trabaja solo?". Un chequeo manual se confundio con el primer ciclo
+# del vigilante el 16/08; esto lo hace imposible.
+nuevo_entorno
+crear_mod_dir 1111111111
+PZ_WORKSHOP_ITEMS="1111111111"
+escribir_acf "1111111111:1000000000"
+
+write_mods_status "$(collect_mod_status)" "automatico"
+grep -qE '^chequeo: .* UTC \(automatico\)$' "$(mods_status_file)" \
+    && ok "el chequeo del vigilante se marca como automatico" \
+    || bad "no se distingue: '$(grep '^chequeo:' "$(mods_status_file)")'"
+
+write_mods_status "$(collect_mod_status)" "manual"
+grep -qE '^chequeo: .* UTC \(manual\)$' "$(mods_status_file)" \
+    && ok "el chequeo a mano se marca como manual" \
+    || bad "no se distingue: '$(grep '^chequeo:' "$(mods_status_file)")'"
+
+# Sin segundo argumento no puede quedar sin marcar: un llamador futuro que se
+# olvide debe producir la lectura conservadora ('manual'), nunca hacer creer
+# que el mecanismo trabajo solo.
+write_mods_status "$(collect_mod_status)"
+grep -qE '^chequeo: .* UTC \(manual\)$' "$(mods_status_file)" \
+    && ok "sin argumento cae en 'manual', no en 'automatico'" \
+    || bad "el defecto no es conservador: '$(grep '^chequeo:' "$(mods_status_file)")'"
+limpiar
+
+
 caso "verify_after_mods_restart: no responde -> avisa y senala el backup de resguardo"
 nuevo_entorno
 FAKE_WAIT_FOR_READY_RC=1

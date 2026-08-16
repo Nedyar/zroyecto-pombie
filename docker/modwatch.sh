@@ -194,8 +194,15 @@ mods_status_file() {
 # Sobrescribe el resumen del ULTIMO chequeo, conservando la linea de auditoria
 # del ultimo reinicio automatico si la habia (esa la escribe note_mods_restart,
 # no esta funcion, y un chequeo cada 30 min no debe borrarla).
+#
+# El segundo argumento dice QUIEN comprobo: 'automatico' (el vigilante en su
+# ciclo) o 'manual' (alguien lanzando check-mods). Sin esa marca, el fichero
+# registra que hubo un chequeo pero no de donde vino, y entonces no responde a
+# la pregunta que de verdad se le hace: "¿esto esta trabajando solo, o solo
+# lo hemos mirado a mano?". Paso de verdad el 16/08: un chequeo manual mio se
+# confundio con el primer ciclo del vigilante.
 write_mods_status() {
-    local report="$1" total stale prev_restart="" f
+    local report="$1" origin="${2:-manual}" total stale prev_restart="" f
     f="$(mods_status_file)"
 
     total="$(printf '%s\n' "$report" | grep -c . || true)"
@@ -205,7 +212,7 @@ write_mods_status() {
         prev_restart="$(grep '^ultimo-reinicio-automatico:' "$f" 2>/dev/null || true)"
 
     {
-        printf 'chequeo: %s UTC\n' "$(date -u +'%Y-%m-%d %H:%M:%S')"
+        printf 'chequeo: %s UTC (%s)\n' "$(date -u +'%Y-%m-%d %H:%M:%S')" "$origin"
         printf 'desfasados: %s de %s\n' "${stale:-0}" "${total:-0}"
         if (( ${stale:-0} > 0 )); then
             printf '%s\n' "$report" | awk -F'\t' '$5=="desfasado"{print "  - " $4 " (id " $1 ")"}'
@@ -287,7 +294,7 @@ mods_watch_loop() {
             report="$(collect_mod_status 2>/dev/null || true)"
             [[ -n "$report" ]] || continue
 
-            write_mods_status "$report"
+            write_mods_status "$report" "automatico"
 
             local stale=""
             stale="$(printf '%s\n' "$report" | awk -F'\t' '$5=="desfasado"{print $1}')"
