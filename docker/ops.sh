@@ -463,7 +463,14 @@ patch_memory() {
 # Etiquetas que la rotacion puede borrar. Todo lo demas (pre-update,
 # pre-restore, manual) se conserva indefinidamente: son justo los backups que
 # quieres tener cuando algo ha salido mal.
-ROTATABLE_LABELS="prestart periodic"
+#
+# "pre-mods" SI rota (a diferencia de pre-update/pre-restore): lo toma el
+# reinicio automatico de docker/modwatch.sh cada vez que el Workshop publica
+# algo, que segun lo medido es mas de una vez al dia. Conservarlo para
+# siempre acumularia ~2 GB/mes sin aportar nada mas alla de unos dias de
+# margen; con BACKUP_KEEP=20 quedan ~2 semanas de puntos de restauracion
+# "justo antes del ultimo mod actualizado", que es la ventana que importa.
+ROTATABLE_LABELS="prestart periodic pre-mods"
 
 backup_prefix() {
     printf '%s' "${BACKUP_NAME_PREFIX:-pz-${PZ_SERVER_NAME}}"

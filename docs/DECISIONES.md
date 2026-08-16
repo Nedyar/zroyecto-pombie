@@ -272,6 +272,53 @@ lista negra, cualquier carpeta futura vuelve a colarse sola.
 
 ---
 
+## 10. Reinicio automatico ante mods desfasados: aceptar el riesgo con red
+
+Steam actualiza los mods de los clientes solos; el servidor no (decision 4,
+arriba). El desfase resultante rompe el acceso casi a diario (medido: al
+menos 1,3 publicaciones/dia sobre 24 mods). La respuesta es que el servidor
+se ponga al dia solo, con tres decisiones de diseno detras.
+
+**No hay alternativa a aceptar lo que publique cada autor.** Los clientes se
+actualizan solos y el servidor tiene que coincidir, o nadie entra. Fijar
+versiones no es una opcion real. Lo que si se puede hacer es no aceptarlo a
+ciegas: hay un backup (`pre-mods`) tomado justo antes de cada apertura con el
+mod nuevo, una verificacion automatica de que el arranque siguiente sale
+limpio, un registro de que mod y cuando provoco cada reinicio, y la certeza de
+que cualquier mod se puede retirar sin romper nada (la regla "nada
+irreversible" de MODS-LISTA.md seccion 0 no es solo una politica de
+jugabilidad: es la salida de emergencia de este mecanismo).
+
+**El reinicio interno no reabre el agujero de la decision 4.** Podria parecer
+que automatizar reinicios es exactamente lo que `UPDATE_ON_START=false` existe
+para evitar. No lo es, porque son dos mecanismos distintos: los mods del
+Workshop los descarga el propio JVM de Project Zomboid al arrancar, con su
+propio ciclo (`GetItemState()=NeedsUpdate`), completamente independiente de
+`app_update` sobre el binario del juego. Verificado tres veces en produccion:
+tras un reinicio que puso los mods al dia, el `buildid` instalado **no
+cambio**. Y `guard_buildid` se revalida en cada apertura del mundo, no solo en
+el arranque del contenedor, asi que la guarda sigue vigilando exactamente
+igual que siempre.
+
+**El backup `pre-mods` que falla no cancela el reinicio.** Contraste
+deliberado con `cmd_update`: alli, sin backup no hay actualizacion, porque hay
+un operador delante que puede esperar a que se libere espacio. Aqui no hay
+nadie despierto a las 4 de la madrugada, y un servidor caido toda la noche por
+un backup que no se pudo hacer es peor que relanzar con la ultima copia
+periodica (a lo sumo un par de horas mas vieja) como unico resguardo. El fallo
+queda registrado y visible, no silenciado.
+
+**Nunca se reinicia con jugadores dentro.** Decision de grupo (15/08): en un
+juego de muerte permanente, un reinicio en el momento equivocado cuesta el
+personaje. La ventana de "no se puede entrar" pasa de "hasta que alguien este
+disponible para arreglarlo" a "hasta que el servidor quede vacio", que es
+estrictamente mejor y no le cuesta nada a quien ya esta jugando.
+
+Diseno completo, con las tres decisiones y su resolucion, en
+[MODS-DESFASADOS.md](MODS-DESFASADOS.md).
+
+---
+
 ## Cosas que costaron una tarde y conviene no redescubrir
 
 **SteamCMD: `validate` sobre un directorio vacio falla.** Da el error

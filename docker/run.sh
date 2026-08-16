@@ -10,6 +10,7 @@ set -Eeuo pipefail
 source /docker/lib.sh
 source /docker/lifecycle.sh
 source /docker/ops.sh
+source /docker/modwatch.sh
 
 # ================================================================ DEFAULTS ===
 
@@ -26,6 +27,12 @@ source /docker/ops.sh
 : "${BACKUP_KEEP:=20}"
 : "${BACKUP_ON_START:=true}"
 : "${SHUTDOWN_TIMEOUT:=150}"
+
+# Vigilancia de mods desfasados del Workshop (docker/modwatch.sh). A 0 se
+# desactiva: el servidor sigue funcionando exactamente como antes de esta
+# funcionalidad, solo que sin el aviso ni el reinicio automatico.
+: "${MODS_CHECK_INTERVAL_MINUTES:=30}"
+: "${MODS_EMPTY_POLL_SECONDS:=120}"
 
 # En staging, si hay una lista de mods propia definida, se usa en lugar de la
 # de produccion. Vacia = replicar produccion. Es lo que permite probar un mod
@@ -45,6 +52,15 @@ export PZ_WORKSHOP_ITEMS PZ_MODS
 
 STOPPING=0
 BACKUP_LOOP_PID=""
+MODS_WATCH_PID=""
+
+# Bandera de "reabre el mundo, no me des por muerto por accidente". La
+# escribe modwatch.sh ANTES de apagar el servidor, para que cmd_serve pueda
+# distinguir un reinicio pedido por el vigilante de una caida real del JVM.
+# Vive en DATA_DIR (no en /tmp) porque es el unico sitio que ambos procesos
+# —el bucle principal y el vigilante en segundo plano— tienen garantizado
+# como comun, y sobrevive si el propio bash del PID 1 tuviera que recrearse.
+RESTART_FLAG="${DATA_DIR}/.pz-restart-requested"
 
 # ============================================================ VALIDACIONES ===
 
@@ -103,6 +119,9 @@ on_signal() {
     if [[ -n "$BACKUP_LOOP_PID" ]]; then
         kill "$BACKUP_LOOP_PID" 2>/dev/null || true
     fi
+    if [[ -n "$MODS_WATCH_PID" ]]; then
+        kill "$MODS_WATCH_PID" 2>/dev/null || true
+    fi
 
     graceful_shutdown "$SHUTDOWN_TIMEOUT" || true
     log "Adios."
@@ -140,50 +159,99 @@ cmd_serve() {
         seed_template
     fi
 
-    render_config
     patch_memory
-
-    # Backup antes de abrir el mundo. Es el que te salva si el arranque de hoy
-    # resulta ser el que rompe algo.
-    #
-    # Con una salvedad importante: si el contenedor entra en bucle de reinicios
-    # —`restart: unless-stopped` relanzando un arranque que falla— cada intento
-    # haria su prestart, y en veinte intentos la rotacion expulsaria los veinte
-    # prestart buenos para sustituirlos por veinte copias del estado roto. La
-    # rotacion cuenta ficheros, no sabe distinguir "veinte puntos repartidos en
-    # semanas" de "veinte fotos del mismo minuto".
-    #
-    # Por eso se salta si ya hay uno reciente: entre dos arranques seguidos el
-    # mundo apenas ha cambiado, asi que no se pierde nada util.
-    if is_true "$BACKUP_ON_START" && [[ -d "${DATA_DIR}/Saves" ]]; then
-        local gap="${BACKUP_PRESTART_MIN_GAP_MINUTES:-60}"
-        if (( gap > 0 )) && recent_backup_exists "prestart" "$gap"; then
-            log "Ya hay un backup de arranque de hace menos de ${gap} min; me lo salto."
-            log "  Protege el historial de un bucle de reinicios."
-        else
-            do_backup "prestart" || warn "El backup de arranque fallo; continuo igualmente."
-        fi
-    fi
-
     trap on_signal TERM INT
+    rm -f "$RESTART_FLAG"
 
-    launch_server "$PZ_SERVER_NAME"
+    # A partir de aqui, todo lo que sigue se repite en CADA apertura del
+    # mundo, no solo en el arranque del contenedor: un reinicio automatico por
+    # mods desfasados (docker/modwatch.sh) reabre el mundo sin salir de este
+    # bucle ni recrear el contenedor. guard_buildid y render_config son
+    # idempotentes por diseno, asi que repetirlos en cada vuelta no cambia el
+    # comportamiento de hoy; solo lo hace mas seguro (la guarda de version se
+    # revalida en cada apertura, no solo la primera vez).
+    local pending_mods_verify=0
+    while true; do
+        guard_buildid
+        render_config
 
-    periodic_backup_loop &
-    BACKUP_LOOP_PID=$!
+        if (( pending_mods_verify )); then
+            log "Reabriendo el mundo tras actualizar mods (backup 'pre-mods' ya tomado)."
+        elif is_true "$BACKUP_ON_START" && [[ -d "${DATA_DIR}/Saves" ]]; then
+            # Backup antes de abrir el mundo. Es el que te salva si el
+            # arranque de hoy resulta ser el que rompe algo.
+            #
+            # Con una salvedad importante: si el contenedor entra en bucle de
+            # reinicios —`restart: unless-stopped` relanzando un arranque que
+            # falla— cada intento haria su prestart, y en veinte intentos la
+            # rotacion expulsaria los veinte prestart buenos para sustituirlos
+            # por veinte copias del estado roto. La rotacion cuenta ficheros,
+            # no sabe distinguir "veinte puntos repartidos en semanas" de
+            # "veinte fotos del mismo minuto".
+            #
+            # Por eso se salta si ya hay uno reciente: entre dos arranques
+            # seguidos el mundo apenas ha cambiado, asi que no se pierde nada
+            # util.
+            local gap="${BACKUP_PRESTART_MIN_GAP_MINUTES:-60}"
+            if (( gap > 0 )) && recent_backup_exists "prestart" "$gap"; then
+                log "Ya hay un backup de arranque de hace menos de ${gap} min; me lo salto."
+                log "  Protege el historial de un bucle de reinicios."
+            else
+                do_backup "prestart" || warn "El backup de arranque fallo; continuo igualmente."
+            fi
+        fi
 
-    # El trap se ejecuta al interrumpirse este wait. Si el servidor se muere
-    # por su cuenta, salimos con su codigo y `restart: unless-stopped` decide.
-    set +e
-    wait "$SERVER_LAUNCHER_PID"
-    local rc=$?
-    set -e
+        launch_server "$PZ_SERVER_NAME"
 
-    (( STOPPING )) && exit 0
+        # Los bucles de fondo se arrancan UNA sola vez y sobreviven a
+        # reaperturas del mundo: no les importa que el JVM de debajo se haya
+        # reiniciado, igual que el de backups no le importaba ya antes.
+        if [[ -z "$BACKUP_LOOP_PID" ]]; then
+            periodic_backup_loop &
+            BACKUP_LOOP_PID=$!
+        fi
+        if [[ -z "$MODS_WATCH_PID" ]]; then
+            mods_watch_loop &
+            MODS_WATCH_PID=$!
+        fi
 
-    warn "El servidor termino por su cuenta (codigo ${rc})."
-    [[ -n "$BACKUP_LOOP_PID" ]] && kill "$BACKUP_LOOP_PID" 2>/dev/null || true
-    exit "$rc"
+        if (( pending_mods_verify )); then
+            pending_mods_verify=0
+            # En segundo plano: puede tardar hasta wait_for_ready(180), y el
+            # bucle principal debe entrar cuanto antes en el `wait` de abajo
+            # para poder atender una senal de parada real mientras tanto.
+            verify_after_mods_restart &
+        fi
+
+        # El trap se ejecuta al interrumpirse este wait. Si el servidor se
+        # muere por su cuenta, salimos con su codigo y `restart: unless-stopped`
+        # decide.
+        set +e
+        wait "$SERVER_LAUNCHER_PID"
+        local rc=$?
+        set -e
+
+        (( STOPPING )) && exit 0
+
+        if [[ -f "$RESTART_FLAG" ]]; then
+            log "El vigilante de mods detecto el servidor vacio y pidio reiniciar."
+            rm -f "$RESTART_FLAG"
+            # Casi siempre ya esta muerto: graceful_shutdown, llamada por el
+            # propio vigilante, ya esperO a que el JVM terminara antes de
+            # devolvernos el control. Este margen corto es solo por si el
+            # lanzador tarda un instante mas en salir que su hijo.
+            wait_for_exit 30 || true
+            do_backup "pre-mods" || \
+                warn "El backup 'pre-mods' fallo; reinicio la partida igualmente (ver docs/DECISIONES.md, 'aceptar lo que publique el autor')."
+            pending_mods_verify=1
+            continue
+        fi
+
+        warn "El servidor termino por su cuenta (codigo ${rc})."
+        [[ -n "$BACKUP_LOOP_PID" ]] && kill "$BACKUP_LOOP_PID" 2>/dev/null || true
+        [[ -n "$MODS_WATCH_PID" ]]  && kill "$MODS_WATCH_PID"  2>/dev/null || true
+        exit "$rc"
+    done
 }
 
 # ============================================================ OTROS COMANDOS ===
@@ -330,6 +398,48 @@ cmd_status() {
     printf 'RAM maxima    : %s\n' "$PZ_MEMORY"
     printf 'Backups       : %s\n' "$(ls -1 "${BACKUP_DIR}"/*.tar.zst 2>/dev/null | wc -l)"
     printf 'Ultimo backup : %s\n' "$(last_backup_summary)"
+    printf 'Mods (workshop):\n'
+    mods_status_summary | sed 's/^/    /'
+    printf '\n'
+}
+
+# Compara el manifiesto local de Steam contra la API publica del Workshop y
+# dice que mods estan desfasados. Misma deteccion que usa mods_watch_loop: una
+# sola implementacion para el chequeo manual y para el automatico.
+#
+# Salida: 0 sincronizado, 1 hay desfase, 2 no se pudo consultar la API (o no
+# hay mods activos que comprobar). Pensada para poder scriptarse.
+cmd_check_mods() {
+    local report=""
+    report="$(collect_mod_status 2>/dev/null || true)"
+
+    if [[ -z "$report" ]]; then
+        log "No hay mods activos que comprobar (o no pude leer el manifiesto de Steam)."
+        return 2
+    fi
+
+    printf '\n%-12s %-13s %-13s %-10s  %s\n' "ID" "LOCAL" "STEAM" "ESTADO" "TITULO"
+    printf '%s\n' "$report" | while IFS=$'\t' read -r id local_ts remote_ts title verdict; do
+        printf '%-12s %-13s %-13s %-10s  %s\n' \
+            "$id" \
+            "$(date -u -d "@${local_ts}" +%Y-%m-%d 2>/dev/null || echo "$local_ts")" \
+            "$(date -u -d "@${remote_ts}" +%Y-%m-%d 2>/dev/null || echo "$remote_ts")" \
+            "$verdict" "$title"
+    done
+
+    write_mods_status "$report"
+
+    local total stale api_fail
+    total="$(printf '%s\n' "$report" | grep -c . || true)"
+    stale="$(printf '%s\n' "$report" | awk -F'\t' '$5=="desfasado"' | grep -c . || true)"
+    api_fail="$(printf '%s\n' "$report" | awk -F'\t' '$5=="sin-datos"' | grep -c . || true)"
+
+    printf '\nDESFASADOS: %s de %s\n' "${stale:-0}" "${total:-0}"
+    (( ${api_fail:-0} > 0 )) && printf 'SIN DATOS : %s (no se pudo consultar la API para estos)\n' "${api_fail:-0}"
+
+    (( ${stale:-0} > 0 )) && return 1
+    (( ${api_fail:-0} > 0 && ${api_fail:-0} == ${total:-0} )) && return 2
+    return 0
 }
 
 # ================================================================ DISPATCH ===
@@ -342,6 +452,7 @@ case "${1:-serve}" in
     update)     cmd_update ;;
     rcon)       shift; cmd_rcon "$@" ;;
     mods)       cmd_mods ;;
+    check-mods) cmd_check_mods ;;
     capture-sandbox) validate_env; capture_sandbox ;;
     status)     cmd_status ;;
     shell)      exec bash ;;

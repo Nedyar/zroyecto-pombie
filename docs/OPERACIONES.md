@@ -76,6 +76,7 @@ Los datos en [TAILSCALE.md](TAILSCALE.md).
 | Quien esta conectado | `./scripts/rcon.sh players` |
 | Mensaje a todos | `./scripts/rcon.sh servermsg '"texto"'` |
 | Guardado manual | `./scripts/rcon.sh save` |
+| Mods desfasados frente a Steam | `./scripts/check-mods.sh` |
 
 Las comillas dobles dentro de comillas simples en `servermsg` no son un capricho:
 el comando tiene que llegarle al servidor con el texto entrecomillado.
@@ -156,6 +157,9 @@ Los que no rotan crecen para siempre, y no son solo los que tecleas tu:
 | `stage` | **cada** `./scripts/stage.sh` | el mas frecuente de los automaticos |
 | `pre-update` | cada actualizacion del juego | unas pocas al ano |
 | `pre-restore` | cada restauracion | raro |
+
+`pre-mods` **no esta en esta lista a proposito**: a diferencia de las de
+arriba, si rota (ver seccion siguiente), asi que no se acumula sin limite.
 
 Y hay uno **mas grande que todos, que no esta en `backups/`**: cada
 restauracion aparta el mundo entero a una carpeta `.pre-restore-<fecha>`
@@ -434,6 +438,99 @@ que se venia jugando. Significa que se colo una actualizacion sin supervisar.
 - Si era intencionada: `./scripts/update-server.sh`
 - Si no: restaura el ultimo backup y averigua que la disparo (normalmente
   `UPDATE_ON_START=true` en el `.env`).
+
+---
+
+## Mods desfasados: el servidor se actualiza y reinicia solo
+
+Steam actualiza los mods de los **clientes** sola, sin preguntar. El servidor
+no (a proposito: ver "Actualizar el juego" arriba). Cuando un autor publica,
+las versiones dejan de coincidir y nadie puede entrar con *"La version del
+articulo de la workshop es diferente a la del servidor"*. Medido: pasa casi a
+diario. Historia completa y diseno en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
+
+**Desde el 16/08/2026 esto se resuelve solo**, sin intervencion:
+
+1. Cada 30 minutos (`MODS_CHECK_INTERVAL_MINUTES`) compara lo instalado
+   contra la API publica del Workshop.
+2. Si hay desfase, avisa **una vez** por chat y espera.
+3. En cuanto el servidor queda vacio: backup, reinicia el JVM **dentro del
+   mismo contenedor** (no hay recreacion, no hay downtime de Docker) y sigue
+   vigilando.
+
+**Nunca reinicia con gente dentro.** Quien ya este jugando sigue sin que nadie
+lo interrumpa; quien intente entrar mientras tanto vera el error de siempre,
+hasta que el servidor quede vacio y se ponga al dia solo.
+
+### Comprobar a mano
+
+```bash
+./scripts/check-mods.sh              # el servicio que este corriendo
+./scripts/check-mods.sh pz-staging   # uno concreto
+```
+
+Da una tabla con cada mod, su fecha local, la de Steam, y el veredicto
+(`ok` / `desfasado` / `sin-datos`), mas el resumen `DESFASADOS: N de M`. Salida
+`0` si esta todo al dia, `1` si hay desfase, `2` si no se pudo consultar la
+API. De solo lectura: no reinicia nada.
+
+El mismo resumen, sin red, esta en:
+
+```bash
+docker compose exec pz /docker/run.sh status
+```
+
+Linea `Mods (workshop)`: fecha del ultimo chequeo automatico, cuantos
+desfasados, y el desenlace del ultimo reinicio automatico si hubo alguno.
+
+### El aviso de "no reintento solo"
+
+Si el log dice `Los mismos mods siguen desfasados tras el ultimo reinicio
+automatico`, es que **un mod no se pudo poner al dia**: puede que se haya
+retirado del Workshop, o que su descarga este fallando. El vigilante no
+insiste solo —evita reiniciar cada 30 minutos toda la noche sin arreglar
+nada— y hace falta mirarlo a mano con `check-mods.sh`.
+
+### Desactivar la vigilancia temporalmente
+
+```bash
+# En .env:
+MODS_CHECK_INTERVAL_MINUTES=0
+docker compose up -d pz   # recrea con el valor nuevo
+```
+
+El servidor vuelve a comportarse exactamente como antes de esta funcionalidad.
+
+### Runbook: un mod se actualizo a peor
+
+Si tras un reinicio automatico algo del juego deja de funcionar y se sospecha
+del mod que se acaba de actualizar:
+
+1. `docker compose exec pz /docker/run.sh status` — la linea `Mods (workshop)`
+   dice que mod causo el ultimo reinicio y cuando.
+2. Si hay datos danados (no solo un mod que se porta mal, sino algo escrito
+   mal en el mundo), restaura el backup **`pre-mods`** mas reciente: es el
+   punto justo antes de que el mod actualizado tocara el mundo.
+   ```bash
+   ls -t backups/*-pre-mods.tar.zst | head -1
+   docker compose stop pz
+   ./scripts/restore.sh <ese-fichero>
+   ```
+3. Quita el mod de `PZ_WORKSHOP_ITEMS` / `PZ_MODS` en `.env` (es reversible
+   por diseno, ver [MODS-LISTA.md](MODS-LISTA.md) seccion 0) y
+   `docker compose up -d`. Los clientes se adaptan solos a la lista nueva.
+
+No hace falta avisar a los jugadores de que un mod se quito: el Workshop se
+distribuye solo, igual que al anadirlo.
+
+### Probar que la deteccion funciona
+
+Mismo espiritu que las pruebas de backup: no tocan nada real.
+
+```bash
+./docker/selftest-modwatch.sh
+docker compose run --rm --no-deps pz /docker/selftest-modwatch.sh
+```
 
 ---
 
