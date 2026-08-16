@@ -11,22 +11,33 @@ forma del despliegue, no sus valores.
 
 ## Estado en una linea
 
-**Queda UN solo mundo. El 13/08 se reorganizo todo: el mundo original (33 mods)
-se retiro con backup, y el mundo bueno —el que nacio vanilla y hoy lleva 25
-mods— paso a ser PRODUCCION. Produccion NO esta desplegada; ahora mismo lo
-unico en marcha es STAGING (puerto 16461, el que los jugadores ya tenian) con
-una copia de ese mundo. Ahi es donde juega el grupo ahora.**
+**Hay UN mundo, en DOS copias con papeles distintos (reorganizado el 16/08):**
 
-Levantar produccion cuando toque: `docker compose up -d` (puerto 16261). Antes,
-bajar staging: `./scripts/stage.sh --down` — **OJO: eso borra el mundo de
-staging**, y ahora se juega ahi. Hacer backup antes o asumir que lo jugado en
-staging se pierde.
+| | Puerto | Estado | Que lleva |
+| --- | --- | --- | --- |
+| **Produccion** (`pz`) | 16261 | **parado, a proposito** | El mundo **sin** los 5 mods irreversibles. Punto de retorno vivo |
+| **Staging** (`pz-staging`) | 16461 | **desplegado, se juega aqui** | El mismo mundo **con** los 5 mods. 32 mods en total |
 
-**Novedad 16/08/2026**: el servidor detecta solo cuando Steam ha actualizado
-un mod y el suyo se quedo atras (pasaba casi a diario), avisa por chat, y
-reinicia el mismo cuando el mundo queda vacio — nunca con gente dentro.
-Staging ya corre la imagen con esto; produccion la tendra en cuanto se
-despliegue. Detalle en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
+Los dos salen del mismo mundo (`pombie-vanilla`, 392 MB) y tienen volumenes
+separados. Produccion se quedo con la foto de justo antes de meter los mods
+irreversibles, y **no como tarball sino como mundo que arranca**: si algun dia
+hay que volver, se levanta y ya. El precio es que volver cuesta todo lo jugado
+en staging desde el 16/08, y ese coste crece cada dia.
+
+**OJO, la trampa mas grave de este montaje**: `./scripts/stage.sh --down`
+**borra el mundo de staging**, y staging es donde se juega. No lo lances sin
+haber hecho backup.
+
+**Novedad 16/08/2026 (I)**: el servidor detecta solo cuando Steam ha
+actualizado un mod y el suyo se quedo atras (pasaba casi a diario), avisa por
+chat, y se reinicia el mismo cuando el mundo queda vacio — nunca con gente
+dentro. Detalle en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
+
+**Novedad 16/08/2026 (II)**: se levanto la regla de "nada irreversible" y
+entraron **Common Sense, Take A Bath, Manage Containers, Realistic Temperature
+y Trailers!**. Siguen fuera StarvingZombies (reversible, espera votacion) y
+Bicycle! (roto en 42.20). Decision tomada con el coste delante; el razonamiento
+completo en [MODS-LISTA.md](MODS-LISTA.md) seccion 0.
 
 ## Que hay montado
 
@@ -36,8 +47,8 @@ despliegue. Detalle en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
 | Docker | **rootless**, daemon de usuario, sin grupo `docker` |
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
 | Juego | Build 42, `buildid` registrado y coincidente con el instalado |
-| Mundos | **uno**: `pombie-vanilla`, 285 MB, 5 jugadores con datos |
-| Mods | **25** (oleada 1): todos reversibles, sin definiciones persistentes |
+| Mundos | **uno**, en dos copias: produccion (resguardo) y staging (en juego), 392 MB |
+| Mods | **32** en staging: los 25 reversibles + los 5 irreversibles del 16/08 (y sus 3 dependencias). Produccion se queda en 25 |
 | Memoria | heap 6g, `mem_limit` 10g |
 | Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods |
 | Mods desfasados | deteccion cada 30 min, reinicio solo si el mundo esta vacio |
@@ -75,6 +86,16 @@ Esto se ejecuto y se comprobo, no se dedujo:
   en loopback.
 - El mod local se instalo tras auditar su contenido: 142 ficheros, unicamente
   10 lineas de Lua sin acceso a red, sistema ni reflexion Java.
+- **La oleada 2 aplicada en staging (16/08)**: backup `antes-oleada-2`
+  verificado aparte (90.817 entradas dentro), mundo trasladado a produccion y
+  comprobado alli (392 MB, 90.023 ficheros, db y buildid correctos), staging
+  rehecho desde produccion con la lista nueva. Verificado: **33 Mod ID / 31
+  WorkshopItems** en el INI renderizado, los 8 nuevos presentes, **0**
+  `required mod not found`, **0 ERROR fuera del frame de carga**, un solo mundo
+  en `Saves/Multiplayer`, RCON respondiendo y `healthy`. La configuracion de
+  sandbox del repo ya cubria estos mods (se capturo del mundo de 33): lo unico
+  que le sobra son los bloques `Bicycle` y `StarvingZombies`, justo los dos
+  excluidos.
 - **Reinicio automatico ante mods desfasados**, de extremo a extremo: contra
   el volumen real de produccion (parado, sin exponer puertos) con un mod
   forzado a desfasado, y desplegado de verdad en staging. 39 pruebas propias
@@ -187,12 +208,18 @@ Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
 - **Que alguien anote la hora** la proxima vez que ocurra. Es la pieza que mas
   falta: hay dos logs senalando momentos distintos y ninguno captura lo que
   vivieron los jugadores.
-- **REGLA VIGENTE: no entra ningun mod irreversible.** Decision del grupo
-  (15/08). Deja CONGELADA la oleada 2 (Common Sense, Take A Bath, Manage
-  Containers, Realistic Temperature) y descarta Trailers!. No es por calidad:
-  los cuatro son buenos, pero declaran definiciones persistentes y no se
-  pueden sacar de un mundo jugado. Criterio y medicion en MODS-LISTA.md
-  seccion 0, por si la regla cambia.
+- ~~REGLA VIGENTE: no entra ningun mod irreversible.~~ **LEVANTADA el 16/08**:
+  entraron los cinco (Common Sense, Take A Bath, Manage Containers, Realistic
+  Temperature, Trailers!) sabiendo que ya no salen. El montaje de dos copias
+  —produccion sin ellos, staging con ellos— es la red que hizo asumible la
+  decision. Razonamiento en MODS-LISTA.md seccion 0.
+- **PREGUNTA ABIERTA, ahora medible: que pasa de verdad al quitar Trailers!**
+  Se dedujo que los remolques quedarian huerfanos y que el mundo NO se
+  romperia (ninguno declara construibles, que es el caso grave de la seccion 5
+  de MODS-LISTA), pero **nadie lo ha probado**. Con produccion guardando el
+  mundo sin ellos, el experimento sale gratis: enganchar remolques en una
+  copia, quitar el mod, y mirar si carga. Convertiria "irreversible" de
+  etiqueta heredada en dato.
 - **Revisar hacia mediados de septiembre**: los mods-parche de sincronizacion
   de vehiculos. Se evaluaron el 15/08 y ninguno dio la talla —el que ataca
   vehiculos exige instalacion manual en cada cliente, el mantenido para 42.20

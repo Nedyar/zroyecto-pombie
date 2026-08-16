@@ -7,6 +7,20 @@
 # ultimo commit no lo saca del historial.
 /env
 
+# Y cualquier copia del .env. Antes de tocarlo con sed lo natural es hacer
+# `cp .env .env.bak`, y esa copia lleva las mismas contrasenas pero NO la
+# ignoraba ninguna regla: aparecia como fichero sin seguimiento, a un
+# `git add -A` de distancia del historial permanente. Paso el 16/08/2026.
+.env.*
+env.*
+
+# ...pero .env.example SI se versiona: es la plantilla que necesita la maquina
+# destino. La excepcion es obligatoria, no cosmetica: `.env.*` lo captura.
+# Hoy no se nota porque ya esta trackeado —y gitignore no afecta a lo ya
+# trackeado, ni `git check-ignore` lo delata sin `--no-index`— pero en un clon
+# nuevo desapareceria en silencio.
+!.env.example
+
 # Los backups son datos, no codigo. Se migran a mano, no por git.
 backups/*
 !backups/.gitkeep

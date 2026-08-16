@@ -347,10 +347,34 @@ Que mirar antes de dar por bueno un cambio:
 
 ---
 
+## Como esta repartido hoy: dos copias, dos papeles (16/08/2026)
+
+El mismo mundo vive en dos sitios con volumenes separados, y **no es un
+descuido**: es la red que hizo asumible meter mods irreversibles.
+
+| | Puerto | Estado | Que lleva |
+| --- | --- | --- | --- |
+| **Produccion** (`pz`) | 16261 | parado a proposito | El mundo **sin** los 5 irreversibles |
+| **Staging** (`pz-staging`) | 16461 | **desplegado, se juega aqui** | El mismo mundo **con** ellos |
+
+Produccion no es un backup: es un mundo que **arranca**. Si algun dia hay que
+volver atras, `docker compose up -d` y ya. Lo que cuesta volver es todo lo
+jugado en staging desde el 16/08, y eso crece cada dia.
+
+**La trampa que hay que tener presente**: `./scripts/stage.sh --down` borra el
+mundo de staging, que es donde se juega. Antes de lanzarlo, backup.
+
+Para levantar produccion habria que decidir antes que pasa con staging: los dos
+pueden correr a la vez (puertos y volumenes distintos), pero son mundos que ya
+han divergido, y jugar en los dos multiplica el lio.
+
+---
+
 ## El mundo unico, y por que se llama "vanilla"
 
-Desde el 13/08/2026 **hay un solo mundo**: `pombie-vanilla`, servido por
-produccion en el puerto **16261**.
+Desde el 13/08/2026 **hay un solo mundo**: `pombie-vanilla`. Desde el 16/08
+existe en las dos copias de arriba; el original lo sirve produccion en el
+puerto **16261**.
 
 El nombre es herencia. Ese mundo nacio como referencia SIN mods para distinguir
 "esto lo rompe un mod" de "esto es asi en Build 42" —y cumplio: respondio

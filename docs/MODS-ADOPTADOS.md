@@ -1,16 +1,21 @@
 # Mods del servidor
 
-Esto es lo que lleva **el mundo en el que jugamos ahora** (el del puerto 16261).
-**25 mods**, todos probados y funcionando en la versión actual del juego
-(Build 42.20).
+Esto es lo que lleva **el mundo en el que jugamos ahora** (el del puerto
+**16461**). **32 mods**, todos probados y funcionando en la versión actual del
+juego (Build 42.20).
 
 No tenéis que hacer nada para instalarlos: al entrar al servidor, el juego los
 descarga automáticamente. La única excepción son las barbas, al final.
 
-Veréis que faltan algunos que estaban en el mundo anterior. No es un descuido:
-los que faltan **dejan huella permanente en el mundo** (objetos, recetas,
-vehículos), así que si entran es para siempre. Por eso se prueban antes con
-calma. Están listados al final.
+**Novedad del 16/08:** vuelven los cinco que faltaban del mundo antiguo —
+Common Sense, Take A Bath, Manage Containers, Realistic Temperature y
+Trailers!—. Son los que dejan huella permanente en el mundo (objetos, recetas,
+vehículos), así que entran sabiendo que **ya no salen**: si algún día se
+quitaran, lo que hayan creado se perdería. Se decidió con ese coste delante.
+
+Por si acaso, el mundo tal como estaba **antes** de meterlos queda guardado
+aparte y entero, no solo como copia de seguridad. Cuanto más juguemos, más
+caro sería volver ahí, pero existe.
 
 ---
 
@@ -22,6 +27,7 @@ calma. Están listados al final.
 - **[Better Sorting](https://steamcommunity.com/sharedfiles/filedetails/?id=2313387159)** — Reorganiza las categorías de objetos y arregla un montón de nombres.
 - **[Split Items](https://steamcommunity.com/sharedfiles/filedetails/?id=3147428398)** — Dividir pilas de objetos.
 - **[Modern Status](https://steamcommunity.com/sharedfiles/filedetails/?id=3451167732)** — Los indicadores de estado del personaje, en círculos y barras configurables.
+- **[Manage Containers](https://steamcommunity.com/sharedfiles/filedetails/?id=2650547917)** — Asignas una categoría a un armario de la base (herramientas, comida, munición…) y al descargar el botín se reparte solo. Se acabó ordenar a mano.
 
 ## Construir, fabricar y cocinar
 
@@ -29,11 +35,28 @@ calma. Están listados al final.
 - **[Neat Crafting](https://steamcommunity.com/sharedfiles/filedetails/?id=3502080466)** — Lo mismo para la artesanía, y encima te deja saltar de una receta a la que necesitas para hacerla.
 - **[Project Cook](https://steamcommunity.com/sharedfiles/filedetails/?id=3490188370)** — Pantalla de cocina de verdad, sobre todo para sopas, guisos, ensaladas y demás.
 
+## Sentido común
+
+- **[Common Sense](https://steamcommunity.com/sharedfiles/filedetails/?id=3717968421)** — El más grande de los que vuelven. Un paquete de cosas que el juego debería traer de serie:
+  - Forzar con palanca puertas de edificio, de garaje, reforzadas, ventanas y puertas de coche
+  - Con un arma equipada ves munición, estado y condición
+  - Equipar armas, ropa y mochilas **desde el suelo** con el clic derecho
+  - Enganchar la linterna al cinturón
+  - Abrir latas con cuchillo, destornillador, tenedor o cuchara
+  - Desinfectar una venda sucia con alcohol
+  - Fabricar sábanas a partir de ropa
+
+## Vehículos
+
+- **[Trailers!](https://steamcommunity.com/sharedfiles/filedetails/?id=3330403100)** — Siete remolques que se enganchan al coche para transportar de verdad. **El menú es la tecla `V`** (el radial del vehículo), no el clic derecho.
+
 ## Descanso y salud
 
 - **[Comfy Sleeping](https://steamcommunity.com/sharedfiles/filedetails/?id=2998737588)** — Dormir descansa más o menos según la ropa que lleves, cómo estés de ánimo y de limpio. Acostarse con la mochila puesta se paga.
 - **[Replace Bandage](https://steamcommunity.com/sharedfiles/filedetails/?id=2944344655)** — Cambiar un vendaje sucio por uno limpio de una vez, sin quitar y volver a poner.
 - **[Cat's eye in the Dark](https://steamcommunity.com/sharedfiles/filedetails/?id=3402513620)** — El rasgo _Cat's Eye_ ahora sí deja ver algo en la oscuridad.
+- **[Take A Bath And Shower](https://steamcommunity.com/sharedfiles/filedetails/?id=3592172476)** — Bañeras y duchas que funcionan: te quitas la mugre corporal. El indicador de suciedad sale en Modern Status, que ya teníais.
+- **[Realistic Temperature](https://steamcommunity.com/sharedfiles/filedetails/?id=3600401184)** — La temperatura de dentro de un edificio ya no es la de fuera; cerrar puertas y ventanas cambia el ambiente. **Se lee en un reloj digital equipado**, no en Modern Status (ese indicador es la temperatura de tu cuerpo, que es otra cosa).
 
 ## Combate y movimiento
 
@@ -55,31 +78,24 @@ calma. Están listados al final.
 - **[Map Symbol Size Slider](https://steamcommunity.com/sharedfiles/filedetails/?id=2734705913)** — Cambiar el tamaño de los símbolos y las notas del mapa.
 - **[Map Symbols Plus](https://steamcommunity.com/sharedfiles/filedetails/?id=3399645148)** — Símbolos de mapa dibujados a mano, con chinchetas de "seguro", "peligro" y "desconocido".
 
-## Y dos más que no vais a notar
+## Y cinco más que no vais a notar
 
 No añaden nada por sí solos: hacen funcionar a los de arriba.
 
 - **[NeatUI Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=3508537032)**
 - **[Fluffy Hair](https://steamcommunity.com/sharedfiles/filedetails/?id=2447729538)** — este además hace que el peinado no se deforme al llevar sombrero
+- **[that DAMN Library](https://steamcommunity.com/sharedfiles/filedetails/?id=3171167894)** — la necesitan los remolques
+- **[Lua Digital Watch Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=3676456221)** — es lo que pinta la temperatura en el reloj
+- **Take A Bath DepthMap** — viene dentro del mod de la bañera
 
 ---
 
-## Los que aún no están, y por qué
-
-Estos estaban en el mundo anterior y **todavía no** en este. Todos dejan huella
-permanente (objetos, recetas o vehículos): quitarlos después rompe cosas, así
-que si entran es para quedarse. Antes de eso se prueban en un servidor de
-ensayo con una copia de nuestro mundo.
+## Los dos que siguen fuera, y por qué
 
 | Mod | Estado |
 | --- | --- |
-| **Common Sense** (palanca, abrir latas con cuchillo...) | En cola para probarse |
-| **Take A Bath And Shower** | En cola para probarse |
-| **Manage Containers** | En cola para probarse |
-| **Realistic Temperature** | En cola para probarse |
-| **Trailers!** (remolques) | Decisión de grupo: es el más irreversible de todos (vehículos) |
-| **Starving Zombies** (los zombis os huelen) | Reversible, pero cambia la jugabilidad: se vota |
-| **Bicycle!** | **No va a entrar**: está roto en la versión actual del juego. Si su autor lo actualiza, se reevalúa |
+| **Starving Zombies** (los zombis se comen los cadáveres y os huelen si vais manchados de sangre) | **Pendiente de que lo votéis.** Técnicamente no tiene ningún problema —de hecho es el único que se podría quitar después sin perder nada—, pero cambia cómo se juega, así que se decide entre todos |
+| **Bicycle!** (bicicletas) | **No va a entrar**: está roto en la versión actual del juego. Si su autor lo actualiza, se reevalúa |
 
 Si echáis de menos alguno o queréis proponer otro, decidlo.
 

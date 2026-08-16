@@ -55,23 +55,71 @@ documentado en la sección 5 — el que puede impedir que un mundo cargue.
 | **Decisión de grupo** | `StarvingZombies` | Reversible y exonerado (incidencia 001), pero cambia jugabilidad, no interfaz |
 | **Nunca** | `Bicycle!` | Defectuoso en 42.20 (incidencia 002) **e** irreversible: la peor combinación. Se reevalúa si el autor publica para 42.20 |
 
-## Regla vigente desde el 15/08/2026: nada irreversible
+## LEVANTADA el 16/08/2026: entra la oleada 2, y Trailers! con ella
+
+Decisión del usuario, tomada **con el coste delante**: entran los cinco
+irreversibles (Common Sense, Take A Bath, Manage Containers, Realistic
+Temperature y Trailers!), y quedan fuera **Starving Zombies** —el único
+reversible, pendiente de votación por cambiar jugabilidad— y **Bicycle!**, que
+sigue roto en 42.20.
+
+Lo que se le puso delante antes de decidir, y que conviene no perder:
+
+- Las investigaciones de `docs/incidencias/` exoneran a los mods de causar los
+  bugs, pero **eso nunca fue el motivo de excluirlos**: se excluyeron por no
+  poder deshacerse. Son ejes independientes y el primero no desbloquea el
+  segundo.
+- El coste real medido es **más pequeño de lo que la etiqueta sugiere**:
+  ninguno declara construibles (`entities`), que es el caso grave capaz de
+  impedir que un mundo cargue (sección 5). Al quitarlos, lo esperable es que
+  sus objetos queden huérfanos, no que el mundo se rompa.
+- **Pero eso último es deducción, no medición.** Nadie ha probado a quitar
+  Trailers! de un mundo con remolques enganchados. Queda como pregunta abierta,
+  y ahora es medible: ver más abajo.
+- Un backup **no** sustituye a la reversibilidad: restaurar devuelve el mundo
+  entero, no el mod, así que deshacer cuesta todo lo jugado desde la copia.
+
+### El montaje que hace asumible la decisión
+
+En vez de meter los mods en el mundo y ya, se separó en dos:
+
+| | Puerto | Qué lleva |
+| --- | --- | --- |
+| **Producción** | 16261 | El mundo tal cual estaba **antes** de los mods. Resguardo, no desplegado |
+| **Staging** | 16461 | Copia de ese mundo **con** los cinco mods. Es donde se juega |
+
+Producción queda como punto de retorno vivo —no un tarball, un mundo que
+arranca— y de paso convierte la pregunta abierta de Trailers! en un
+experimento que se puede hacer cuando se quiera: engancharle remolques a la
+copia de staging, quitar el mod y mirar si el mundo carga. Sin arriesgar nada.
+
+**El precio, dicho claro**: cuanto más se juegue en staging, más cuesta volver
+a producción, porque volver significa perder lo jugado desde el 16/08.
+
+### La regla que estuvo vigente del 15 al 16/08
+
+Se deja escrita porque explica por qué la lista fue lo que fue durante la
+oleada 1, y por qué se sigue midiendo la reversibilidad de todo candidato:
 
 Decisión del grupo: **no entra ningún mod que declare definiciones
-persistentes**. Congela la oleada 2 entera y descarta Trailers!.
+persistentes**. Congelaba la oleada 2 entera y descartaba Trailers!.
 
 No es un juicio sobre su calidad —los cuatro de la oleada 2 son buenos— sino
 sobre la asimetría: en un mundo donde ya hay meses de partida, un mod que no
 se puede sacar es una apuesta sin marcha atrás, y la marcha atrás es
 precisamente lo que este montaje existe para conservar.
 
-Lo que sigue vivo bajo la regla:
+Lo que sigue vivo **después de levantarla**:
 
-- **StarvingZombies**: reversible y exonerado por la incidencia 001. Solo
-  pendiente de votación porque cambia jugabilidad, no por riesgo técnico.
-- **Cualquier candidato nuevo**, si pasa la medición de reversibilidad. El
+- **StarvingZombies**: reversible y exonerado por la incidencia 001. Sigue
+  fuera, y ahora por su único motivo real: es el que cambia jugabilidad y
+  espera votación. Nada técnico lo frena.
+- **La medición de reversibilidad de todo candidato nuevo**, que no se retira:
+  ya no es un veto automático, pero sí el dato con el que se decide. El
   procedimiento: meterlo en `STAGING_*`, lanzar `./scripts/stage.sh` y escanear
-  lo descargado con el método de esta sección. Cero scripts = admisible.
+  lo descargado con el método de esta sección.
+- **Bicycle!**: fuera por estar roto en 42.20, que es un motivo aparte y sigue
+  en pie.
 
 Evaluado y descartado bajo esta regla el 15/08: los **mods-parche de
 sincronización de vehículos**. Ninguno reunía atacar vehículos + estar
