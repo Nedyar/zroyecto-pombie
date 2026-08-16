@@ -110,6 +110,10 @@ despues de que una tanda de arreglos "obviamente correctos" introdujera dos
 regresiones —borrar backups validos y bloquear la restauracion— que solo
 aparecieron al ejecutarlas.
 
+Y `docker/selftest-capture-ini.sh` para la captura de ajustes del INI, que lee
+un fichero con las contrasenas ya sustituidas y escribe en uno versionado: si
+tocas `capture_ini`, lanzalas. Una fuga ahi no se deshace.
+
 Lo mismo para la deteccion de mods desfasados: `docker/selftest-modwatch.sh`.
 Ejecutala **dentro del contenedor**, no solo en el host: el contenedor corre
 `mawk`, el host probablemente `gawk`, y una prueba que solo pasa en el host

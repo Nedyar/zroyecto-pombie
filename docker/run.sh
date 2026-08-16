@@ -470,6 +470,7 @@ case "${1:-serve}" in
     mods)       cmd_mods ;;
     check-mods) cmd_check_mods ;;
     capture-sandbox) validate_env; capture_sandbox ;;
+    capture-ini)     validate_env; capture_ini ;;
     status)     cmd_status ;;
     shell)      exec bash ;;
     *)          exec "$@" ;;

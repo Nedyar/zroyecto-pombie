@@ -357,10 +357,11 @@ CarEngineAttractionModifier=0.5
 PlayerBumpPlayer=false
 
 # Controls display of remote players on the in-game map. 1=Hidden 2=Friends 3=Friends and nearby players 4=Everyone Min: 1 Max: 4 Default: 1
-# Decision del grupo (16/08/2026): 4 = todos se ven en el mapa. Es un servidor
-# de amigos que juegan juntos; esconderse entre ellos no aporta nada y perderse
-# si.
-MapRemotePlayerVisibility=4
+# Decision del grupo (16/08/2026). Se puso a 4 (todos) al recuperarlo del panel,
+# y alguien lo dejo en 3 dentro de la partida ese mismo dia: se ven los amigos y
+# quien este cerca, pero no el mapa entero. Lo captura capture-ini.sh, asi que
+# el valor de aqui es siempre el ultimo que se decidio jugando.
+MapRemotePlayerVisibility=3
 
 # Min: 1 Max: 300 Default: 5
 BackupsCount=5

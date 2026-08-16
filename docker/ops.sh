@@ -355,6 +355,138 @@ para que haya algo que capturar."
     log "Revisa el diff y commitealo."
 }
 
+# Claves del INI que capture_ini NO debe tocar aunque hayan cambiado, porque no
+# son preferencias sino identidad del mundo: las genera el juego al crearlo.
+# Produccion y staging son mundos distintos que comparten esta plantilla, asi
+# que capturar la de uno se la impondria al otro. ResetID ademas tiene
+# significado propio: cambiarlo le dice al cliente que el mundo se reinicio.
+INI_KEYS_NO_CAPTURAR="ResetID ServerPlayerID Seed"
+
+# Trae al repo los ajustes del INI que se hayan tocado en caliente (panel de
+# administrador). Gemelo de capture_sandbox, pero con un problema que aquel no
+# tiene: server.ini.tmpl es una PLANTILLA, y el INI de runtime es el resultado
+# de renderizarla con los valores del .env dentro.
+#
+# O sea que copiar el runtime encima de la plantilla haria dos destrozos a la
+# vez: se cargaria los ${MARCADORES}, y grabaria en un fichero versionado las
+# contrasenas de RCON y del servidor. Por eso esto no copia: compara clave a
+# clave y solo reescribe el valor de las lineas que NO son variables.
+capture_ini() {
+    local ini="${DATA_DIR}/Server/${PZ_SERVER_NAME}.ini"
+    local tmpl="${CONFIG_DIR}/server.ini.tmpl"
+
+    [[ -f "$ini" ]] || die_loud \
+"No existe ${ini}.
+El servidor tiene que haber arrancado al menos una vez para que haya un INI
+de runtime del que capturar."
+
+    [[ -f "$tmpl" ]] || die_loud "No existe ${tmpl}; hay que hacer bootstrap primero."
+    [[ -w "$CONFIG_DIR" ]] || die_loud "El directorio /config esta montado de solo lectura."
+
+    # Valores que tiene el servidor ahora mismo.
+    local -A runtime=()
+    local line key val
+    while IFS= read -r line; do
+        [[ "$line" =~ ^([A-Za-z0-9_]+)=(.*)$ ]] || continue
+        runtime["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+    done < "$ini"
+
+    local -a cambios=() protegidas=() identidad=()
+    local out="${tmpl}.tmp.${BASHPID}"
+    : > "$out"
+
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^([A-Za-z0-9_]+)=(.*)$ ]]; then
+            key="${BASH_REMATCH[1]}"
+            val="${BASH_REMATCH[2]}"
+
+            if [[ -v runtime["$key"] && "${runtime[$key]}" != "$val" ]]; then
+                # 1. Lineas con ${VAR}: su valor manda desde el .env, y varias
+                #    llevan contrasenas. No se tocan NUNCA.
+                if [[ "$val" == *'${'* ]]; then
+                    protegidas+=("$key")
+                    printf '%s\n' "$line" >> "$out"
+                    continue
+                fi
+                # 2. Identidad del mundo: ver INI_KEYS_NO_CAPTURAR.
+                if [[ " ${INI_KEYS_NO_CAPTURAR} " == *" ${key} "* ]]; then
+                    identidad+=("$key")
+                    printf '%s\n' "$line" >> "$out"
+                    continue
+                fi
+                # 3. El resto si: es un ajuste que alguien cambio a proposito.
+                cambios+=("${key}: ${val} -> ${runtime[$key]}")
+                printf '%s=%s\n' "$key" "${runtime[$key]}" >> "$out"
+                continue
+            fi
+        fi
+        printf '%s\n' "$line" >> "$out"
+    done < "$tmpl"
+
+    # ---- Red de seguridad, antes de mover nada ----
+    #
+    # Lo de arriba ya deberia bastar, pero grabar una contrasena en un fichero
+    # versionado es irreversible: el historial de git es permanente. Asi que se
+    # comprueba el resultado en vez de confiar en el algoritmo.
+    local antes_vars despues_vars
+    antes_vars="$(grep -cE '^[A-Za-z0-9_]+=\$\{' "$tmpl" || true)"
+    despues_vars="$(grep -cE '^[A-Za-z0-9_]+=\$\{' "$out" || true)"
+    if [[ "$antes_vars" != "$despues_vars" ]]; then
+        rm -f "$out"
+        die_loud \
+"CAPTURA CANCELADA: el numero de lineas con \${VARIABLE} ha cambiado
+(${antes_vars} -> ${despues_vars}). Alguna se habria sustituido por su valor
+renderizado, y entre ellas van las contrasenas. No se ha tocado la plantilla."
+    fi
+
+    # El '.+' del final no es un detalle: exige que haya ALGO despues del '=',
+    # porque una clave sensible VACIA es el estado normal, no una fuga.
+    # `DiscordToken=` viene asi de serie y hacia saltar la guarda en la primera
+    # ejecucion real contra el servidor. Lo cazo la ejecucion, no las pruebas:
+    # el fixture sintetico no tenia ninguna clave sensible vacia.
+    local fuga
+    fuga="$(grep -E '^(RCONPassword|Password|ServerPassword|DiscordToken)=.+' "$out" \
+            | grep -vE '=\$\{' || true)"
+    if [[ -n "$fuga" ]]; then
+        rm -f "$out"
+        die_loud \
+"CAPTURA CANCELADA: una clave sensible habria quedado con un valor literal en
+la plantilla versionada. No se ha tocado nada."
+    fi
+
+    mv "$out" "$tmpl"
+
+    # ---- Informe ----
+    if (( ${#cambios[@]} == 0 )); then
+        log "El INI de runtime no tiene ningun ajuste distinto del de la plantilla."
+    else
+        log "Capturados ${#cambios[@]} ajustes en server.ini.tmpl:"
+        local c; for c in "${cambios[@]}"; do log "    ${c}"; done
+    fi
+
+    if (( ${#protegidas[@]} > 0 )); then
+        warn "NO capturadas por venir del .env (ahi es donde se cambian): ${protegidas[*]}"
+    fi
+    if (( ${#identidad[@]} > 0 )); then
+        warn "NO capturadas por ser identidad del mundo: ${identidad[*]}"
+    fi
+
+    # Claves que el servidor tiene y la plantilla no: suele significar que una
+    # actualizacion del juego las anadio. No se meten a ciegas; para eso esta
+    # el bootstrap, que regenera la referencia y deja verlas en un diff.
+    local nuevas=""
+    for key in "${!runtime[@]}"; do
+        grep -qE "^${key}=" "$tmpl" || nuevas+="${key} "
+    done
+    if [[ -n "${nuevas// /}" ]]; then
+        warn "El servidor tiene claves que la plantilla no: ${nuevas}"
+        warn "  No se anaden solas. Si vienen de una version nueva del juego:"
+        warn "    ./scripts/bootstrap.sh   y mira el git diff de config/reference/"
+    fi
+
+    log "Revisa el diff y commitealo:  git diff config/server.ini.tmpl"
+}
+
 # Renderiza repo -> runtime. Idempotente y unidireccional.
 render_config() {
     local sdir="${DATA_DIR}/Server"

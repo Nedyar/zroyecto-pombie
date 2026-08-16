@@ -77,6 +77,7 @@ Los datos en [TAILSCALE.md](TAILSCALE.md).
 | Mensaje a todos | `./scripts/rcon.sh servermsg '"texto"'` |
 | Guardado manual | `./scripts/rcon.sh save` |
 | Mods desfasados frente a Steam | `./scripts/check-mods.sh` |
+| Guardar los ajustes tocados en la partida | `./scripts/capture-ini.sh [pz\|pz-staging]` |
 
 Las comillas dobles dentro de comillas simples en `servermsg` no son un capricho:
 el comando tiene que llegarle al servidor con el texto entrecomillado.
@@ -95,6 +96,41 @@ el comando tiene que llegarle al servidor con el texto entrecomillado.
 Un cambio de configuracion **no puede** danar los guardados: el proceso de
 renderizado escribe unicamente en `Server/*.ini` y `Server/*_SandboxVars.lua`,
 nunca en `Saves/` ni en `db/`. Esta comprobado, no es una suposicion.
+
+### Si el ajuste se toco DENTRO de la partida
+
+Lo que se cambia desde el panel de administrador **no sobrevive al siguiente
+arranque**: el render sobrescribe el INI de runtime con la plantilla, siempre.
+Es la misma propiedad de una sola direccion de arriba, y es lo que garantiza
+que un ajuste no pueda tocar los guardados.
+
+Antes se notaba poco porque los reinicios eran manuales y raros. Desde que el
+vigilante de mods reinicia solo, puede pasar a diario. Para que un ajuste hecho
+en la partida se quede:
+
+```bash
+./scripts/capture-ini.sh pz-staging     # o pz
+git diff config/server.ini.tmpl         # revisa antes de commitear
+```
+
+Trae a la plantilla los valores que difieran, y **deja fuera dos categorias a
+proposito**:
+
+- **Las claves que en la plantilla son `${VARIABLES}`.** Su valor manda desde
+  el `.env`, y dos son las contrasenas de RCON y del servidor: capturarlas
+  las grabaria en un fichero versionado, y el historial de git es permanente.
+- **`ResetID`, `ServerPlayerID` y `Seed`.** No son preferencias sino identidad
+  del mundo, y produccion y staging comparten esta plantilla.
+
+Si el servidor tiene claves que la plantilla no, las informa pero **no las
+anade solas**: eso suele significar que una version nueva del juego las trajo,
+y para eso esta `./scripts/bootstrap.sh` con su diff de `config/reference/`.
+
+Hay dos guardas que abortan la captura sin tocar nada si algo saliera mal (que
+cambie el numero de lineas con `${...}`, o que una clave sensible acabe con un
+valor literal), y sus pruebas estan en `docker/selftest-capture-ini.sh`.
+
+El equivalente para los ajustes de sandbox es `./scripts/capture-sandbox.sh`.
 
 Aviso: buena parte de los `SandboxVars` solo tienen efecto **al crear el
 mundo**. Cambiar el tamano del mapa o la distribucion inicial de zombis en un
