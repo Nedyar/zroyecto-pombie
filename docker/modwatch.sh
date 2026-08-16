@@ -146,10 +146,16 @@ collect_mod_status() {
         remote_ts="" title=""
 
         if (( api_rc == 0 )) && [[ -n "$api_json" ]]; then
+            # El gsub del titulo no es cosmetico: el informe es TSV y los
+            # titulos los escribe el autor del mod. Un tabulador dentro del
+            # titulo desplazaria el veredicto a un sexto campo y los
+            # `awk -F'\t' '$5=="desfasado"'` de todo el flujo dejarian de
+            # contar ese mod desfasado, sin ningun error. Se aplasta a espacio
+            # en origen y el problema no puede existir.
             line="$(printf '%s' "$api_json" | jq -r --arg id "$id" '
                 .response.publishedfiledetails[]?
                 | select(.publishedfileid == $id and .result == 1 and ((.time_updated // 0) != 0))
-                | "\(.time_updated)\t\(.title)"
+                | "\(.time_updated)\t\((.title // "?") | gsub("[\\t\\r\\n]+"; " "))"
             ' 2>/dev/null | head -1 || true)"
             if [[ -n "$line" ]]; then
                 remote_ts="${line%%$'\t'*}"
@@ -212,19 +218,27 @@ write_mods_status() {
         if [[ -n "$prev_restart" ]]; then
             printf '%s\n' "$prev_restart"
         fi
-    } > "${f}.tmp" && mv "${f}.tmp" "$f"
+    } > "${f}.tmp.${BASHPID}" && mv "${f}.tmp.${BASHPID}" "$f"
 }
 
 # Registra (o reemplaza) la linea de auditoria del ultimo reinicio automatico,
 # sin tocar el resto del fichero. Mismo patron leer-filtrar-reescribir que
 # capture_sandbox en ops.sh.
+#
+# El sufijo BASHPID del temporal (aqui y en write_mods_status) existe porque
+# escriben procesos DISTINTOS: el vigilante, el verificador post-reinicio (en
+# segundo plano) y un check-mods manual pueden coincidir. Con un `.tmp` fijo,
+# dos escritores concurrentes se pisan el temporal y el mv del segundo muere
+# por set -e. Y es BASHPID, no $$: $$ vale lo mismo en todos los subshells
+# hijos del mismo run.sh, o sea que no distinguiria justo a los que hay que
+# distinguir.
 note_mods_restart() {
     local text="$1" f
     f="$(mods_status_file)"
     {
         [[ -f "$f" ]] && grep -v '^ultimo-reinicio-automatico:' "$f"
         printf 'ultimo-reinicio-automatico: %s\n' "$text"
-    } > "${f}.tmp" && mv "${f}.tmp" "$f"
+    } > "${f}.tmp.${BASHPID}" && mv "${f}.tmp.${BASHPID}" "$f"
 }
 
 # Para cmd_status: sin red, solo lee lo que ya se escribio.
@@ -277,9 +291,33 @@ mods_watch_loop() {
 
             local stale=""
             stale="$(printf '%s\n' "$report" | awk -F'\t' '$5=="desfasado"{print $1}')"
-            [[ -n "$stale" ]] || continue
 
-            stale_key="$(printf '%s\n' "$stale" | sort | tr '\n' ',')"
+            if [[ -z "$stale" ]]; then
+                # Todo al dia: el backoff se LIMPIA aqui, y este reset no es
+                # opcional. Sin el, la segunda actualizacion legitima del mismo
+                # mod quedaria bloqueada para siempre: CleanUI publico dos veces
+                # en 24 horas, asi que "el mismo conjunto otra vez" es el caso
+                # MAS probable, no una rareza. (Fallo real cazado en revision:
+                # la primera version no reseteaba nunca y la funcion se
+                # autodesactivaba tras su primer uso.)
+                #
+                # Eso si: solo se resetea si la API respondio de verdad (algun
+                # veredicto distinto de sin-datos). Un apagon de la API deja
+                # todos los mods en sin-datos y "0 desfasados", y eso NO
+                # significa que un conjunto atascado se haya curado.
+                if printf '%s\n' "$report" | awk -F'\t' '$5!="sin-datos"{ok=1} END{exit !ok}'; then
+                    last_stale_key=""
+                fi
+                continue
+            fi
+
+            # La clave del backoff lleva el timestamp REMOTO ademas del id:
+            # distingue "el reinicio no consiguio sincronizarlo" (mismo id y
+            # misma fecha publicada -> no insistir) de "el autor publico OTRA
+            # version" (mismo id, fecha nueva -> intento legitimo nuevo, aunque
+            # llegue antes de que el chequeo de curacion haya reseteado nada).
+            stale_key="$(printf '%s\n' "$report" \
+                | awk -F'\t' '$5=="desfasado"{print $1 ":" $3}' | sort | tr '\n' ',')"
 
             if [[ "$stale_key" == "$last_stale_key" ]]; then
                 warn "Los mismos mods siguen desfasados tras el ultimo reinicio automatico."
@@ -316,12 +354,18 @@ mods_watch_loop() {
 
 # Se llama UNA vez, en segundo plano, justo despues de relanzar el servidor
 # tras un reinicio por mods. No bloquea el bucle principal (por eso quien la
-# invoca la manda con `&`): tarda hasta wait_for_ready(180) y el contenedor
+# invoca la manda con `&`): tarda hasta wait_for_ready(600) y el contenedor
 # debe seguir pudiendo atender una senal de parada real mientras tanto.
 verify_after_mods_restart() {
     log "Verificando el arranque tras el reinicio automatico por mods..."
 
-    if ! wait_for_ready 180; then
+    # 600 y no menos, a proposito: este arranque es justo el que DESCARGA los
+    # mods actualizados, y uno grande en una linea lenta tarda. Un plazo corto
+    # escribiria "FALLO: no respondio" en la auditoria sobre un servidor que
+    # arranca bien al cuarto minuto — un falso rojo en el peor sitio. Y no
+    # retrasa la deteccion de un crash real: wait_for_ready corta solo en
+    # cuanto ve que el proceso ya no existe.
+    if ! wait_for_ready 600; then
         note_mods_restart "$(date -u +'%Y-%m-%d %H:%M:%S') UTC - FALLO: no respondio tras el reinicio. Backup de resguardo: $(latest_backup_name pre-mods)"
         warn "El servidor NO respondio tras el reinicio automatico de mods."
         warn "  Backup de resguardo mas reciente: $(latest_backup_name pre-mods)"

@@ -408,6 +408,121 @@ unset MODS_FORCE_STALE FAKE_PLAYER_COUNT
 limpiar
 
 
+caso "mods_watch_loop: el backoff se RESETEA cuando un chequeo con API viva da 0 desfasados"
+# El fallo que caza esta prueba existio de verdad: sin el reset, la SEGUNDA
+# actualizacion legitima del mismo mod quedaba bloqueada para siempre (CleanUI
+# publico dos veces en 24 horas: es el caso mas probable, no una rareza). La
+# coreografia va por fichero de respuesta, no por MODS_FORCE_STALE: el bucle
+# corre en un subshell y no se le puede cambiar el entorno una vez lanzado.
+nuevo_entorno
+crear_mod_dir 1111111111
+PZ_WORKSHOP_ITEMS="1111111111"
+escribir_acf "1111111111:1000000000"
+RESPUESTA="$(mktemp)"
+curl() { cat "$RESPUESTA"; }
+respuesta_con_ts() {
+    printf '{"response":{"result":1,"publishedfiledetails":[{"publishedfileid":"1111111111","result":1,"time_updated":%s,"title":"Mod Cambiante"}]}}' "$1" > "$RESPUESTA"
+}
+espera_llamadas() {  # espera acotada a que LLAMADAS_SHUTDOWN alcance N lineas
+    local n="$1" i
+    for i in $(seq 1 24); do
+        [[ "$(grep -c . "$LLAMADAS_SHUTDOWN" || true)" -ge "$n" ]] && return 0
+        sleep 0.5
+    done
+    return 1
+}
+FAKE_PLAYER_COUNT=0
+MODS_CHECK_INTERVAL_SECONDS=1
+MODS_EMPTY_POLL_SECONDS=1
+
+respuesta_con_ts 1000000001          # fase 1: Steam por delante -> debe reiniciar
+mods_watch_loop >/dev/null 2>&1 &
+pid=$!
+espera_llamadas 1 && ok "fase 1: primer desfase dispara el reinicio" \
+                  || bad "fase 1: nunca disparo"
+
+respuesta_con_ts 1000000000          # fase 2: curado (fechas iguales, API viva)
+sleep 3                              # un par de chequeos limpios -> reset del backoff
+
+respuesta_con_ts 1000000001          # fase 3: MISMO conjunto y MISMA fecha otra vez
+if espera_llamadas 2; then
+    ok "fase 3: tras curarse, el mismo conjunto vuelve a disparar (backoff reseteado)"
+else
+    bad "fase 3: el backoff no se reseteo y bloqueo un desfase legitimo"
+fi
+kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+rm -f "$RESPUESTA"
+curl() { return 1; }  # vuelve al stub por defecto, NO a la red real
+unset FAKE_PLAYER_COUNT
+limpiar
+
+
+caso "mods_watch_loop: atascado, pero una PUBLICACION NUEVA del autor si reintenta"
+# El caso complementario del backoff: el reinicio no consiguio sincronizar
+# (fecha remota identica -> no insistir), pero si el autor publica OTRA
+# version, la fecha remota cambia y eso es un intento legitimo nuevo aunque
+# nunca haya habido un chequeo "curado" de por medio. Lo distingue la clave
+# id:fecha, no el reset.
+nuevo_entorno
+crear_mod_dir 1111111111
+PZ_WORKSHOP_ITEMS="1111111111"
+escribir_acf "1111111111:1000000000"
+RESPUESTA="$(mktemp)"
+curl() { cat "$RESPUESTA"; }
+FAKE_PLAYER_COUNT=0
+MODS_CHECK_INTERVAL_SECONDS=1
+MODS_EMPTY_POLL_SECONDS=1
+
+respuesta_con_ts 1000000001          # desfase; el acf de mentira NUNCA se actualiza
+mods_watch_loop >/dev/null 2>&1 &
+pid=$!
+espera_llamadas 1 || bad "no disparo el primer reinicio"
+sleep 3                              # misma fecha remota -> el backoff debe frenar
+n_llamadas="$(grep -c . "$LLAMADAS_SHUTDOWN" || true)"
+[[ "${n_llamadas:-0}" -eq 1 ]] \
+    && ok "con la misma fecha publicada no insiste (n=${n_llamadas})" \
+    || bad "insistio ${n_llamadas} veces con la misma fecha publicada"
+
+respuesta_con_ts 1000000002          # el autor publica OTRA version
+if espera_llamadas 2; then
+    ok "una fecha publicada nueva vuelve a disparar (clave id:fecha)"
+else
+    bad "la publicacion nueva quedo bloqueada por el backoff"
+fi
+kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+rm -f "$RESPUESTA"
+curl() { return 1; }  # vuelve al stub por defecto, NO a la red real
+unset FAKE_PLAYER_COUNT
+limpiar
+
+
+caso "collect_mod_status: un titulo con tabulador no rompe el TSV"
+# Los titulos los escribe el autor del mod. Un tabulador dentro desplazaria el
+# veredicto a un sexto campo y los awk -F'\t' de todo el flujo dejarian de
+# contar ese mod, sin error. Se sanea en el jq de origen; esto lo demuestra.
+nuevo_entorno
+crear_mod_dir 1111111111
+PZ_WORKSHOP_ITEMS="1111111111"
+escribir_acf "1111111111:1000000000"
+curl() {
+    # OJO al %s: el titulo debe llegar al JSON como la SECUENCIA escapada
+    # \t (que jq decodifica a tabulador dentro del valor), no como un
+    # tabulador crudo, que es JSON ilegal y haria fallar el parseo entero.
+    # Esta prueba fallo por eso la primera vez: probaba un fixture roto, no
+    # el codigo.
+    printf '%s' '{"response":{"result":1,"publishedfiledetails":[{"publishedfileid":"1111111111","result":1,"time_updated":2000000000,"title":"Mod\tCon\tTabuladores"}]}}'
+}
+reporte="$(collect_mod_status)"
+curl() { return 1; }  # vuelve al stub por defecto, NO a la red real
+campos="$(awk -F'\t' '{print NF}' <<<"$reporte")"
+[[ "$campos" == "5" ]] && ok "la linea conserva exactamente 5 campos" \
+                       || bad "la linea tiene ${campos} campos, esperaba 5"
+verdicto="$(awk -F'\t' '{print $5}' <<<"$reporte")"
+[[ "$verdicto" == "desfasado" ]] && ok "el veredicto sigue en su campo" \
+                                 || bad "el veredicto se perdio: '${verdicto}'"
+limpiar
+
+
 caso "ROTATABLE_LABELS: pre-mods rota igual que prestart/periodic"
 nuevo_entorno
 BACKUP_KEEP=2

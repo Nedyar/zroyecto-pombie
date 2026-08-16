@@ -77,9 +77,12 @@ Esto se ejecuto y se comprobo, no se dedujo:
   10 lineas de Lua sin acceso a red, sistema ni reflexion Java.
 - **Reinicio automatico ante mods desfasados**, de extremo a extremo: contra
   el volumen real de produccion (parado, sin exponer puertos) con un mod
-  forzado a desfasado, y desplegado de verdad en staging. 30 pruebas propias
+  forzado a desfasado, y desplegado de verdad en staging. 36 pruebas propias
   en `docker/selftest-modwatch.sh`, verificadas dentro del contenedor (que
-  corre `mawk`, no el `gawk` del host).
+  corre `mawk`, no el `gawk` del host). Una revision adversarial posterior
+  corrigio 4 fallos (el grave: el backoff no se reseteaba y la SEGUNDA
+  actualizacion del mismo mod quedaba bloqueada para siempre); detalle en
+  MODS-DESFASADOS.md.
 
 ## Bugs abiertos de jugabilidad
 
@@ -167,12 +170,16 @@ Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
 
 ## Pendiente
 
+- **Redesplegar staging con la imagen corregida**: la desplegada el 16/08 por
+  la manana lleva el fallo del backoff sin reset que cazo la revision (la
+  correccion existe, pero el contenedor vivo corre la version anterior). Es
+  una recreacion normal con el servidor vacio:
+  `docker compose --profile staging up -d pz-staging`.
 - **Observar el primer disparo real** del reinicio automatico por mods
-  desfasados en staging (desplegado el 16/08; al ritmo medido deberia darse
-  en menos de un dia) y anotarlo en [MODS-DESFASADOS.md](MODS-DESFASADOS.md)
-  como cierre del todo el mecanismo. Ya se probo de extremo a extremo con un
-  mod forzado, pero un disparo espontaneo con datos reales de Steam cierra el
-  ciclo.
+  desfasados en staging (al ritmo medido deberia darse en menos de un dia) y
+  anotarlo en [MODS-DESFASADOS.md](MODS-DESFASADOS.md) como cierre de todo el
+  mecanismo. Ya se probo de extremo a extremo con un mod forzado, pero un
+  disparo espontaneo con datos reales de Steam cierra el ciclo.
 - **Conseguir los logs de los demas clientes** para la incidencia 005. Solo se
   ha analizado uno, y los errores del servidor son la suma de todos los
   conectados: "aqui esta limpio" no significa "no paso". El procedimiento y el

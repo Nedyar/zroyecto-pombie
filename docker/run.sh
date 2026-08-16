@@ -217,7 +217,7 @@ cmd_serve() {
 
         if (( pending_mods_verify )); then
             pending_mods_verify=0
-            # En segundo plano: puede tardar hasta wait_for_ready(180), y el
+            # En segundo plano: puede tardar hasta wait_for_ready(600), y el
             # bucle principal debe entrar cuanto antes en el `wait` de abajo
             # para poder atender una senal de parada real mientras tanto.
             verify_after_mods_restart &
@@ -240,9 +240,25 @@ cmd_serve() {
             # propio vigilante, ya esperO a que el JVM terminara antes de
             # devolvernos el control. Este margen corto es solo por si el
             # lanzador tarda un instante mas en salir que su hijo.
-            wait_for_exit 30 || true
-            do_backup "pre-mods" || \
+            #
+            # Y si NO muere, se aborta, no se continua: relanzar con el JVM
+            # viejo vivo serian dos servidores escribiendo el mismo mundo, la
+            # via mas directa a la corrupcion que existe. Salir del contenedor
+            # es ademas la unica forma GARANTIZADA de matar un proceso que ya
+            # sobrevivio al SIGKILL de graceful_shutdown: al morir el PID 1 se
+            # desmonta el namespace entero y se lo lleva por delante.
+            wait_for_exit 30 || die_loud \
+"EL JVM ANTERIOR SIGUE VIVO TRAS EL APAGADO - NO RELANZO ENCIMA
+
+El vigilante de mods apago el servidor para actualizarlos, pero 30s
+despues el proceso viejo sigue existiendo. Lanzar un segundo servidor
+sobre el mismo mundo es la forma mas directa de corromperlo, asi que
+tiro el contenedor entero: eso si mata el proceso, y la politica de
+reinicio de Docker decide si volvemos a arrancar."
+            if ! do_backup "pre-mods"; then
                 warn "El backup 'pre-mods' fallo; reinicio la partida igualmente (ver docs/DECISIONES.md, 'aceptar lo que publique el autor')."
+                note_mods_restart "$(date -u +'%Y-%m-%d %H:%M:%S') UTC - reabierto SIN backup pre-mods (el backup fallo; el motivo esta en el log)"
+            fi
             pending_mods_verify=1
             continue
         fi

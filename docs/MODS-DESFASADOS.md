@@ -3,7 +3,7 @@
 **Estado: implementado y verificado (16/08/2026).** Rama
 `feat/deteccion-mods-desfasados`. El servidor detecta el desfase solo, avisa
 por chat, y reinicia en cuanto queda vacío — nunca con gente dentro. Código en
-`docker/modwatch.sh`; 30 pruebas propias en `docker/selftest-modwatch.sh`.
+`docker/modwatch.sh`; 36 pruebas propias en `docker/selftest-modwatch.sh`.
 
 Este documento se escribió primero como estudio, con las tres decisiones que
 bloqueaban la implementación. Se deja el estudio completo debajo porque el
@@ -231,7 +231,17 @@ desfase:
 mod que no se puede sincronizar, o se retiró del Workshop), el vigilante avisa
 fuerte y **no vuelve a reintentar solo** con ese conjunto. Sin esto, un mod
 imposible de sincronizar reiniciaría el servidor cada 30 minutos toda la
-noche.
+noche. Dos matices que salieron de la revisión, ambos con prueba propia:
+
+- La clave del backoff es **id + fecha publicada**, no solo el id: si el
+  autor publica *otra* versión mientras el conjunto está atascado, la fecha
+  cambia y eso cuenta como intento legítimo nuevo, no como insistencia.
+- El backoff **se resetea** cuando un chequeo con la API viva confirma 0
+  desfasados. Sin ese reset, la segunda actualización legítima del mismo mod
+  quedaba bloqueada para siempre — y con autores que publican dos veces en
+  24 h (CleanUI la semana del 14/08), ese era el caso más probable, no una
+  rareza. Un apagón de la API no resetea nada: "todos sin datos" no es
+  "todos curados".
 
 ## Mitigación del riesgo (decisión 2, en detalle)
 
@@ -271,10 +281,17 @@ sin aviso ni reinicio automático.
 
 ## Verificación hecha
 
-- 30 pruebas en `docker/selftest-modwatch.sh`, en verde tanto en el host
+- 36 pruebas en `docker/selftest-modwatch.sh`, en verde tanto en el host
   (gawk) como **dentro del contenedor real (mawk)** — la diferencia importa:
   el parseo del `.acf` evita a propósito el `match()` de 3 argumentos, una
   extensión de gawk que mawk no tiene.
+- Una revisión adversarial posterior (16/08) encontró y corrigió, con prueba
+  nueva cada uno: el backoff sin reset (arriba), la ausencia de guarda si el
+  JVM viejo no muriera antes de relanzar (ahora aborta el contenedor entero
+  antes que abrir dos servidores sobre el mismo mundo), el plazo de la
+  verificación post-reinicio (180→600 s: ese arranque es justo el que
+  descarga los mods nuevos), y el saneado de títulos con tabuladores en el
+  informe TSV.
 - `selftest-backups.sh` sigue en verde (41 pruebas): la reestructuración de
   `cmd_serve` en un bucle no le afecta.
 - **Simulacro de extremo a extremo** contra el volumen real de producción
