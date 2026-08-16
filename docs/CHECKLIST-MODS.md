@@ -3,6 +3,14 @@
 Que un mod cargue no significa que funcione. El servidor solo detecta errores de
 arranque; todo lo demás falla en silencio dentro del juego.
 
+**Añadir un mod es aceptar sus futuras actualizaciones automáticas.** Steam
+pone al día a los jugadores solo, sin preguntar, y el servidor se reinicia
+solo para seguirles el ritmo (detalle en
+[MODS-DESFASADOS.md](MODS-DESFASADOS.md)). Antes de meter un candidato nuevo,
+conviene mirar su historial de publicaciones en el Workshop: un autor que
+actualiza cada dos días implica reinicios frecuentes; uno que lleva meses
+parado, casi ninguno.
+
 Esta lista es para repartir entre varios y comprobarlo de verdad. **Hazlo con al
 menos dos jugadores conectados**: el multijugador es donde los mods se rompen, y
 casi ninguno de estos autores tiene un servidor para probar.

@@ -77,6 +77,14 @@ Evaluado y descartado bajo esta regla el 15/08: los **mods-parche de
 sincronización de vehículos**. Ninguno reunía atacar vehículos + estar
 mantenido para 42.20 + distribuirse por Steam. Detalle en la incidencia 005.
 
+Esta medición no es solo el filtro de entrada: es también la garantía que
+hace asumible el reinicio automático ante mods desfasados. Steam actualiza
+los mods de los jugadores sin avisar, y aceptar esas actualizaciones sería
+una apuesta sin salida si algún mod no pudiera retirarse después. Como todos
+la pasaron, siempre hay una vía de emergencia si una actualización sale mal:
+quitar el mod y relanzar. Detalle en
+[MODS-DESFASADOS.md](MODS-DESFASADOS.md).
+
 ## Reglas de inserción para la oleada 2
 
 El orden de carga del vanilla se derivó **filtrando la cadena de producción**

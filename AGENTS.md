@@ -39,6 +39,23 @@ escribes una guarda, que aborte, no que continue con un aviso.
    de escribir cualquier cosa en `config/reference/`, comprueba que el filtro de
    redaccion de `docker/ops.sh` la cubre.
 
+## El contenedor se relanza solo, dentro de si mismo
+
+Desde el 16/08/2026, `cmd_serve` en `run.sh` no lanza el servidor una sola
+vez: lo hace dentro de un bucle que se repite cada vez que
+`docker/modwatch.sh` detecta mods desfasados y el mundo queda vacio. No hay
+recreacion de contenedor ni intervencion de Docker; es el mismo proceso
+apagando el JVM (secuencia de siempre: `save` → `quit`) y volviendolo a
+lanzar. Consecuencias para quien lea logs o backups:
+
+- Un mismo contenedor puede tener **varios arranques del JVM** en su
+  historial (`Arrancando servidor... Lanzador arrancado (pid N)` se repite).
+  No es un crash-loop: busca la linea `Reabriendo el mundo tras actualizar
+  mods` justo antes para distinguirlo.
+- La etiqueta de backup **`pre-mods`** existe solo por esto: se toma antes de
+  cada una de esas reaperturas y **si rota** (a diferencia de `pre-update` /
+  `pre-restore`). Detalle en [docs/MODS-DESFASADOS.md](docs/MODS-DESFASADOS.md).
+
 ## Donde esta cada cosa
 
 ```
@@ -48,6 +65,7 @@ docker/          TODA la logica real, corre dentro del contenedor
   lifecycle.sh     arranque del servidor y APAGADO SEGURO
   ops.sh           instalar, renderizar config, backup y restore
   lib.sh           helpers: logging, rcon, buildid, procesos
+  modwatch.sh      detecta mods desfasados y pide reiniciar con el mundo vacio
 scripts/         envoltorios finos del host; NO metas logica aqui
 config/          fuente de verdad de la configuracion, versionada
 tailscale/       fragmento de ACL para dar acceso a los jugadores
@@ -91,6 +109,11 @@ lanzalas, y si anades una salvaguarda anade tambien su caso. Se escribieron
 despues de que una tanda de arreglos "obviamente correctos" introdujera dos
 regresiones —borrar backups validos y bloquear la restauracion— que solo
 aparecieron al ejecutarlas.
+
+Lo mismo para la deteccion de mods desfasados: `docker/selftest-modwatch.sh`.
+Ejecutala **dentro del contenedor**, no solo en el host: el contenedor corre
+`mawk`, el host probablemente `gawk`, y una prueba que solo pasa en el host
+puede estar validando una extension de gawk que el contenedor no tiene.
 
 **Recuerda reconstruir la imagen** antes de comprobar cambios en `docker/`: esos
 ficheros se copian dentro y el contenedor sigue corriendo los viejos hasta que

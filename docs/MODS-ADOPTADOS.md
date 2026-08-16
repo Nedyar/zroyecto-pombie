@@ -112,8 +112,13 @@ tiene que quedar `Zomboid\mods\<carpeta>\mod.info`, no
 ## Un par de cosas prácticas
 
 **Si un día no puedes entrar y antes sí podías**, lo más probable es que Steam
-te haya actualizado un mod por su cuenta y ya no coincida con el del servidor.
-Avisa y lo ponemos al día.
+te haya actualizado un mod por su cuenta y ya no coincida con el del
+servidor. **Desde el 16/08 esto se arregla solo**: el servidor se da cuenta,
+avisa por chat a quien esté dentro, y en cuanto la partida se quede vacía se
+pone al día él mismo y reinicia — sin que nadie tenga que hacer nada. Si ves
+ese aviso, tienes dos opciones: seguir jugando tranquilo (nadie te va a
+echar) o guardar y salir tú para que se agilice. Si el error persiste mucho
+más de lo normal, avisa igualmente.
 
 **Si os apetece algún mod más**, decidlo. Antes de meterlo se prueba en un
 servidor aparte, así que no hay riesgo de romper la partida.

@@ -22,6 +22,12 @@ bajar staging: `./scripts/stage.sh --down` — **OJO: eso borra el mundo de
 staging**, y ahora se juega ahi. Hacer backup antes o asumir que lo jugado en
 staging se pierde.
 
+**Novedad 16/08/2026**: el servidor detecta solo cuando Steam ha actualizado
+un mod y el suyo se quedo atras (pasaba casi a diario), avisa por chat, y
+reinicia el mismo cuando el mundo queda vacio — nunca con gente dentro.
+Staging ya corre la imagen con esto; produccion la tendra en cuanto se
+despliegue. Detalle en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
+
 ## Que hay montado
 
 | | |
@@ -33,7 +39,8 @@ staging se pierde.
 | Mundos | **uno**: `pombie-vanilla`, 285 MB, 5 jugadores con datos |
 | Mods | **25** (oleada 1): todos reversibles, sin definiciones persistentes |
 | Memoria | heap 6g, `mem_limit` 10g |
-| Backups | automatico al arrancar + cada 6 h |
+| Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods |
+| Mods desfasados | deteccion cada 30 min, reinicio solo si el mundo esta vacio |
 
 **El nombre `pombie-vanilla` y los volumenes `*-vanilla` son herencia, no
 descripcion**: ese mundo lleva 25 mods. Se conservaron a proposito — renombrar
@@ -68,6 +75,11 @@ Esto se ejecuto y se comprobo, no se dedujo:
   en loopback.
 - El mod local se instalo tras auditar su contenido: 142 ficheros, unicamente
   10 lineas de Lua sin acceso a red, sistema ni reflexion Java.
+- **Reinicio automatico ante mods desfasados**, de extremo a extremo: contra
+  el volumen real de produccion (parado, sin exponer puertos) con un mod
+  forzado a desfasado, y desplegado de verdad en staging. 30 pruebas propias
+  en `docker/selftest-modwatch.sh`, verificadas dentro del contenedor (que
+  corre `mawk`, no el `gawk` del host).
 
 ## Bugs abiertos de jugabilidad
 
@@ -155,6 +167,12 @@ Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
 
 ## Pendiente
 
+- **Observar el primer disparo real** del reinicio automatico por mods
+  desfasados en staging (desplegado el 16/08; al ritmo medido deberia darse
+  en menos de un dia) y anotarlo en [MODS-DESFASADOS.md](MODS-DESFASADOS.md)
+  como cierre del todo el mecanismo. Ya se probo de extremo a extremo con un
+  mod forzado, pero un disparo espontaneo con datos reales de Steam cierra el
+  ciclo.
 - **Conseguir los logs de los demas clientes** para la incidencia 005. Solo se
   ha analizado uno, y los errores del servidor son la suma de todos los
   conectados: "aqui esta limpio" no significa "no paso". El procedimiento y el
