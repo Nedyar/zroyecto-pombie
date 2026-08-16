@@ -218,7 +218,11 @@ AllowCoop=true
 SleepAllowed=true
 
 # Players get tired and need to sleep. (Ignored if SleepAllowed=false)
-SleepNeeded=true
+# Decision del grupo (16/08/2026): sin necesidad de dormir. Se ajusto primero
+# desde el panel de administrador y se perdio en el siguiente reinicio, porque
+# el render sobrescribe el INI de runtime en CADA arranque: la fuente de verdad
+# es este fichero, no lo que se toque en caliente. Fijado aqui, ya sobrevive.
+SleepNeeded=false
 
 # WIP: Activating this setting may cause visual desynchronization of player positions.
 KnockedDownAllowed=false
@@ -327,7 +331,9 @@ BanKickGlobalSound=true
 RemovePlayerCorpsesOnCorpseRemoval=false
 
 # If true, player can use the "delete all" button on bins.
-TrashDeleteAll=false
+# Decision del grupo (16/08/2026): activado, para poder vaciar contenedores de
+# una vez en vez de objeto a objeto.
+TrashDeleteAll=true
 
 # If true, player can hit again when struck by another player.
 PVPMeleeWhileHitReaction=false
@@ -351,7 +357,10 @@ CarEngineAttractionModifier=0.5
 PlayerBumpPlayer=false
 
 # Controls display of remote players on the in-game map. 1=Hidden 2=Friends 3=Friends and nearby players 4=Everyone Min: 1 Max: 4 Default: 1
-MapRemotePlayerVisibility=1
+# Decision del grupo (16/08/2026): 4 = todos se ven en el mapa. Es un servidor
+# de amigos que juegan juntos; esconderse entre ellos no aporta nada y perderse
+# si.
+MapRemotePlayerVisibility=4
 
 # Min: 1 Max: 300 Default: 5
 BackupsCount=5

@@ -261,8 +261,38 @@ Sin etiqueta *Build 42*, o el autor los marca como exclusivos de B41.
 | ID | Nombre | Motivo |
 | --- | --- | --- |
 | 3453580134 | Right Click To Wear | Funcionaba, pero Common Sense hace lo mismo con más alcance (armas y mochilas, no solo ropa). Ver sección 3bis |
-| 3028528478 | Beds Have Blankets (y con el su dependencia `2969455858` TargetSquareOnLoad, que solo servia para el) | Las mantas salen dobladas sobre la cama en vez de puestas. Su codigo comprueba `getActivatedMods():contains("\TargetSquareOnLoad")`, con barra invertida, pero `getActivatedMods()` devuelve el ID canonico sin barra. La comprobacion no puede dar verdadero, se escriba como se escriba en `Mods=`: es un fallo del autor, no configurable. El mod era estetico |
+| 3028528478 | Beds Have Blankets (y con el su dependencia `2969455858` TargetSquareOnLoad, que solo servia para el) | Las mantas salen dobladas sobre la cama en vez de puestas. Su codigo comprueba `getActivatedMods():contains("\TargetSquareOnLoad")`, con barra invertida, pero `getActivatedMods()` devuelve el ID canonico sin barra. La comprobacion no puede dar verdadero, se escriba como se escriba en `Mods=`: es un fallo del autor, no configurable. El mod era estetico. **Recomprobado el 16/08/2026** (ver abajo): el autor lo actualizo ese mismo dia y SIGUE roto para nuestra version |
 | 3391902125 | Throw your bag across | **Roto en 42.20 y ademas peligroso.** La opcion sale en el menu, arranca la accion y no hace nada; la bolsa queda pegada a la mano. El log lo confirma: `no such function "ISThrowBag.new"` |
+
+### Beds Have Blankets: recomprobado el 16/08/2026, sigue roto
+
+Un jugador echo de menos el mod de las camas, y como el autor lo habia
+actualizado **ese mismo dia** (11:48) parecia buen momento para reevaluarlo. Se
+descargo aparte con `steamcmd` y se leyo el codigo, sin acercarlo al servidor.
+
+La clave esta en las **carpetas versionadas** y sus limites declarados:
+
+| Carpeta | `mod.info` declara | ¿Aplica a 42.20? | La comprobacion del bug |
+| --- | --- | :---: | --- |
+| `Blankets/42.12` | `versionMax=42.12` | no | `contains("\\TargetSquareOnLoad")` |
+| **`Blankets/42.13`** | **`versionMin=42.13`** | **SI** | **`contains("\\TargetSquareOnLoad")`** |
+| `Blankets/` (raiz) | sin limites (es la de B41) | no | `contains("TargetSquareOnLoad")` |
+
+O sea: la barra invertida **la introdujo el autor al portar a Build 42**. La
+version de B41 nunca la tuvo, y por eso la raiz parece "arreglada" cuando en
+realidad es codigo antiguo que a nosotros no nos toca. La variante que el juego
+elige para 42.20 es la de `versionMin=42.13`, y ahi el fallo sigue intacto tras
+la actualizacion de hoy.
+
+Consecuencia practica: las mantas apareceran como **objeto suelto** en vez de
+transformar la cama, que es justo lo que ya se observo. Sigue fuera.
+
+Matiz honesto: el codigo esta leido y verificado; lo que se deduce —con los
+limites de version delante— es cual de las tres variantes carga el juego. No se
+ha visto elegir al motor.
+
+Y su dependencia `TargetSquareOnLoad` (2969455858) no se toca **desde el
+28/12/2024**, lo que no ayuda.
 
 ---
 
