@@ -343,7 +343,7 @@ mods_watch_loop() {
     (( secs > 0 )) || { log "Vigilancia de mods desfasados desactivada."; return 0; }
 
     local empty_poll="${MODS_EMPTY_POLL_SECONDS:-120}"
-    local pending=0 stale_key="" last_stale_key=""
+    local pending=0 stale_key="" last_stale_key="" last_n_pendiente=""
 
     log "Vigilancia de mods cada ${secs}s. Si hay desfase, avisa y reinicia SOLO cuando el servidor quede vacio."
 
@@ -398,18 +398,40 @@ mods_watch_loop() {
             fi
 
             pending=1
+            last_n_pendiente=""
             local titulos=""
             titulos="$(printf '%s\n' "$report" \
                 | awk -F'\t' '$5=="desfasado"{print $4}' \
                 | tr -d '"' | tr '\n' ',' | sed 's/,/, /g; s/, $//')"
             log "Mods desfasados: ${titulos}. Esperando a que el servidor quede vacio para reiniciar."
+            # El aviso lleva LA INSTRUCCION, no solo la noticia. Paso el 17/08:
+            # tras actualizarse el servidor, dos jugadores de la sesion anterior
+            # no podian reentrar porque su juego, abierto desde antes de la
+            # publicacion, conservaba la version vieja del mod. Steam solo
+            # actualiza los mods del Workshop al ARRANCAR el juego, asi que el
+            # remedio es cerrar del todo y volver a abrir — y quien mas lo
+            # necesita saber es exactamente quien esta dentro oyendo este aviso.
             rcon_cmd servermsg \
-                "\"Hay mods actualizados en Steam (${titulos}). El servidor se reiniciara solo en cuanto quede vacio; nadie nuevo podra entrar hasta entonces.\"" \
+                "\"Hay mods actualizados en Steam (${titulos}). El servidor se reiniciara solo en cuanto quede vacio. IMPORTANTE: al salir, CERRAD el juego del todo y volved a abrirlo; si no, Steam no os actualiza el mod y no podreis reentrar.\"" \
                 >/dev/null 2>&1 || true
             continue
         fi
 
         local n; n="$(player_count || true)"
+
+        # Reavisar a quien ENTRA durante la espera: se conecto despues del
+        # aviso original, asi que no lo oyo, y es justo quien quedara fuera si
+        # sale sin cerrar el juego (entro con la version vieja, que es la que
+        # el servidor todavia tiene). Solo cuando el recuento SUBE respecto al
+        # ultimo sondeo conocido: ni repite el aviso a los mismos, ni dice nada
+        # cuando la gente se va.
+        if [[ -n "$n" && -n "$last_n_pendiente" ]] && (( n > last_n_pendiente )); then
+            rcon_cmd servermsg \
+                "\"Aviso: hay mods actualizados en Steam (${titulos}) y el servidor reiniciara al quedar vacio. Cuando salgas, CIERRA el juego del todo y vuelve a abrirlo, o no podras reentrar.\"" \
+                >/dev/null 2>&1 || true
+        fi
+        [[ -n "$n" ]] && last_n_pendiente="$n"
+
         if [[ "$n" != "0" ]]; then
             # RCON caido (n vacio): no se sabe, no se toca.
             [[ -n "$n" ]] || continue

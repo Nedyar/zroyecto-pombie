@@ -691,6 +691,21 @@ distinta. Empieza por ahi y vuelve aqui solo si los paquetes llegan.
 5. `PZ_PUBLIC=false` significa que no sale en la lista de servidores; hay que
    entrar por IP directa.
 
+**La conexion completa y se pierde al minuto o dos**
+
+Firma exacta: en el DebugLog aparece `Connected new client N ID # 0` (el
+handshake SI completa) y en el log de conexiones, ~1-2 min despues,
+`connection-lost` de RakNet sin que hubiera `player-connect`. El servidor esta
+sano; es el CLIENTE el que, al comparar las versiones de mods con las del
+servidor, se queda en su aviso hasta que la conexion caduca.
+
+Causa tipica desde que el servidor se actualiza solo: el jugador tenia el
+juego abierto desde antes de que el mod publicara, y conserva la version
+vieja. Remedio (autoservicio): **cerrar Project Zomboid del todo y volver a
+abrirlo** — Steam solo actualiza los mods del Workshop al arrancar el juego.
+Detalle y porque en [MODS-DESFASADOS.md](MODS-DESFASADOS.md), "El caso
+inverso".
+
 **"Conexion erronea" y el log no da ningun motivo**
 
 Sintoma exacto: el log registra `Steam client ... is initiating a connection`

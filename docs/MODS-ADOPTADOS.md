@@ -127,14 +127,22 @@ tiene que quedar `Zomboid\mods\<carpeta>\mod.info`, no
 
 ## Un par de cosas prácticas
 
-**Si un día no puedes entrar y antes sí podías**, lo más probable es que Steam
-te haya actualizado un mod por su cuenta y ya no coincida con el del
-servidor. **Desde el 16/08 esto se arregla solo**: el servidor se da cuenta,
-avisa por chat a quien esté dentro, y en cuanto la partida se quede vacía se
-pone al día él mismo y reinicia — sin que nadie tenga que hacer nada. Si ves
-ese aviso, tienes dos opciones: seguir jugando tranquilo (nadie te va a
-echar) o guardar y salir tú para que se agilice. Si el error persiste mucho
-más de lo normal, avisa igualmente.
+**Si un día no puedes entrar por "la versión del artículo de la workshop es
+diferente"**, haz esto antes de avisar a nadie:
+
+1. **Cierra Project Zomboid DEL TODO** — no vale salir al menú: cerrar el
+   juego. Steam solo actualiza los mods al arrancarlo.
+2. Espera unos segundos (en Steam → Descargas se ve si está bajando algo).
+3. Vuelve a abrir y entra. En el 99% de los casos, arreglado.
+4. Si sigue igual: desuscríbete y resuscríbete al mod en el Workshop, y
+   reinicia el juego otra vez. Si ni con esas, avisa.
+
+¿Por qué pasa? El servidor **se mantiene al día solo** desde el 16/08: cuando
+un autor publica una versión nueva, espera a que la partida se vacíe y se
+actualiza él mismo. Tu juego, en cambio, solo se actualiza al arrancar — así
+que si lo tenías abierto de antes, te quedaste con la versión vieja. Por eso,
+cuando el servidor avise por chat de que hay mods actualizados: **al salir,
+cierra el juego del todo**, y al volver entrarás sin problema.
 
 **Si os apetece algún mod más**, decidlo. Antes de meterlo se prueba en un
 servidor aparte, así que no hay riesgo de romper la partida.

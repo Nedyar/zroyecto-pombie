@@ -54,13 +54,26 @@ wait_for_exit()     { return 0; }
 # "-Nombre" por jugador) cuando FAKE_PLAYER_NAMES esta definido. Los casos que
 # solo fijan FAKE_PLAYER_COUNT sin nombres ejercitan a proposito la guarda de
 # "los nombres no cuadran con el recuento -> bloquear".
+#
+# FAKE_PLAYERS_FILE permite CAMBIAR la respuesta con el bucle ya lanzado: el
+# bucle corre en un subshell y hereda el entorno congelado, asi que reasignar
+# FAKE_PLAYER_COUNT desde la prueba no le llega; un fichero si.
+#
+# Los servermsg se REGISTRAN en vez de descartarse: los casos del aviso a
+# quien entra durante la espera cuentan cuantos y cuales se enviaron.
+LLAMADAS_SERVERMSG="$(mktemp)"
 rcon_cmd() {
     case "$1" in
         players)
-            printf 'Players connected (%s):\n' "${FAKE_PLAYER_COUNT:-0}"
-            local _n
-            for _n in ${FAKE_PLAYER_NAMES:-}; do printf -- '-%s\n' "$_n"; done
+            if [[ -n "${FAKE_PLAYERS_FILE:-}" && -f "${FAKE_PLAYERS_FILE:-}" ]]; then
+                cat "$FAKE_PLAYERS_FILE"
+            else
+                printf 'Players connected (%s):\n' "${FAKE_PLAYER_COUNT:-0}"
+                local _n
+                for _n in ${FAKE_PLAYER_NAMES:-}; do printf -- '-%s\n' "$_n"; done
+            fi
             ;;
+        servermsg) shift; printf '%s\n' "$*" >> "$LLAMADAS_SERVERMSG" ;;
         *)       return 0 ;;
     esac
 }
@@ -82,7 +95,8 @@ nuevo_entorno() {
     DATA_DIR="$(mktemp -d)"
     BACKUP_DIR="$(mktemp -d)"
     export PZ_DIR DATA_DIR BACKUP_DIR
-    unset BACKUP_NAME_PREFIX MODS_FORCE_STALE FAKE_PLAYER_COUNT FAKE_WAIT_FOR_READY_RC FAKE_PLAYER_NAMES
+    unset BACKUP_NAME_PREFIX MODS_FORCE_STALE FAKE_PLAYER_COUNT FAKE_WAIT_FOR_READY_RC FAKE_PLAYER_NAMES FAKE_PLAYERS_FILE
+    : > "$LLAMADAS_SERVERMSG"
     PZ_SERVER_NAME="pruebas"
     RESTART_FLAG="${DATA_DIR}/.pz-restart-requested"
     rm -f "$LLAMADAS_SHUTDOWN"; : > "$LLAMADAS_SHUTDOWN"
@@ -263,17 +277,22 @@ rcon_cmd() { printf 'algo irreconocible\n'; }
 # posterior que use player_count (via mods_watch_loop) heredaria esta
 # respuesta ilegible para SIEMPRE y "vacio" no se detectaria nunca. Exactamente
 # la misma clase de fuga que ya obligo a arreglar los casos de curl().
-# Y tiene que ser LA MISMA definicion que la de la cabecera (con nombres):
+# Y tiene que ser LA MISMA definicion que la de la cabecera, copiada literal:
 # restaurar una version vieja del stub contamino los casos de players_in_game
 # con un "los nombres no cuadran" permanente. Tercera vez que muerde esta
 # clase de fuga; de ahi tanta insistencia en estos comentarios.
 rcon_cmd() {
     case "$1" in
         players)
-            printf 'Players connected (%s):\n' "${FAKE_PLAYER_COUNT:-0}"
-            local _n
-            for _n in ${FAKE_PLAYER_NAMES:-}; do printf -- '-%s\n' "$_n"; done
+            if [[ -n "${FAKE_PLAYERS_FILE:-}" && -f "${FAKE_PLAYERS_FILE:-}" ]]; then
+                cat "$FAKE_PLAYERS_FILE"
+            else
+                printf 'Players connected (%s):\n' "${FAKE_PLAYER_COUNT:-0}"
+                local _n
+                for _n in ${FAKE_PLAYER_NAMES:-}; do printf -- '-%s\n' "$_n"; done
+            fi
             ;;
+        servermsg) shift; printf '%s\n' "$*" >> "$LLAMADAS_SERVERMSG" ;;
         *)       return 0 ;;
     esac
 }
@@ -678,6 +697,56 @@ salida="$(mods_watch_loop 2>&1 & pid=$!; sleep 3; kill "$pid" 2>/dev/null; wait 
     && ok "quien esta jugando de verdad sigue mandando: NO reinicia" \
     || bad "reinicio con un jugador real dentro"
 unset MODS_FORCE_STALE FAKE_PLAYER_COUNT FAKE_PLAYER_NAMES
+limpiar
+
+
+caso "mods_watch_loop: quien ENTRA durante la espera tambien recibe el aviso"
+# Paso el 17/08: el aviso original se emitio a quien estaba dentro, pero dos
+# jugadores que entraron/salieron alrededor de la publicacion no lo oyeron,
+# salieron sin cerrar el juego, y quedaron fuera tras la actualizacion sin
+# saber por que. El aviso debe repetirse cuando el recuento SUBE (alguien
+# nuevo), y solo entonces: ni spam a los mismos, ni mensajes al vacio.
+nuevo_entorno
+crear_mod_dir 1111111111
+PZ_WORKSHOP_ITEMS="1111111111"
+escribir_acf "1111111111:1000000000"
+escribir_conexiones <<'EOF'
+[01-01-26 10:01:00.000] event="receive-packet" message="player-connect" guid="111" ip="1.2.3.4" steam-id="1" role="user" username="Dentro" connection-type="UDPRakNet".
+[01-01-26 10:02:00.000] event="receive-packet" message="player-connect" guid="222" ip="1.2.3.5" steam-id="2" role="user" username="Nuevo" connection-type="UDPRakNet".
+EOF
+export FAKE_PLAYERS_FILE="${DATA_DIR}/players.txt"
+printf 'Players connected (1):\n-Dentro\n' > "$FAKE_PLAYERS_FILE"
+MODS_FORCE_STALE="1111111111"
+MODS_CHECK_INTERVAL_SECONDS=1
+MODS_EMPTY_POLL_SECONDS=1
+mods_watch_loop >/dev/null 2>&1 &
+pid=$!
+# fase 1: deteccion con 1 dentro -> 1 aviso (el original)
+esperado=0
+for i in $(seq 1 20); do
+    [[ "$(grep -c . "$LLAMADAS_SERVERMSG" || true)" -ge 1 ]] && { esperado=1; break; }
+    sleep 0.5
+done
+[[ "$esperado" -eq 1 ]] && ok "el aviso original se emite al detectar" || bad "no hubo aviso original"
+sleep 3    # varios sondeos con la MISMA gente: no debe repetirse
+n1="$(grep -c . "$LLAMADAS_SERVERMSG" || true)"
+[[ "$n1" -eq 1 ]] && ok "sin entradas nuevas no se repite (sigue en 1)" || bad "se repitio sin motivo: $n1 avisos"
+# fase 2: entra alguien -> un aviso mas, con la instruccion de cerrar el juego
+printf 'Players connected (2):\n-Dentro\n-Nuevo\n' > "$FAKE_PLAYERS_FILE"
+esperado=0
+for i in $(seq 1 20); do
+    [[ "$(grep -c . "$LLAMADAS_SERVERMSG" || true)" -ge 2 ]] && { esperado=1; break; }
+    sleep 0.5
+done
+[[ "$esperado" -eq 1 ]] && ok "al entrar alguien nuevo, se reavisa" || bad "el que entro se quedo sin aviso"
+grep -qi "CIERRA el juego" "$LLAMADAS_SERVERMSG" \
+    && ok "el reaviso lleva la instruccion (cerrar el juego del todo)" \
+    || bad "el reaviso no lleva la instruccion"
+sleep 3    # de nuevo estabilidad: mismos 2 -> no mas avisos
+n2="$(grep -c . "$LLAMADAS_SERVERMSG" || true)"
+[[ "$n2" -eq 2 ]] && ok "con la misma gente, sigue en 2 avisos" || bad "spam: $n2 avisos"
+kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+unset MODS_FORCE_STALE FAKE_PLAYERS_FILE
 limpiar
 
 

@@ -3,7 +3,7 @@
 **Estado: implementado y verificado (16/08/2026).** Rama
 `feat/deteccion-mods-desfasados`. El servidor detecta el desfase solo, avisa
 por chat, y reinicia en cuanto queda vacío — nunca con gente dentro. Código en
-`docker/modwatch.sh`; 46 pruebas propias en `docker/selftest-modwatch.sh`.
+`docker/modwatch.sh`; 51 pruebas propias en `docker/selftest-modwatch.sh`.
 
 Este documento se escribió primero como estudio, con las tres decisiones que
 bloqueaban la implementación. Se deja el estudio completo debajo porque el
@@ -339,6 +339,61 @@ primera, porque mantiene intacta la regla del grupo: el plazo habría acabado
 echando también a jugadores reales, que es justo lo que la regla existe para
 impedir. El resultado es `players_in_game()`, arriba.
 
+## El caso inverso (17/08): el servidor por delante de los clientes
+
+Al día siguiente de desplegarlo apareció el espejo del problema original.
+Better Sorting publicó a las 16:12 UTC; el servidor, vacío a las 16:22, se
+actualizó solo — diez minutos después. Perfecto. Pero dos jugadores de la
+sesión de esa tarde no pudieron reentrar: su juego, **abierto desde antes de
+la publicación**, conservaba la versión vieja. Steam solo actualiza los mods
+del Workshop **al arrancar el juego**, así que salir al menú y volver no
+basta: hay que cerrarlo del todo.
+
+La firma en los logs, para distinguirlo del caso de ayer: la conexión
+**completa** (`Connected new client` en el DebugLog) y se pierde ~1-2 minutos
+después (`connection-lost` de RakNet). El servidor está sano; es el cliente el
+que, al comparar versiones, se queda en su aviso hasta caducar.
+
+### Por qué NO se arregló con un margen de gracia
+
+La tentación obvia es que el servidor espere unas horas antes de actualizarse,
+para dar tiempo a Steam a repartir. **Se descartó a propósito, y conviene que
+el porqué quede escrito antes de que alguien lo "arregle" así:**
+
+- Quien **arranca el juego de cero** recibe la versión NUEVA en ese momento.
+  Con un servidor retrasado, esa persona queda fuera **sin remedio propio**:
+  no puede degradar su mod. Es el problema original, el que exigía un
+  administrador despierto.
+- Quien **tenía el juego abierto** conserva la vieja. Con el servidor al día
+  queda fuera, pero su remedio es **autoservicio e inmediato**: cerrar y
+  abrir el juego.
+
+Un margen de gracia solo mueve el bloqueo del segundo grupo al primero — y el
+primero no puede arreglárselo solo. El desfase entre clientes es inevitable
+mientras Steam los actualice de forma asíncrona; lo único que se elige es qué
+lado favorecer, y se favorece al que tiene salida.
+
+### Lo que se arregló de verdad: el aviso llega con la instrucción, y a todos
+
+Dos cambios en el vigilante, con sus pruebas:
+
+1. **El aviso lleva el remedio**, no solo la noticia: *"al salir, CERRAD el
+   juego del todo y volved a abrirlo; si no, Steam no os actualiza el mod y no
+   podréis reentrar"*. Quien más lo necesita oír es exactamente quien está
+   dentro cuando se anuncia — los que hoy quedaron fuera.
+2. **Quien entra durante la espera también lo recibe.** El aviso original se
+   emitía una sola vez; quien se conectara después no lo veía, y era candidato
+   perfecto al bloqueo (entró con la versión vieja, la que el servidor aún
+   tenía). Ahora, cuando el recuento de jugadores sube durante la espera, se
+   reenvía — y solo entonces: ni spam a los mismos, ni mensajes al vacío.
+
+### El remedio, si le pasa a alguien
+
+Cerrar Project Zomboid **del todo** (no al menú: cerrar), esperar unos
+segundos a que Steam actualice, y volver a entrar. Si no basta: desuscribirse
+y resuscribirse al mod en el Workshop. Está contado en llano en
+[MODS-ADOPTADOS.md](MODS-ADOPTADOS.md).
+
 ## Cómo se desactiva
 
 `MODS_CHECK_INTERVAL_MINUTES=0` en el `.env` apaga toda la vigilancia: el
@@ -347,7 +402,7 @@ sin aviso ni reinicio automático.
 
 ## Verificación hecha
 
-- 46 pruebas en `docker/selftest-modwatch.sh`, en verde tanto en el host
+- 51 pruebas en `docker/selftest-modwatch.sh`, en verde tanto en el host
   (gawk) como **dentro del contenedor real (mawk)** — la diferencia importa:
   el parseo del `.acf` evita a propósito el `match()` de 3 argumentos, una
   extensión de gawk que mawk no tiene.
