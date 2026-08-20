@@ -171,12 +171,61 @@ hay que crear una instancia aparte.
 
 Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
 
+## Caida de 14 horas del 20/08/2026: el papel se hereda, la resistencia no
+
+**Sintoma**: los jugadores llevaban dias sin poder entrar. El contenedor
+estaba `Exited (255)` desde hacia 14 horas y nadie se entero.
+
+**Cadena completa**, reconstruida de los logs:
+
+```
+04:00:20 CEST  la MAQUINA se reinicia (unattended-upgrades: Automatic-Reboot
+               "true", Automatic-Reboot-Time "04:00", con parche de seguridad)
+04:00:00 UTC   el contenedor recibe SIGTERM y se apaga LIMPIO
+               (SaveAll, Saving players, Saving finish: el mundo se guardo bien)
+04:00:34 CEST  el daemon de Docker rootless vuelve solo
+     ...       staging NO vuelve
+```
+
+**La causa**: `pz-staging` llevaba `restart: "no"`, correcto cuando era un
+banco de pruebas de usar y tirar, y **nunca se reviso al convertirse en el
+sitio donde se juega** (13/08). Produccion, que esta parada, si tenia
+`unless-stopped`. El servicio heredo el papel de produccion pero no sus
+salvaguardas.
+
+Es exactamente el escenario que este documento listaba como "NO verificado
+nº1" —"que el servidor vuelva solo tras un reinicio"— y que se daba por
+cubierto por `restart: unless-stopped`... que staging no tenia.
+
+**Arreglado**: `pz-staging` pasa a `unless-stopped`, con el porque al lado en
+el compose. No estorba a `stage.sh --down` ni a `docker compose stop`: una
+parada explicita deja el contenedor "stopped" y `unless-stopped` la respeta.
+
+**Lo que funciono y conviene reconocer**: el apagado seguro hizo su trabajo
+con un reinicio del sistema por medio. El mundo cruzo la caida sin un
+rasguno; lo que fallo fue exclusivamente volver a levantarse.
+
+**Lo que sigue sin resolver, y es lo mas grave del incidente**: nadie se
+entero durante 14 horas. No hay ninguna alerta que avise de que el servidor
+esta caido; se descubrio porque los jugadores lo dijeron. El vigilante de
+mods no sirve para esto —vive dentro del contenedor, asi que muere con el—.
+Haria falta algo FUERA: un timer de systemd de usuario que compruebe el
+estado y avise. Es la unica pieza del montaje que, por naturaleza, no puede
+vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
+
 ## NO verificado
 
-1. **Que el servidor vuelva solo tras un reinicio.** El daemon rootless y el
-   linger estan habilitados, pero hay una carrera sin probar: si Docker arranca
-   antes de que exista la interfaz de Tailscale, el bind falla. `restart:
-   unless-stopped` deberia recuperarlo.
+1. **Que el servidor vuelva solo tras un reinicio.** ~~El daemon rootless y el
+   linger estan habilitados... `restart: unless-stopped` deberia recuperarlo.~~
+   **PROBADO EN REAL el 20/08 y FALLO**, por un motivo distinto al que se
+   temia: no fue la carrera con Tailscale, fue que staging llevaba
+   `restart: "no"`. Corregido; ver la seccion de la caida de 14 horas arriba.
+   **Sigue sin verificarse la carrera original**: si Docker arranca antes de
+   que exista la interfaz de Tailscale, el bind puede fallar. El reinicio del
+   20/08 no lo aclara porque el contenedor ni siquiera lo intento. Ahora que
+   la politica es `unless-stopped`, el proximo reinicio del sistema sera la
+   primera prueba real de esa carrera: **conviene mirar el log tras el
+   siguiente parche de seguridad**.
 2. **Que los mods hagan lo que prometen en juego.** Para eso esta
    [CHECKLIST-MODS.md](CHECKLIST-MODS.md), que ya lleva buena parte marcada.
 3. ~~Cual es la linea base de errores de un B42.20 multijugador sano.~~

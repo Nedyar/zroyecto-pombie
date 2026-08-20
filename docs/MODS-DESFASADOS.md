@@ -394,6 +394,40 @@ segundos a que Steam actualice, y volver a entrar. Si no basta: desuscribirse
 y resuscribirse al mod en el Workshop. Está contado en llano en
 [MODS-ADOPTADOS.md](MODS-ADOPTADOS.md).
 
+## Lo que el vigilante NO cubre, demostrado el mismo 17/08: el motor del juego
+
+Horas después del caso inverso llegó su hermano mayor, y confundirlos costó
+una hora de diagnóstico. Mismo síntoma exacto (nadie entra, colgado en
+"uniéndose al juego", conexión que completa y muere), pero **ningún mod
+desfasado: era el JUEGO**. The Indie Stone publicó el hotfix **42.20.3** a las
+12:18 UTC; los clientes se actualizaron solos por la tarde — con más motivo
+tras seguir el consejo de "cerrad y abrid el juego" del caso anterior — y el
+servidor seguía en 42.20.2 (`buildid 24574884` frente a `24775771`).
+
+El vigilante no toca el motor **a propósito** (decisión 4 de DECISIONES.md:
+el binario solo cambia por decisión humana, vía `./scripts/update-server.sh`).
+Eso significa que **este caso siempre requerirá intervención manual**, y está
+bien que así sea. Lo que se puede mejorar es reconocerlo rápido.
+
+**Cómo distinguir los tres casos con el mismo síntoma "no puedo entrar":**
+
+| Comprobación | Resultado | Diagnóstico |
+| --- | --- | --- |
+| `./scripts/check-mods.sh` | hay desfasados | mods del servidor atrás → esperar al reinicio automático |
+| check-mods 0 desfasados + el cliente cerró y abrió el juego | sigue fallando | seguir abajo |
+| Noticias de PZ (`ISteamNews`, appid 108600) o `steamcmd app_info_print 380870` vs `buildid disco` de `status` | hay build nuevo | **hotfix del juego** → `./scripts/update-server.sh` (o su equivalente sobre staging) |
+
+Falsas pistas que se descartaron con datos, para no volver a perseguirlas: el
+WARN `No packet handler for type: Drink...` de `PacketsCache.<init>` aparece
+en cada conexión **también en los arranques sanos** (12 veces en el arranque
+bueno del 16-17/08); y Better Sorting quedó exonerado retirándolo en caliente
+y comprobando que el cuelgue seguía — se devolvió a su posición.
+
+Pendiente de decidir (no implementado): que el vigilante compare también el
+`buildid` público de Steam con el instalado y **avise** —solo avisar, nunca
+actualizar— cuando haya hotfix del juego. Habría convertido esta hora de
+diagnóstico en una línea de log.
+
 ## Cómo se desactiva
 
 `MODS_CHECK_INTERVAL_MINUTES=0` en el `.env` apaga toda la vigilancia: el

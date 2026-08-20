@@ -132,7 +132,22 @@ services:
     container_name: pombie-staging
     hostname: pombie-staging
     profiles: ["staging"]
-    restart: "no"
+
+    # `unless-stopped`, igual que produccion, y NO el `"no"` que tenia como
+    # entorno desechable. El 20/08/2026 costo 14 horas de servidor caido:
+    # unattended-upgrades reinicia esta maquina a las 04:00 cuando hay parche
+    # de seguridad (Automatic-Reboot "true"), el contenedor se apago limpio
+    # —el mundo se guardo bien— Docker volvio... y staging no, porque tenia
+    # prohibido resucitar. Nadie se entero hasta que los jugadores lo dijeron.
+    #
+    # El "no" era correcto mientras staging fuera un banco de pruebas que se
+    # levanta y se tira. Desde el 13/08 es donde se juega, asi que hereda
+    # tambien la resistencia de produccion, no solo su papel.
+    #
+    # No estorba a `stage.sh --down` ni a `docker compose stop`: una parada
+    # explicita deja el contenedor en estado "stopped", y `unless-stopped`
+    # respeta justo eso.
+    restart: unless-stopped
 
     environment:
       # OJO: staging usa EL MISMO PZ_SERVER_NAME que el mundo del que se copia.
