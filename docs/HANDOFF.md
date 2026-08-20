@@ -179,13 +179,33 @@ estaba `Exited (255)` desde hacia 14 horas y nadie se entero.
 **Cadena completa**, reconstruida de los logs:
 
 ```
-04:00:20 CEST  la MAQUINA se reinicia (unattended-upgrades: Automatic-Reboot
-               "true", Automatic-Reboot-Time "04:00", con parche de seguridad)
-04:00:00 UTC   el contenedor recibe SIGTERM y se apaga LIMPIO
+19/08 06:04    unattended-upgrades actualiza el KERNEL (6.8.0-137 -> -138)
+19/08 06:05    ve /var/run/reboot-required y programa el reinicio:
+               "Reboot scheduled for Thu 2026-08-20 04:00:00 CEST"
+20/08 04:00:20 la maquina se reinicia
+20/08 04:00:00 el contenedor recibe SIGTERM y se apaga LIMPIO
                (SaveAll, Saving players, Saving finish: el mundo se guardo bien)
-04:00:34 CEST  el daemon de Docker rootless vuelve solo
-     ...       staging NO vuelve
+20/08 04:00:34 el daemon de Docker rootless vuelve solo
+       ...     staging NO vuelve
 ```
+
+**Cada cuanto pasa esto, medido** (importa, porque marca cuando se manifiestan
+los fallos de este tipo). `Automatic-Reboot-Time "04:00"` NO significa
+"reinicia a diario": significa "si hace falta reiniciar, hazlo a las 04:00", y
+solo hace falta al actualizar el kernel. El historial de `last reboot`:
+
+| Arranque | Kernel | Duro |
+| --- | --- | --- |
+| 17/06 | 6.8.0-124 | 41 dias |
+| 28/07 | 6.8.0-136 | 10 dias |
+| 07/08 | 6.8.0-137 | **12 dias 23 h** |
+| 20/08 | 6.8.0-138 | en curso |
+
+Entre el 07 y el 20/08 **no hubo ni un reinicio**, y ahi vivio el despliegue
+entero. Por eso el fallo tardo una semana en aparecer: staging paso a ser el
+mundo de juego el 13/08 con `restart: "no"` puesto, y hasta el 20/08 no hubo
+ningun reinicio que lo delatara. **Una salvaguarda que falta no se nota hasta
+que hace falta**; conviene tenerlo presente al revisar el resto del montaje.
 
 **La causa**: `pz-staging` llevaba `restart: "no"`, correcto cuando era un
 banco de pruebas de usar y tirar, y **nunca se reviso al convertirse en el
