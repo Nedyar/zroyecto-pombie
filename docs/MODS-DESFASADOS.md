@@ -428,6 +428,29 @@ Pendiente de decidir (no implementado): que el vigilante compare también el
 actualizar— cuando haya hotfix del juego. Habría convertido esta hora de
 diagnóstico en una línea de log.
 
+### Volvió a pasar el 27/08, y con una variante peor
+
+42.20.4 salió el 26/08. Esta vez **solo un jugador quedó fuera**: el que había
+reinstalado el juego y por tanto tenía la versión nueva. Los demás seguían en
+42.20.3, igual que el servidor, y entraban sin problema.
+
+Eso hace el diagnóstico mucho más difícil, porque la intuición apunta al
+jugador que falla — y **es el único que está bien**. La pista que lo resuelve
+en segundos es la ruta del fichero del error: si empieza por
+`steamapps\common\ProjectZomboid\`, es el **juego base** y ningún mod puede
+tener la culpa; si empieza por `steamapps\workshop\`, entonces sí es un mod.
+
+Refuerza el argumento de arriba: **este es el segundo hotfix seguido que
+cuesta una hora de diagnóstico.** El aviso automático de "hay build nuevo del
+juego" pasa de mejora cómoda a claramente rentable. Sigue sin implementarse
+porque nadie lo ha pedido, no porque haya dudas de diseño: sería una
+comparación más dentro del chequeo que ya se hace cada 30 minutos, y **solo
+avisaría** — actualizar el motor seguiría siendo decisión humana.
+
+Procedimiento completo (diagnóstico y actualización, incluido el atasco
+`state is 0x6` de SteamCMD, que ya ha salido las dos veces) en
+[OPERACIONES.md](OPERACIONES.md).
+
 ## Cómo se desactiva
 
 `MODS_CHECK_INTERVAL_MINUTES=0` en el `.env` apaga toda la vigilancia: el

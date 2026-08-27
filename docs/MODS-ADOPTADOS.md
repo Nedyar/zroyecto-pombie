@@ -144,5 +144,32 @@ que si lo tenías abierto de antes, te quedaste con la versión vieja. Por eso,
 cuando el servidor avise por chat de que hay mods actualizados: **al salir,
 cierra el juego del todo**, y al volver entrarás sin problema.
 
+---
+
+## Si el error NO menciona la workshop, sino un fichero del juego
+
+A veces sale un mensaje distinto, con una ruta larga:
+
+```
+File doesn't match the one on the server:
+C:\...\steamapps\common\ProjectZomboid\media\lua\...
+```
+
+**Fíjate en la ruta**, porque lo cambia todo:
+
+| Si pone... | Es... | Qué hacer |
+| --- | --- | --- |
+| `steamapps\workshop\` | un **mod** | cerrar el juego del todo y reabrir |
+| `steamapps\common\` | el **juego** | **avisar — no toques nada** |
+
+En el segundo caso no es culpa tuya ni de tus mods: significa que **tu juego y
+el servidor tienen versiones distintas de Project Zomboid**. Borrar mods,
+verificar archivos o reinstalar el juego **no lo arreglan** — lo tiene que
+actualizar quien lleva el servidor.
+
+Pasó el 27/08: un jugador reinstaló el juego, Steam le dio una versión nueva
+que acababa de salir, y fue el único que no podía entrar mientras los demás
+seguíamos con la anterior. **El que fallaba era el único que estaba al día.**
+
 **Si os apetece algún mod más**, decidlo. Antes de meterlo se prueba en un
 servidor aparte, así que no hay riesgo de romper la partida.

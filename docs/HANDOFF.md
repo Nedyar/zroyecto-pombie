@@ -18,8 +18,9 @@ forma del despliegue, no sus valores.
 | **Produccion** (`pz`) | 16261 | **parado, a proposito** | El mundo **sin** los 5 mods irreversibles. Punto de retorno vivo |
 | **Staging** (`pz-staging`) | 16461 | **desplegado, se juega aqui** | El mismo mundo **con** los 5 mods. 32 mods en total |
 
-Los dos salen del mismo mundo (`pombie-vanilla`, 392 MB) y tienen volumenes
-separados. Produccion se quedo con la foto de justo antes de meter los mods
+Los dos salen del mismo mundo (`pombie-vanilla`) y tienen volumenes separados.
+Ya han divergido: staging va por **426 MB** de partida jugada, produccion sigue
+con la foto de 392 MB del 16/08. Produccion se quedo con la foto de justo antes de meter los mods
 irreversibles, y **no como tarball sino como mundo que arranca**: si algun dia
 hay que volver, se levanta y ya. El precio es que volver cuesta todo lo jugado
 en staging desde el 16/08, y ese coste crece cada dia.
@@ -46,12 +47,17 @@ completo en [MODS-LISTA.md](MODS-LISTA.md) seccion 0.
 | Anfitrion | Linux (Ubuntu 24.04), portatil usado como servidor, lid ignorado |
 | Docker | **rootless**, daemon de usuario, sin grupo `docker` |
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
-| Juego | Build 42, `buildid` registrado y coincidente con el instalado |
-| Mundos | **uno**, en dos copias: produccion (resguardo) y staging (en juego), 392 MB |
-| Mods | **32** en staging: los 25 reversibles + los 5 irreversibles del 16/08 (y sus 3 dependencias). Produccion se queda en 25 |
+| Juego | **42.20.4** (`buildid 24909836`), actualizado el 27/08. Disco y mundo coinciden |
+| Mundos | **uno**, en dos copias: produccion (resguardo, 42.20.3) y staging (en juego), **426 MB** |
+| Mods | **33 Mod ID / 31 WorkshopItems** en staging: los 25 reversibles + los 5 irreversibles del 16/08 y sus dependencias. Produccion se queda en 25 |
 | Memoria | heap 6g, `mem_limit` 10g |
 | Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods |
 | Mods desfasados | deteccion cada 30 min, reinicio solo si el mundo esta vacio |
+| Reinicio del sistema | staging vuelve solo (`unless-stopped` desde el 20/08) |
+
+**OJO al actualizar el juego**: produccion se quedo en 42.20.3 y staging esta
+en 42.20.4. Si algun dia se levanta produccion, hay que actualizarla primero o
+nadie podra entrar — sus clientes ya estaran en la version nueva.
 
 **El nombre `pombie-vanilla` y los volumenes `*-vanilla` son herencia, no
 descripcion**: ese mundo lleva 25 mods. Se conservaron a proposito — renombrar
@@ -170,6 +176,40 @@ la incidencia 004). Si algun dia hiciera falta una referencia limpia de nuevo,
 hay que crear una instancia aparte.
 
 Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
+
+## 27/08/2026: un solo jugador fuera, y era el unico que estaba bien
+
+Javi no podia entrar; todos los demas si. Le salia un fichero que **no era de
+ningun mod** —`steamapps\common\ProjectZomboid\media\lua\shared\TimedActions\
+ISReadABook.lua`— y por eso borrar el Workshop entero y hasta reinstalar el
+juego no cambiaban nada.
+
+**Causa**: salio **42.20.4** el 26/08. Javi reinstalo, Steam le dio la ultima,
+y el servidor seguia en 42.20.3 con el resto del grupo. Es el desfase de
+siempre pero **invertido y con un solo afectado**, que es justo lo que
+despista: los demas entraban porque compartian la version VIEJA del servidor.
+**El que fallaba era el unico que estaba al dia.**
+
+Confirmado de la forma mas directa: de los 7,2 GB de instalacion, 42.20.4
+reescribio **cuatro** ficheros Lua, y uno es `ISReadABook.lua` (md5
+`256bd056…` -> `9a6639c7…`) — exactamente el del error.
+
+**Dos trampas que costaron tiempo y quedan en OPERACIONES.md:**
+
+1. **`version=42.20.x` en el log NO prueba que la actualizacion entrara
+   entera.** Esa cadena sale del binario, que puede ir por delante de los
+   scripts Lua. Hay que comprobar que los ficheros de `media/` llevan fecha de
+   la actualizacion. Omitir esto el 17/08 es lo que dejo la duda abierta.
+2. **SteamCMD se atasca en `state is 0x6`** (instalado + actualizacion
+   requerida) con un `ScheduledAutoUpdate` a futuro. Ha pasado en **los dos**
+   hotfixes, asi que no es mala suerte: reintentar, `validate`, borrar
+   `downloading/` y editar `StateFlags` no bastan. Lo que funciona es retirar
+   el manifiesto y reinstalar encima con `+app_info_print` de por medio.
+
+**Pista falsa que levante yo y conviene no perseguir**: que la actualizacion
+del 17/08 hubiera quedado a medias porque `media/lua` tenia fecha antigua. No
+lo estaba — Steam sencillamente no reescribe los ficheros que no cambian, y
+entre 42.20.2 y 42.20.3 esos no cambiaron.
 
 ## Caida de 14 horas del 20/08/2026: el papel se hereda, la resistencia no
 
