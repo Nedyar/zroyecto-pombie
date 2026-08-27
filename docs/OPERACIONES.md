@@ -490,6 +490,81 @@ docker compose up -d
 
 Los jugadores tendran que actualizar su cliente en Steam o no podran conectarse.
 
+### Cuando un SOLO jugador no puede entrar y le sale un fichero del juego base
+
+Sintoma exacto (visto el 27/08/2026 con 42.20.4):
+
+```
+File doesn't match the one on the server:
+media/lua/shared/timedactions/isreadabook.lua
+C:\...\steamapps\common\ProjectZomboid\media\lua\shared\TimedActions\ISReadABook.lua
+```
+
+**La ruta lo dice todo**: `steamapps\common\ProjectZomboid\` es el JUEGO BASE.
+Los mods viven en `steamapps\workshop\content\108600\`. Si la ruta es la
+primera, **no es un mod** y borrar el Workshop no puede arreglarlo. Lo provoca
+`DoLuaChecksum=true`, que expulsa a quien tenga ficheros del juego distintos.
+
+Casi siempre significa que **ese jugador tiene una version del juego mas nueva
+que el servidor** — tipicamente porque acaba de reinstalar o verificar, y Steam
+le ha dado la ultima. Es el mismo desfase de siempre, pero al reves y con un
+solo afectado, y por eso despista: los demas siguen en la version vieja, que es
+la del servidor, y entran sin problema. **El que falla es el que esta bien.**
+
+Diagnostico en un comando — comparar lo instalado con lo que Steam publica:
+
+```bash
+docker compose exec pz-staging sh -c 'grep -oP "\"buildid\"\s+\"\K[0-9]+" \
+  /opt/pz-server/steamapps/appmanifest_380870.acf | head -1'
+curl -fsS 'https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=108600&count=3&maxlength=100' \
+  | jq -r '.appnews.newsitems[] | "\(.date|strftime("%Y-%m-%d")) \(.title)"'
+```
+
+Si el buildid instalado es menor que el que anuncia Steam, hay hotfix
+pendiente: actualizar (abajo) y avisar a TODOS de que cierren y reabran el
+juego, porque tras actualizar el servidor los rezagados seran los demas.
+
+### Actualizar el juego cuando SteamCMD se atasca en `state is 0x6`
+
+`0x6` = instalado (4) + actualizacion requerida (2). SteamCMD reconoce que hay
+version nueva y **se niega a bajarla**, normalmente porque el manifiesto lleva
+un `ScheduledAutoUpdate` con hora futura. Ha pasado en los dos hotfixes
+(17/08 y 27/08), asi que no es mala suerte.
+
+Lo que NO basta: reintentar, `validate`, borrar `steamapps/downloading`, ni
+editar `StateFlags` a mano.
+
+Lo que SI funciona, las dos veces — retirar el manifiesto y reinstalar encima:
+
+```bash
+docker compose stop pz-staging            # apagado seguro primero
+docker compose --profile staging run --rm --no-deps --entrypoint bash pz-staging -c '
+  mv /opt/pz-server/steamapps/appmanifest_380870.acf{,.atascado}
+  rm -rf /opt/pz-server/steamapps/downloading /opt/pz-server/steamapps/temp
+  steamcmd +force_install_dir /opt/pz-server +login anonymous \
+           +app_info_update 1 +app_info_print 380870 +app_update 380870 +quit'
+```
+
+El `+app_info_print` no es decorativo: sin el, SteamCMD falla con un
+`Missing configuration` que no significa lo que parece. Y no re-descarga los
+7,5 GB: verifica lo que ya hay y baja solo lo que cambia.
+
+**Verificacion imprescindible tras actualizar**, que en el hotfix del 17/08 se
+omitio y costo diez dias de un jugador sin poder jugar:
+
+```bash
+# 1. el buildid del manifiesto es el que anuncia Steam
+# 2. y los ficheros del juego se han reescrito de verdad:
+docker compose exec pz-staging sh -c \
+  'find /opt/pz-server/media/lua -name "*.lua" -newermt "AAAA-MM-DD" | wc -l'
+```
+
+**Que el servidor diga `version=42.20.4` NO basta**: esa cadena sale del
+binario, y el binario puede actualizarse mientras los scripts Lua se quedan
+atras. Solo los ficheros con fecha nueva prueban que la actualizacion entro
+entera. En 42.20.4 cambiaron exactamente 4 ficheros Lua, uno de ellos
+`ISReadABook.lua` — el del error de arriba.
+
 ### Si el arranque se detiene con "CAMBIO DE VERSION DETECTADO"
 
 Es la guarda haciendo su trabajo: el binario instalado no es el mismo con el
