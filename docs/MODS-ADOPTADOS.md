@@ -1,7 +1,7 @@
 # Mods del servidor
 
 Esto es lo que lleva **el mundo en el que jugamos ahora** (el del puerto
-**16461**). **32 mods**, todos probados y funcionando en la versión actual del
+**16461**). **34 mods**, todos probados y funcionando en la versión actual del
 juego (Build 42.20).
 
 No tenéis que hacer nada para instalarlos: al entrar al servidor, el juego los
@@ -45,6 +45,14 @@ caro sería volver ahí, pero existe.
   - Abrir latas con cuchillo, destornillador, tenedor o cuchara
   - Desinfectar una venda sucia con alcohol
   - Fabricar sábanas a partir de ropa
+
+## Peligro humano
+
+- **[Bandits NPC](https://steamcommunity.com/sharedfiles/filedetails/?id=3268487204)** — **La novedad gorda del 29/08.** Ya no sois los únicos vivos: hay **bandidos con IA** que patrullan, asaltan y disparan. Un millón de suscriptores lo avalan, y está hecho específicamente para nuestra versión (42.20). Sus opciones se ajustan desde el sandbox, así que si resulta demasiado duro se puede suavizar sin quitarlo. **Id con cuidado: ahora los ruidos no siempre son zombis.**
+
+## Agua y fontanería
+
+- **[LG Extended Plumbing](https://steamcommunity.com/sharedfiles/filedetails/?id=3779561845)** — Arregla la limitación más absurda del juego base: un barril solo alimentaba un fregadero situado justo debajo, en el 3×3. Ahora **conectas el barril con una llave inglesa y da agua a todo el edificio**, y varios barriles se leen como un depósito único (doce de 400 litros = 4.800 litros). Junto con *Useful Barrels*, que ya teníamos, cierra el ciclo: recoger, almacenar y distribuir.
 
 ## Vehículos
 
@@ -95,7 +103,8 @@ No añaden nada por sí solos: hacen funcionar a los de arriba.
 | Mod | Estado |
 | --- | --- |
 | **Starving Zombies** (los zombis se comen los cadáveres y os huelen si vais manchados de sangre) | **Pendiente de que lo votéis.** Técnicamente no tiene ningún problema —de hecho es el único que se podría quitar después sin perder nada—, pero cambia cómo se juega, así que se decide entre todos |
-| **Bicycle!** (bicicletas) | **No va a entrar**: está roto en la versión actual del juego. Si su autor lo actualiza, se reevalúa |
+| **Bicycle!** (bicicletas) | **Ya se puede.** Estaba roto, pero su autor lo arregló el 15/08 y lo hemos comprobado. Solo falta que alguien lo pida |
+| **Campers!** (autocaravanas habitables, base móvil) | Pendiente de revisar: 655.000 suscriptores, pero sin actualizarse desde junio |
 
 Si echáis de menos alguno o queréis proponer otro, decidlo.
 

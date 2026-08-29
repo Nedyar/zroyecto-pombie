@@ -48,8 +48,8 @@ completo en [MODS-LISTA.md](MODS-LISTA.md) seccion 0.
 | Docker | **rootless**, daemon de usuario, sin grupo `docker` |
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
 | Juego | **42.20.4** (`buildid 24909836`), actualizado el 27/08. Disco y mundo coinciden |
-| Mundos | **uno**, en dos copias: produccion (resguardo, 42.20.3) y staging (en juego), **426 MB** |
-| Mods | **33 Mod ID / 31 WorkshopItems** en staging: los 25 reversibles + los 5 irreversibles del 16/08 y sus dependencias. Produccion se queda en 25 |
+| Mundos | **uno**, en dos copias: produccion (resguardo, 42.20.3) y staging (en juego), **687 MB** |
+| Mods | **37 Mod ID / 35 WorkshopItems** en staging: 25 reversibles + 5 irreversibles (16/08) + **4 de contenido (29/08)**. Produccion se queda en 25 |
 | Memoria | heap 6g, `mem_limit` 10g |
 | Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods |
 | Mods desfasados | deteccion cada 30 min, reinicio solo si el mundo esta vacio |
@@ -60,7 +60,7 @@ en 42.20.4. Si algun dia se levanta produccion, hay que actualizarla primero o
 nadie podra entrar — sus clientes ya estaran en la version nueva.
 
 **El nombre `pombie-vanilla` y los volumenes `*-vanilla` son herencia, no
-descripcion**: ese mundo lleva 25 mods. Se conservaron a proposito — renombrar
+descripcion**: ese mundo lleva 37 mods. Se conservaron a proposito — renombrar
 exigiria mover 285 MB de guardados, y mover guardados es justo lo que este
 montaje evita cuando no hace falta.
 
@@ -176,6 +176,37 @@ la incidencia 004). Si algun dia hiciera falta una referencia limpia de nuevo,
 hay que crear una instancia aparte.
 
 Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
+
+## Oleada 3 del 29/08/2026: cuatro mods de contenido
+
+Entraron **Bandits NPC** (bandidos con IA), **LG Extended Plumbing** (el barril
+alimenta todo el edificio), **[SVRP] ClassicBows** (arcos y ballestas) y
+**Horse Mod** (caballos montables). Cada uno con su backup etiquetado propio
+—`antes-bandits-npc`, `antes-plumbing`, `antes-classicbows`,
+`antes-horsemod`— y verificado antes de instalar el siguiente, para que si algo
+fallaba se supiera cual.
+
+**El criterio cambio**, por decision del usuario: la reversibilidad deja de ser
+el veto y pasa a ser un dato. El filtro nuevo es "coherente, estable,
+compatible y que no rompa la partida". Detalle y metodo en
+[MODS-LISTA.md](MODS-LISTA.md) seccion 0.
+
+**Lo que hay que saber de estos cuatro:**
+
+- **Horse Mod es el primero con `entity` (construibles)** que entra en este
+  mundo. Es el unico tipo de declaracion que puede impedir que un mundo cargue
+  —no al anadirlo, sino al QUITARLO—. Se avisó y se acepto.
+- **Bandits NPC cambia la jugabilidad de verdad**: IA hostil armada en un juego
+  de muerte permanente. Sus opciones se ajustan por sandbox, asi que se puede
+  suavizar sin desinstalarlo.
+- **No hubo ensayo previo.** Ya no existe un entorno de pruebas: staging ES el
+  mundo de juego y produccion es la foto congelada. Es la primera vez que se
+  instala algo sin ensayar, y fue una decision explicita ("nada de tercer
+  mundo").
+
+**Bicycle! deja de estar vetado**: el autor publico el 15/08 una carpeta
+`42.20` completa que ya no llama a la API que 42.20 elimino. Verificado en el
+codigo. Solo falta que alguien lo pida.
 
 ## 27/08/2026: un solo jugador fuera, y era el unico que estaba bien
 
@@ -300,16 +331,29 @@ vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
 
 ## Pendiente
 
-- **Redesplegar staging con la imagen corregida**: la desplegada el 16/08 por
-  la manana lleva el fallo del backoff sin reset que cazo la revision (la
-  correccion existe, pero el contenedor vivo corre la version anterior). Es
-  una recreacion normal con el servidor vacio:
-  `docker compose --profile staging up -d pz-staging`.
-- **Observar el primer disparo real** del reinicio automatico por mods
-  desfasados en staging (al ritmo medido deberia darse en menos de un dia) y
-  anotarlo en [MODS-DESFASADOS.md](MODS-DESFASADOS.md) como cierre de todo el
-  mecanismo. Ya se probo de extremo a extremo con un mod forzado, pero un
-  disparo espontaneo con datos reales de Steam cierra el ciclo.
+- ~~Redesplegar staging con la imagen corregida.~~ **Hecho el 16/08.**
+- ~~Observar el primer disparo real del reinicio automatico.~~ **Confirmado**:
+  se disparo solo varias veces (16/08 con CleanUI, 17/08 con Better Sorting)
+  con backup, reinicio y verificacion, sin intervencion. El mecanismo esta
+  cerrado.
+- **ALERTA DE SERVIDOR CAIDO — lo mas rentable que queda por hacer.** El 20/08
+  el servidor estuvo 14 horas muerto y nadie se entero hasta que lo dijeron los
+  jugadores. El vigilante de mods NO puede cubrirlo: vive dentro del contenedor
+  y muere con el. Hace falta algo FUERA (un timer de systemd de usuario), la
+  unica pieza que por naturaleza no cabe en el repo autocontenido.
+- **Aviso de hotfix del juego.** Dos veces seguidas (42.20.3 el 17/08, 42.20.4
+  el 27/08) el mismo sintoma costo una hora de diagnostico. Bastaria comparar
+  el `buildid` publico de Steam contra el instalado dentro del chequeo que ya
+  corre cada 30 min, y **solo avisar** — actualizar el motor seguiria siendo
+  decision humana. Detalle en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
+- **Repasar el servicio de staging entero contra produccion**, ajuste por
+  ajuste. El `restart: "no"` que costo la caida de 14 horas era un resto de su
+  vida como entorno desechable, y **puede haber mas**. La trampa conocida que
+  sigue viva: `stage.sh --down` borra el mundo de staging, que hoy es el bueno.
+- **Auditar Campers!** (655k subs, bases moviles) antes de instalarlo: es el
+  unico candidato bueno sin actualizar desde el 09/06, anterior a 42.20
+  estable. Mismo procedimiento que se uso con Bicycle!: bajarlo y mirar si
+  llama a APIs que 42.20.4 haya eliminado.
 - **Conseguir los logs de los demas clientes** para la incidencia 005. Solo se
   ha analizado uno, y los errores del servidor son la suma de todos los
   conectados: "aqui esta limpio" no significa "no paso". El procedimiento y el
@@ -322,13 +366,16 @@ vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
   Temperature, Trailers!) sabiendo que ya no salen. El montaje de dos copias
   —produccion sin ellos, staging con ellos— es la red que hizo asumible la
   decision. Razonamiento en MODS-LISTA.md seccion 0.
-- **PREGUNTA ABIERTA, ahora medible: que pasa de verdad al quitar Trailers!**
-  Se dedujo que los remolques quedarian huerfanos y que el mundo NO se
-  romperia (ninguno declara construibles, que es el caso grave de la seccion 5
-  de MODS-LISTA), pero **nadie lo ha probado**. Con produccion guardando el
-  mundo sin ellos, el experimento sale gratis: enganchar remolques en una
-  copia, quitar el mod, y mirar si carga. Convertiria "irreversible" de
-  etiqueta heredada en dato.
+- **PREGUNTA ABIERTA: que pasa de verdad al quitar un mod con vehiculos o
+  construibles.** Se dedujo que los objetos quedarian huerfanos sin impedir
+  que el mundo cargue, pero **nadie lo ha probado**. Ahora importa mas: con
+  Horse Mod entraron los primeros `entity` del mundo, y esos SI son el caso
+  grave documentado en MODS-LISTA seccion 5. El experimento sale gratis sobre
+  una copia y convertiria "irreversible" de etiqueta heredada en dato.
+- ~~Que los vehiculos de Trailers! aparezcan en zonas nuevas.~~ **CONFIRMADO
+  el 29/08**: de 0 remolques el 17/08 se paso a 5, mientras la exploracion
+  subia de 169 a 271 celdas — y **ninguno aparecio en las 169 viejas**. El
+  mecanismo de generacion por celda queda demostrado, no deducido.
 - **Revisar hacia mediados de septiembre**: los mods-parche de sincronizacion
   de vehiculos. Se evaluaron el 15/08 y ninguno dio la talla —el que ataca
   vehiculos exige instalacion manual en cada cliente, el mantenido para 42.20

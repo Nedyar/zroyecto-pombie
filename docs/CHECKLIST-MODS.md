@@ -26,6 +26,30 @@ mundo nuevo sí se reporta.
 
 ---
 
+## Oleada 3 (29/08/2026) — SIN COMPROBAR TODAVIA
+
+Los cuatro entraron el mismo dia y **ninguno se ha probado en juego**. El
+servidor solo garantiza que cargan; lo demas falla en silencio.
+
+- [ ] **Bandits NPC** — Aparecen bandidos hostiles con IA. Comprobar que se
+      ven **desde dos clientes a la vez y en la misma posicion** (es lo que
+      mas sufre en MP), que reaccionan al ruido y que no atraviesan paredes.
+      Sus opciones estan en el sandbox: si resultan demasiado duros se
+      suavizan sin desinstalar. **Ojo: cambia la jugabilidad de verdad.**
+- [ ] **LG Extended Plumbing** — Poner un barril en una planta y un fregadero
+      en otra, conectarlo **con una llave inglesa**, y comprobar que el
+      fregadero da agua (en vanilla solo funcionaba en el 3x3 justo debajo).
+      Con varios barriles, el total deberia leerse sumado.
+- [ ] **[SVRP] ClassicBows** — Fabricar un arco (lo mas rapido; encontrarlos
+      requiere zona sin explorar). Comprobar que dispara, que **no atrae
+      zombis como un arma de fuego**, y que las flechas se recuperan.
+- [ ] **Horse Mod** — Encontrar o criar un caballo y **montarlo**. Comprobar
+      la sincronizacion entre dos jugadores: que ambos vean el caballo en el
+      mismo sitio, y que al desmontar el jinete no aparezca desplazado (es el
+      sintoma exacto de la incidencia 005 con vehiculos).
+
+Si algo de esto falla, decirlo con **que mod, que hacias y que esperabas**.
+
 ## Inventario y saqueo
 
 - [x] **Proximity Inventory** — Mata unos zombis y quédate entre varios

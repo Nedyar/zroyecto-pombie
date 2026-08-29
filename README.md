@@ -54,6 +54,8 @@ ver [docs/TAILSCALE.md](docs/TAILSCALE.md).
 | Probar cambios sin riesgo | `./scripts/stage.sh` |
 | Instalar un mod que no viene del Workshop | `./scripts/install-local-mods.sh <zip>` |
 | Traer al repo los ajustes de sandbox de los mods | `./scripts/capture-sandbox.sh` |
+| Traer al repo los ajustes tocados en la partida | `./scripts/capture-ini.sh` |
+| Ver si algun mod se ha quedado atras frente a Steam | `./scripts/check-mods.sh` |
 
 **Nunca** uses `docker compose kill` ni `docker kill`. Saltan el apagado seguro.
 
@@ -82,6 +84,8 @@ esta carpeta: viven en volumenes de Docker, por rendimiento. Se migran con
 - [docs/TAILSCALE.md](docs/TAILSCALE.md) — como entran los jugadores: node sharing, ACL y diagnostico de red.
 - [docs/MODS.md](docs/MODS.md) — procedimiento verificado para anadir mods sin arriesgar los guardados.
 - [docs/MODS-ADOPTADOS.md](docs/MODS-ADOPTADOS.md) — que mods llevamos, en lenguaje llano. Pensado para pasarselo a los jugadores.
+- [docs/MODS-LISTA.md](docs/MODS-LISTA.md) — el documento tecnico de los mods: que entro, que se descarto y por que, con la medicion detras.
+- [docs/MODS-DESFASADOS.md](docs/MODS-DESFASADOS.md) — por que el servidor se rompia casi a diario, y el mecanismo que lo arregla solo.
 - [docs/CHECKLIST-MODS.md](docs/CHECKLIST-MODS.md) — que comprobar en juego, mod por mod, para saber si funcionan de verdad.
 - [docs/DECISIONES.md](docs/DECISIONES.md) — por que el montaje es asi.
 - [docs/incidencias/](docs/incidencias/) — lo que esta roto: sintoma, evidencia y propuesta, sin aplicar.

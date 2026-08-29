@@ -53,7 +53,65 @@ documentado en la sección 5 — el que puede impedir que un mundo cargue.
 | **2 — preparada** | Common Sense, Take A Bath (+DepthMap), Manage Containers, Realistic Temperature (+LuaDigitalWatchUI) | **Solo tras probarse en staging sobre copia del vanilla.** Entran para quedarse |
 | **Decisión de grupo** | `Trailers!` (KI5trailers+damnlib) | Irreversible de verdad; que se decida sabiéndolo |
 | **Decisión de grupo** | `StarvingZombies` | Reversible y exonerado (incidencia 001), pero cambia jugabilidad, no interfaz |
-| **Nunca** | `Bicycle!` | Defectuoso en 42.20 (incidencia 002) **e** irreversible: la peor combinación. Se reevalúa si el autor publica para 42.20 |
+| ~~**Nunca**~~ → **candidato** | `Bicycle!` | Era "defectuoso en 42.20 (incidencia 002) e irreversible". **El autor publico el 15/08 una carpeta `42.20` completa** (58 ficheros Lua) que sustituye la API eliminada por `instanceItem()`. Verificado en el codigo: el defecto ya no existe. Sigue sin instalarse solo porque nadie lo ha pedido |
+
+## Oleada 3 (29/08/2026): cuatro mods de contenido, con el criterio relajado
+
+Decision del usuario: **"no hace falta pararte tanto a lo de la
+irreversibilidad, solo que sea coherente, estable y compatible y sin romper la
+partida"**. La reversibilidad deja de ser el filtro y pasa a ser un dato mas;
+el filtro nuevo son las tres condiciones de esa frase.
+
+| Mod | Workshop | Mod ID | Declara | Por que entro |
+| --- | --- | --- | --- | --- |
+| **Bandits NPC** | 3268487204 | `Bandits2` | 5 items (modifica vanilla), 0 vehiculos, 0 entities | 1.003.146 subs, unica carpeta `42.20`, 37 ficheros con `isServer`/`sendServerCommand` |
+| **LG Extended Plumbing** | 3779561845 | `LGExtendedPlumbing` | **nada** — reversible | `versionMin=42.20.0`, 141k subs, resuelve el 3x3 del barril |
+| **[SVRP] ClassicBows** | 3776949545 | `SVRPClassicBows` | 149 items, 1 distribucion | `versionMin=42.20`, 53k subs y creciendo, arma silenciosa |
+| **Horse Mod** | 3661336777 | `Horse` | 329 items, **2 entities** | `versionMin=42.13.0`, 296k subs, 22 ficheros con sincronizacion MP |
+
+**Horse Mod es el primero con `entity` (construibles)** que entra en este
+mundo. Importa porque es el UNICO caso que puede impedir que un mundo cargue
+—no al anadirlo, sino al quitarlo (ver seccion 5)—. Se avisó antes de
+instalarlo y se acepto: anadirlo es seguro, sacarlo ya no.
+
+Lo que hizo que Horse Mod fuera viable ahora y no en agosto: **el autor quito
+el "MP SOON" del titulo**. Paso de `Horse Mod [B42.20/MP SOON]` (sin tocar
+desde el 29/04) a `Horse Mod [B42.20+/MP]` el 23/08. La revision periodica que
+esta lista pedia dio su fruto.
+
+### El metodo que se consolido para admitir un mod
+
+Cuatro comprobaciones antes de instalar, todas sobre lo DESCARGADO, nunca
+sobre la ficha del Workshop:
+
+1. **Carpetas de version y sus limites** (`versionMin`/`versionMax` de cada
+   `mod.info`). Un `versionMin=42.20` es la mejor senal de porte deliberado.
+   Cuidado con las rutas con corchetes —`[SVRP] ClassicBows`— que rompen los
+   globs si no se citan.
+2. **Que declara**: `item`, `vehicle`, `entity`, tablas de distribucion.
+   `entity` es el unico grave.
+3. **Arquitectura MP**: contar ficheros bajo `lua/server|client|shared` y los
+   que usan `isServer()`/`sendServerCommand`. Si el multijugador solo esta en
+   la etiqueta y no en el codigo, no cuenta.
+4. **Dependencias declaradas** (`require=`) en TODOS los `mod.info`, no solo
+   el de la raiz.
+
+### Prediccion confirmada: los vehiculos aparecen en zona nueva
+
+El 17/08 se predijo que los remolques de Trailers! irian saliendo segun se
+explorase, porque el estado del mundo se genera celda a celda. Comprobado el
+29/08 contra `vehicles.db`:
+
+| | 17/08 | 29/08 |
+| --- | ---: | ---: |
+| Remolques en el mundo | **0** | **5** |
+| Celdas exploradas | 169 | 271 |
+| Coches vanilla | 113 | 128 |
+
+Cinco remolques en 102 celdas nuevas, y **ninguno en las 169 viejas**. Queda
+demostrado el mecanismo entero: lo que entra por generacion de celda o por
+tabla de botin **solo aparece en territorio no explorado**. Aplica igual a los
+149 items de ClassicBows, con la ventaja de que ademas son fabricables.
 
 ## LEVANTADA el 16/08/2026: entra la oleada 2, y Trailers! con ella
 
@@ -118,8 +176,9 @@ Lo que sigue vivo **después de levantarla**:
   ya no es un veto automático, pero sí el dato con el que se decide. El
   procedimiento: meterlo en `STAGING_*`, lanzar `./scripts/stage.sh` y escanear
   lo descargado con el método de esta sección.
-- **Bicycle!**: fuera por estar roto en 42.20, que es un motivo aparte y sigue
-  en pie.
+- ~~**Bicycle!**: fuera por estar roto en 42.20.~~ **Ese motivo caduco el
+  15/08**: el autor publico una carpeta `42.20` que ya no llama a la API
+  eliminada. Pasa de vetado a candidato pendiente de que alguien lo pida.
 
 Evaluado y descartado bajo esta regla el 15/08: los **mods-parche de
 sincronización de vehículos**. Ninguno reunía atacar vehículos + estar

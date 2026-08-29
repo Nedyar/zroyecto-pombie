@@ -30,11 +30,16 @@ escribes una guarda, que aborte, no que continue con un aviso.
 3. **Si tocas `docker/`, hay que `docker compose build`.** Esos scripts se
    hornean en la imagen con `COPY`. Editarlos no surte efecto hasta reconstruir,
    y el fallo es silencioso.
-4. **Un mod se anade de uno en uno y pasando por staging.** Si el mundo falla
-   con tres mods nuevos, no sabras cual fue. Excepcion acotada: un conjunto que
-   ya corrio JUNTO en otra instancia y es reversible (sin definiciones
-   persistentes) puede entrar en bloque; el criterio esta en
-   docs/MODS-LISTA.md, seccion 0.
+4. **Un mod se anade de uno en uno, con backup etiquetado y verificando antes
+   del siguiente.** Si el mundo falla con tres mods nuevos, no sabras cual fue.
+   Excepcion acotada: un conjunto que ya corrio JUNTO en otra instancia puede
+   entrar en bloque.
+   **OJO — ya no hay entorno de ensayo**: desde el 13/08 staging ES el mundo de
+   juego y produccion es una foto congelada. Lo que se instale va directo a la
+   partida buena. Antes de instalar, auditar el mod descargado con el
+   procedimiento de docs/MODS.md ("Auditar un candidato"), y mirar sobre todo
+   si declara `entity`: es lo unico que puede impedir que un mundo cargue al
+   quitarlo.
 5. **Los secretos no entran en git.** Viven en `.env`, que esta ignorado. Antes
    de escribir cualquier cosa en `config/reference/`, comprueba que el filtro de
    redaccion de `docker/ops.sh` la cubre.

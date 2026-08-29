@@ -47,6 +47,50 @@ persistente. Por eso el procedimiento es el que es.
 
 ---
 
+## Auditar un candidato antes de instalarlo (consolidado el 29/08/2026)
+
+Cuatro comprobaciones **sobre lo descargado**, nunca sobre la ficha del
+Workshop. Se baja el mod aparte, sin acercarlo al servidor:
+
+```bash
+docker compose --profile staging run --rm --no-deps --entrypoint bash pz-staging -c '
+  steamcmd +login anonymous +workshop_download_item 108600 <ID> +quit >/dev/null 2>&1
+  D=$(find /home/steam -type d -path "*content/108600/<ID>" | head -1)
+  find "$D" -name mod.info -print0 | while IFS= read -r -d "" f; do
+    printf "  %-46s " "${f#$D/}"
+    grep -ihE "^(id|require|versionMin|versionMax)=" "$f" | tr -d "\r" | tr "\n" " "; echo
+  done
+  printf "  items:%s vehiculos:%s entities:%s distrib:%s\n" \
+    "$(grep -rhE "^[[:space:]]*item[[:space:]]+" "$D" --include="*.txt" | wc -l)" \
+    "$(grep -rhE "^[[:space:]]*vehicle[[:space:]]+" "$D" --include="*.txt" | wc -l)" \
+    "$(grep -rhE "^[[:space:]]*entity[[:space:]]+" "$D" --include="*.txt" | wc -l)" \
+    "$(find "$D" -iname "*istribution*" | wc -l)"
+  for p in server client shared; do printf "  %-7s %s\n" "$p" "$(find "$D" -path "*lua/$p/*" -name "*.lua" | wc -l)"; done
+  printf "  con isServer/sendServerCommand: %s\n" "$(grep -rl "isServer()\|sendServerCommand" "$D" --include="*.lua" | wc -l)"'
+```
+
+**Como leer el resultado:**
+
+1. **`versionMin` / `versionMax` de CADA `mod.info`.** Un `versionMin=42.20` es
+   la mejor senal de porte deliberado. Y son los limites, no el nombre de la
+   carpeta, los que deciden que variante carga el juego — asi se descubrio que
+   *Beds Have Blankets* seguia roto y que *Bicycle!* ya no.
+2. **`entity` es el unico grave.** Al quitar un mod con construibles, el mundo
+   puede no cargar (seccion 5 de MODS-LISTA). `item` y `vehicle` solo dejan
+   objetos huerfanos.
+3. **El multijugador se comprueba en el codigo, no en la etiqueta.** Ficheros
+   bajo `lua/server/` y usos de `isServer()`/`sendServerCommand` significan
+   sincronizacion real; su ausencia, que la etiqueta puede ser optimismo.
+4. **`require=` en TODOS los `mod.info`**, no solo el de la raiz: asi se colo
+   `LuaDigitalWatchUI` en su dia.
+
+**Trampa de shell**: las rutas con corchetes —`mods/[SVRP] ClassicBows/`—
+rompen los globs. Usar `find -print0` con `read -d ""`, no `for f in $(...)`.
+
+**Y el mod descargado vive en el contenedor efimero**: si se baja en un
+`run --rm` y se analiza en otro, la carpeta ya no existe. Descargar y analizar
+en la MISMA sesion.
+
 ## Procedimiento
 
 **Regla: de uno en uno, y siempre primero en staging.** Añadir cinco mods a la

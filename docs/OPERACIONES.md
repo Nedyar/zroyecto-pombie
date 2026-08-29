@@ -428,10 +428,17 @@ El servicio `pz-vanilla` se elimino a la vez. **Dos servicios sobre el mismo
 volumen es la forma mas directa de corromper un mundo**, y despues de la
 adopcion habrian apuntado los dos a `pz-data-vanilla`.
 
-### Su lista de mods: solo lo reversible
+### Su lista de mods
 
-25 mods (24 del Workshop + `Tariq's Beards` local), en `PZ_WORKSHOP_ITEMS` /
-`PZ_MODS` del `.env`.
+**Produccion** (`PZ_WORKSHOP_ITEMS` / `PZ_MODS` del `.env`): **25 mods**, todos
+reversibles. Es la foto que se congelo el 16/08, antes de la oleada 2.
+
+**Staging, que es donde se juega** (`STAGING_WORKSHOP_ITEMS` / `STAGING_MODS`):
+**37 Mod ID / 35 WorkshopItems**. Los 25 de arriba, mas los 5 irreversibles del
+16/08 con sus dependencias, mas los 4 de contenido del 29/08 (Bandits NPC,
+LG Extended Plumbing, ClassicBows y Horse Mod).
+
+Las dos listas divergen a proposito: produccion es el punto de retorno.
 
 El criterio, con su medicion y las oleadas siguientes, esta en
 [MODS-LISTA.md](MODS-LISTA.md) seccion 0. El resumen: sobre un mundo empezado
