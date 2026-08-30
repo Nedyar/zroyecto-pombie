@@ -451,6 +451,44 @@ Procedimiento completo (diagnóstico y actualización, incluido el atasco
 `state is 0x6` de SteamCMD, que ya ha salido las dos veces) en
 [OPERACIONES.md](OPERACIONES.md).
 
+## 30/08: un mod que publica DOS veces en una hora
+
+Primera vez que ocurre, y deja ver el límite de la ventana de 30 minutos.
+
+```
+17:04 UTC  ClassicBows publica
+17:31      el vigilante lo detecta y avisa
+17:33      servidor vacío → reinicio automático
+17:34      verificación OK, 0 mods faltantes          ✅ todo solo
+18:04      ClassicBows publica OTRA VEZ
+18:20      los jugadores no pueden entrar
+18:33      (le habría tocado el siguiente chequeo)
+```
+
+**El sistema no falló**: la segunda publicación cayó dentro de su ventana de
+30 minutos y la habría resuelto a las 18:33. Se adelantó a mano solo porque
+había gente esperando.
+
+**Lo que sí valida este caso es el arreglo de la revisión del 16/08.** La clave
+del backoff incluye la fecha publicada, no solo el id:
+
+```
+1er reinicio:  3776949545:1788109476
+2ª publicación: 3776949545:1788113072   ← distinta, no la bloquea
+```
+
+Con la versión original —que comparaba solo el id— esto se habría leído como
+"el mismo mod sigue desfasado tras reiniciar", habría entrado en backoff y el
+servidor **se habría quedado bloqueado indefinidamente**. Era el caso hipotético
+que motivó el cambio; hoy ocurrió de verdad.
+
+**Decisión pendiente**: bajar `MODS_CHECK_INTERVAL_MINUTES` de 30 a 10-15. El
+coste es solo más llamadas a la API de Steam (una por chequeo, con todos los
+ids juntos), y reduciría a un tercio la ventana en la que un mod recién
+publicado deja fuera a la gente. Con el ritmo medio (~1,3 publicaciones/día
+sobre 34 mods) los 30 minutos bastan; con autores que publican dos veces por
+hora, no. **Sin decidir: es cambio de configuración y lo decide el usuario.**
+
 ## Cómo se desactiva
 
 `MODS_CHECK_INTERVAL_MINUTES=0` en el `.env` apaga toda la vigilancia: el

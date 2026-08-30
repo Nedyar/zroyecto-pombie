@@ -16,12 +16,12 @@ forma del despliegue, no sus valores.
 | | Puerto | Estado | Que lleva |
 | --- | --- | --- | --- |
 | **Produccion** (`pz`) | 16261 | **parado, a proposito** | El mundo **sin** los 5 mods irreversibles. Punto de retorno vivo |
-| **Staging** (`pz-staging`) | 16461 | **desplegado, se juega aqui** | El mismo mundo **con** los 5 mods. 32 mods en total |
+| **Staging** (`pz-staging`) | 16461 | **desplegado, se juega aqui** | El mismo mundo **con** los mods. 36 en total |
 
 Los dos salen del mismo mundo (`pombie-vanilla`) y tienen volumenes separados.
-Ya han divergido: staging va por **426 MB** de partida jugada, produccion sigue
-con la foto de 392 MB del 16/08. Produccion se quedo con la foto de justo antes de meter los mods
-irreversibles, y **no como tarball sino como mundo que arranca**: si algun dia
+Ya han divergido mucho: staging va por **687 MB** de partida jugada, produccion
+sigue con la foto de 392 MB del 16/08, tomada justo antes de meter los mods
+irreversibles — y **no como tarball sino como mundo que arranca**: si algun dia
 hay que volver, se levanta y ya. El precio es que volver cuesta todo lo jugado
 en staging desde el 16/08, y ese coste crece cada dia.
 
@@ -37,7 +37,7 @@ dentro. Detalle en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
 **Novedad 16/08/2026 (II)**: se levanto la regla de "nada irreversible" y
 entraron **Common Sense, Take A Bath, Manage Containers, Realistic Temperature
 y Trailers!**. Siguen fuera StarvingZombies (reversible, espera votacion) y
-Bicycle! (roto en 42.20). Decision tomada con el coste delante; el razonamiento
+Bicycle! (que entonces estaba roto; ya no, ver seccion 0 de MODS-LISTA). Decision tomada con el coste delante; el razonamiento
 completo en [MODS-LISTA.md](MODS-LISTA.md) seccion 0.
 
 ## Que hay montado
@@ -49,7 +49,7 @@ completo en [MODS-LISTA.md](MODS-LISTA.md) seccion 0.
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
 | Juego | **42.20.4** (`buildid 24909836`), actualizado el 27/08. Disco y mundo coinciden |
 | Mundos | **uno**, en dos copias: produccion (resguardo, 42.20.3) y staging (en juego), **687 MB** |
-| Mods | **37 Mod ID / 35 WorkshopItems** en staging: 25 reversibles + 5 irreversibles (16/08) + **4 de contenido (29/08)**. Produccion se queda en 25 |
+| Mods | **36 Mod ID / 34 WorkshopItems** en staging: 25 reversibles + 5 irreversibles (16/08) + 4 de contenido (29/08), **menos Run and Reload**, retirado por incompatibilidad con Horse Mod. Produccion se queda en 25 |
 | Memoria | heap 6g, `mem_limit` 10g |
 | Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods |
 | Mods desfasados | deteccion cada 30 min, reinicio solo si el mundo esta vacio |
@@ -60,7 +60,7 @@ en 42.20.4. Si algun dia se levanta produccion, hay que actualizarla primero o
 nadie podra entrar — sus clientes ya estaran en la version nueva.
 
 **El nombre `pombie-vanilla` y los volumenes `*-vanilla` son herencia, no
-descripcion**: ese mundo lleva 37 mods. Se conservaron a proposito — renombrar
+descripcion**: ese mundo lleva 36 mods. Se conservaron a proposito — renombrar
 exigiria mover 285 MB de guardados, y mover guardados es justo lo que este
 montaje evita cuando no hace falta.
 
@@ -350,6 +350,13 @@ vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
   ajuste. El `restart: "no"` que costo la caida de 14 horas era un resto de su
   vida como entorno desechable, y **puede haber mas**. La trampa conocida que
   sigue viva: `stage.sh --down` borra el mundo de staging, que hoy es el bueno.
+- **DECIDIR sobre Horse Mod.** Obligo a retirar Run and Reload (incompatibilidad
+  declarada por su autor) y ademas arrastra dos defectos conocidos suyos: las
+  animaciones exigen que cada jugador arranque el juego con el mod ya activado
+  ("Meatball Fix", su issue #215), y **un mundo creado sin el mod puede no
+  generar zonas de rancho, con lo que no apareceria ningun caballo** (su issue
+  #382) — nuestro mundo es del 11/08. Falta investigar su FAQ. Si no hay
+  solucion, la alternativa es retirarlo y devolver Run and Reload.
 - **Auditar Campers!** (655k subs, bases moviles) antes de instalarlo: es el
   unico candidato bueno sin actualizar desde el 09/06, anterior a 42.20
   estable. Mismo procedimiento que se uso con Bicycle!: bajarlo y mirar si

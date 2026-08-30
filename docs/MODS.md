@@ -83,6 +83,47 @@ docker compose --profile staging run --rm --no-deps --entrypoint bash pz-staging
    sincronizacion real; su ausencia, que la etiqueta puede ser optimismo.
 4. **`require=` en TODOS los `mod.info`**, no solo el de la raiz: asi se colo
    `LuaDigitalWatchUI` en su dia.
+5. **`incompatible=`** — el campo que un autor usa para declarar con que mods
+   NO puede convivir. **Lo mira el CLIENTE, no el servidor**: el servidor
+   arranca tan feliz con dos mods incompatibles, `healthy` y con 0 mods
+   faltantes, mientras a cada jugador le sale un error al entrar y el menu de
+   mods le dice cual es el conflicto.
+
+**Regla que sale de esto: `cat` al `mod.info` entero, no `grep` de los campos
+que esperas.** El 29/08 se instalo Horse Mod tras comprobar version,
+dependencias, declaraciones y arquitectura MP — todo correcto— y aun asi
+rompio para los jugadores, porque declara
+`incompatible=RIDINGAPI,WolfoMod,Run and Reload` y teniamos Run and Reload
+puesto. Ninguna comprobacion del lado del servidor lo habria delatado: el
+sintoma solo existe en el cliente.
+
+### Auditar incompatibilidades de TODA la lista activa
+
+Merece la pena pasarlo tras cada instalacion. Cruza lo que cada mod declara
+contra lo que hay realmente activo en el INI:
+
+```bash
+docker compose exec pz-staging bash -c '
+INI=/home/steam/Zomboid/Server/<mundo>.ini
+WS=/opt/pz-server/steamapps/workshop/content/108600
+mapfile -t ACT < <(grep "^Mods=" "$INI" | cut -d= -f2- | tr ";" "\n" | tr -d "\r" | sed "s/^\\\\//")
+for a in "${ACT[@]}"; do
+  f=$(grep -rlx "id=${a}" "$WS" --include=mod.info | head -1); [[ -z "$f" ]] && continue
+  inc=$(grep -ihm1 "^incompatible=" "$f" | cut -d= -f2- | tr -d "\r"); [[ -z "$inc" ]] && continue
+  IFS="," read -ra L <<< "$inc"
+  for x in "${L[@]}"; do x="${x#\\}"; x="$(echo "$x" | xargs)"
+    for b in "${ACT[@]}"; do [[ "$b" == "$x" ]] && echo "*** $a INCOMPATIBLE con $b ***"; done
+  done
+done'
+```
+
+Ojo a dos detalles del formato: los nombres pueden llevar **barra invertida
+delante** (`\BetterFPS_B42`) y **espacios dentro** (`Run and Reload`), asi que
+hay que quitar la barra y recortar espacios antes de comparar.
+
+Muchas incompatibilidades declaradas son entre **variantes del mismo elemento
+del Workshop** —`Neat_Building` contra `Neat_Building_UIOnly`— y son inofensivas
+porque solo se activa una. Lo que importa es cuando las DOS estan en `Mods=`.
 
 **Trampa de shell**: las rutas con corchetes —`mods/[SVRP] ClassicBows/`—
 rompen los globs. Usar `find -print0` con `read -d ""`, no `for f in $(...)`.

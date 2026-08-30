@@ -67,7 +67,7 @@ el filtro nuevo son las tres condiciones de esa frase.
 | **Bandits NPC** | 3268487204 | `Bandits2` | 5 items (modifica vanilla), 0 vehiculos, 0 entities | 1.003.146 subs, unica carpeta `42.20`, 37 ficheros con `isServer`/`sendServerCommand` |
 | **LG Extended Plumbing** | 3779561845 | `LGExtendedPlumbing` | **nada** — reversible | `versionMin=42.20.0`, 141k subs, resuelve el 3x3 del barril |
 | **[SVRP] ClassicBows** | 3776949545 | `SVRPClassicBows` | 149 items, 1 distribucion | `versionMin=42.20`, 53k subs y creciendo, arma silenciosa |
-| **Horse Mod** | 3661336777 | `Horse` | 329 items, **2 entities** | `versionMin=42.13.0`, 296k subs, 22 ficheros con sincronizacion MP |
+| **Horse Mod** | 3661336777 | `Horse` | 329 items, **2 entities** | `versionMin=42.13.0`, 296k subs, 22 ficheros con sincronizacion MP. **Obligo a retirar Run and Reload**, ver abajo |
 
 **Horse Mod es el primero con `entity` (construibles)** que entra en este
 mundo. Importa porque es el UNICO caso que puede impedir que un mundo cargue
@@ -78,6 +78,44 @@ Lo que hizo que Horse Mod fuera viable ahora y no en agosto: **el autor quito
 el "MP SOON" del titulo**. Paso de `Horse Mod [B42.20/MP SOON]` (sin tocar
 desde el 29/04) a `Horse Mod [B42.20+/MP]` el 23/08. La revision periodica que
 esta lista pedia dio su fruto.
+
+### Horse Mod: rompio para los jugadores el mismo dia, por dos motivos
+
+**1. Incompatible con Run and Reload, declarado por el propio autor.** Su
+`mod.info` lleva:
+
+```
+incompatible=RIDINGAPI,WolfoMod,Run and Reload
+```
+
+Y **eso lo comprueba el CLIENTE, no el servidor**: el servidor arrancaba
+`healthy`, con 0 mods faltantes y sin un solo error, mientras a cada jugador le
+saltaba el aviso al entrar y el menu de mods le señalaba el conflicto. Ninguna
+comprobacion del lado del servidor podia detectarlo.
+
+Se resolvio **retirando Run and Reload** (decision del usuario: prefiere los
+caballos). La leccion de metodo esta en [MODS.md](MODS.md): `cat` al `mod.info`
+entero, nunca `grep` de los campos que uno espera encontrar. Alli tambien esta
+el comando que audita las incompatibilidades de toda la lista activa de golpe;
+pasado despues, confirmo **cero conflictos** entre los 36 mods restantes.
+
+**2. Defectos conocidos del mod, documentados por su autor:**
+
+- **Las animaciones no cargan si el mod se activa con el juego ya abierto**
+  (su issue #215). El arreglo —que el autor llama *"Meatball Fix"*— es que
+  **cada jugador arranque el juego con el mod ya activado**: activarlo desde el
+  menu y reconectar NO basta. Guia en imagen y video en la ficha del Workshop.
+- **PROBLEMA DE FONDO, sin resolver (su issue #382)**: crear un mundo sin haber
+  arrancado con el mod activado impide que aparezcan las zonas de rancho, **y
+  entonces no salen caballos en el mapa**. Nuestro mundo se creo el 11/08 sin
+  este mod, asi que es probable que le afecte. El autor dice que hay "una
+  posible solucion" en su FAQ; **no se ha investigado todavia**.
+- Menores: desmontar a veces falla (se arregla saliendo y volviendo a entrar),
+  y apuntar montado se ve raro.
+
+**Decision pendiente del usuario**: investigar la FAQ para generar las zonas de
+rancho en un mundo ya empezado, o retirar Horse Mod y devolver Run and Reload.
+Mientras tanto el mod esta instalado y no afecta al servidor.
 
 ### El metodo que se consolido para admitir un mod
 
@@ -93,6 +131,10 @@ sobre la ficha del Workshop:
 3. **Arquitectura MP**: contar ficheros bajo `lua/server|client|shared` y los
    que usan `isServer()`/`sendServerCommand`. Si el multijugador solo esta en
    la etiqueta y no en el codigo, no cuenta.
+0. **`incompatible=`** — el campo que costo el incidente del 29/08 y que va el
+   primero por eso. Lo evalua el CLIENTE, asi que el servidor no lo delata:
+   arranca perfecto mientras los jugadores no pueden entrar. **Leer el
+   `mod.info` ENTERO**, no solo los campos esperados.
 4. **Dependencias declaradas** (`require=`) en TODOS los `mod.info`, no solo
    el de la raiz.
 

@@ -46,6 +46,21 @@ caro sería volver ahí, pero existe.
   - Desinfectar una venda sucia con alcohol
   - Fabricar sábanas a partir de ropa
 
+## Caballos ⚠️ requiere un paso vuestro
+
+- **[Horse Mod](https://steamcommunity.com/sharedfiles/filedetails/?id=3661336777)** — Siete razas de caballos con variantes de color. Se encuentran en granjas, ranchos y establos; se cuidan, se les fabrica equipo y **se montan**.
+
+**Para que funcione, el juego tiene que ARRANCAR con el mod ya activado.** No basta con activarlo desde el menú y volver a entrar — si lo hacéis así, las animaciones no cargan y os sale error. Es un fallo del juego base, no del mod:
+
+1. Cerrad Project Zomboid **del todo**
+2. Abridlo y, **antes de conectar**, id a `Mods` y activad Horse Mod
+3. **Cerrad el juego otra vez del todo**
+4. Volved a abrirlo y ya conectad
+
+Su autor lo llama *"Meatball Fix"* y tiene guía con imágenes y vídeo en la página del mod.
+
+**Aviso honesto:** puede que **no aparezcan caballos por el mapa**. El mod avisa de que un mundo creado sin él puede no generar las zonas de rancho, y el nuestro es del 11 de agosto. Estamos mirando si hay solución. Si no la hay, se decidirá entre quedarnos con los caballos o recuperar *Run and Reload*.
+
 ## Peligro humano
 
 - **[Bandits NPC](https://steamcommunity.com/sharedfiles/filedetails/?id=3268487204)** — **La novedad gorda del 29/08.** Ya no sois los únicos vivos: hay **bandidos con IA** que patrullan, asaltan y disparan. Un millón de suscriptores lo avalan, y está hecho específicamente para nuestra versión (42.20). Sus opciones se ajustan desde el sandbox, así que si resulta demasiado duro se puede suavizar sin quitarlo. **Id con cuidado: ahora los ruidos no siempre son zombis.**
@@ -69,7 +84,7 @@ caro sería volver ahí, pero existe.
 ## Combate y movimiento
 
 - **[Buttstroke](https://steamcommunity.com/sharedfiles/filedetails/?id=3394044313)** — Puedes dar culatazos con el arma de fuego.
-- **[Run and Reload](https://steamcommunity.com/sharedfiles/filedetails/?id=3397207461)** — Recargar mientras corres.
+- ~~**Run and Reload** — Recargar mientras corres.~~ **RETIRADO el 29/08**: el mod de caballos se declara incompatible con él, y al entrar os daba error. Se eligió quedarse con los caballos. Si algún día se quitaran los caballos, vuelve.
 
 ## Ropa y aspecto
 
