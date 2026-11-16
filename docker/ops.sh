@@ -65,6 +65,82 @@ game_installed() {
     [[ -f "${PZ_DIR}/start-server.sh" ]]
 }
 
+# ============================================================ GUARDA DE RED ===
+
+# Escenario real (03/10 - 16/11/2026, seis semanas caido): Docker rootless
+# arranco antes que Tailscale, fallo al publicar los puertos en la IP de
+# Tailscale y, al deshacer el intento, dejo el contenedor DESCONECTADO de su red
+# para siempre. Desde entonces cada arranque se hacia solo con loopback, y lo
+# unico que decia el log era `Failed to connect to Steam servers`, que apunta a
+# Steam, a la red rootless o al UDP: tres pistas falsas. Desde dentro no se
+# puede arreglar —hay que recrear el contenedor desde el host—, pero si se
+# puede decir que es esto y como se sale.
+#
+# Se mira la ruta por defecto IPv4 en /proc/net/route y no las interfaces: un
+# contenedor sin red tiene `lo` y nada mas, pero lo que de verdad necesita el
+# servidor es poder SALIR (Steam, Workshop), y eso es la ruta. Va antes de
+# instalar y antes del backup de arranque: sin red no se puede jugar, y un
+# bucle de reinicios no debe ir rotando copias `prestart` mientras tanto.
+#
+# "No he podido leer la tabla de rutas" NO es "no hay red": en ese caso se
+# avisa y se sigue. Esta guarda protege de un diagnostico confuso, no al mundo,
+# y un falso positivo dejaria el servidor caido sin motivo.
+guard_network() {
+    local route_file="${ROUTE_FILE:-/proc/net/route}"
+
+    if [[ ! -r "$route_file" ]]; then
+        warn "No puedo leer ${route_file}; me salto la comprobacion de red."
+        return 0
+    fi
+
+    # Columna 2 = destino en hexadecimal; 00000000 es la ruta por defecto (y
+    # tambien acepta una ruta partida tipo 0.0.0.0/1: permisivo a proposito,
+    # basta con que haya por donde salir). Sintaxis POSIX: el contenedor corre
+    # mawk. El "no encontrada" lleva su propio codigo (3) porque mawk sale con
+    # 2 tanto si no puede leer como si falla, y eso NO debe leerse como "sin
+    # red": la revision lo provoco pasandole un directorio.
+    local rc=0
+    awk 'NR > 1 && $2 == "00000000" { found = 1 } END { exit (found ? 0 : 3) }' \
+        "$route_file" || rc=$?
+    case "$rc" in
+        0) return 0 ;;
+        3) ;;
+        *) warn "awk no pudo leer ${route_file} (codigo ${rc}); me salto la comprobacion de red."
+           return 0 ;;
+    esac
+
+    local recreate="docker compose up -d --force-recreate --no-deps pz"
+    if is_true "${PZ_USE_STAGING_MODS:-false}"; then
+        recreate="docker compose --profile staging up -d --force-recreate --no-deps pz-staging"
+    fi
+
+    # Las interfaces van en el mensaje para que el diagnostico se demuestre
+    # solo: si algun dia aparece algo distinto de `lo`, ya no es el caso de
+    # siempre y no hay que fiarse de la receta de abajo.
+    local ifaces
+    ifaces="$(ls /sys/class/net 2>/dev/null | tr '\n' ' ' || true)"
+
+    die_loud \
+"EL CONTENEDOR NO TIENE RED - NO ARRANCO EL SERVIDOR
+
+No hay ruta de salida. Interfaces: ${ifaces:-(no se pudieron listar)}
+Sin ruta el servidor fallaria con 'Failed to connect to Steam servers',
+que NO es un problema de Steam ni del UDP.
+
+Causa conocida (si arriba solo sale 'lo'): Docker intento arrancar el
+contenedor antes de que existiera la IP de Tailscale, fallo al publicar los
+puertos y lo dejo desconectado de su red. Reiniciar el contenedor NO lo
+arregla; hay que recrearlo. En el host, desde la carpeta del proyecto:
+
+  1. comprueba que Tailscale ya tiene su IP (la de HOST_BIND_IP):
+       ip -4 addr show tailscale0
+     si no la tiene, recrear ahora volveria a fallar igual.
+  2. ${recreate}
+
+El mundo no corre peligro: no se ha abierto. Detalle en docs/HANDOFF.md,
+'Caida de seis semanas'."
+}
+
 # ========================================================== GUARDA VERSION ===
 
 # El mecanismo antifallo central del proyecto.

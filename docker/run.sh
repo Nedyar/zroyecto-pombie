@@ -137,6 +137,7 @@ cmd_serve() {
     export FATAL_PAUSE_SECONDS="${FATAL_PAUSE_SECONDS:-30}"
 
     validate_env
+    guard_network
 
     if ! game_installed; then
         log "No hay instalacion del juego en el volumen. Instalando..."
