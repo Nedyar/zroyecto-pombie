@@ -45,6 +45,30 @@ service_running() {
     [[ -n "$("${DC[@]}" ps -q --status running "$svc" 2>/dev/null)" ]]
 }
 
+# PROVISIONAL (16/11/2026), hasta aplicar docs/PLAN-CAMBIO-DE-PAPELES.md.
+#
+# Desde el 13/08 los papeles estan invertidos: `pz` ("produccion") es la foto
+# congelada del 16/08 y el mundo en el que se juega es `pz-staging`. Todos los
+# scripts que trabajan sobre `pz` operan entonces sobre el mundo EQUIVOCADO sin
+# dar ningun error: backup.sh hace una copia en frio del mundo de agosto,
+# capture-*.sh trae al repo los ajustes de agosto y el render se los aplica a la
+# partida buena en el siguiente arranque, install-local-mods.sh instala en un
+# volumen que ya no existe. Mejor que se nieguen.
+#
+# Se quita en el mismo cambio que devuelve el mundo de juego a `pz`.
+refuse_frozen_pz() {
+    # `pz-vanilla` tambien: install-local-mods.sh aun lo acepta y escribe en
+    # el volumen del mundo congelado (el servicio se retiro el 13/08).
+    [[ "${1:-}" == "pz" || "${1:-}" == "pz-vanilla" ]] || return 0
+    die "PROVISIONAL: hoy 'pz' es el mundo CONGELADO de agosto, no el de juego.
+El mundo de juego es 'pz-staging'. Este script trabajaria sobre el equivocado.
+Ver docs/PLAN-CAMBIO-DE-PAPELES.md. Equivalentes para el mundo de juego:
+  backup (en marcha):  docker compose --profile staging exec -T pz-staging /docker/run.sh backup <etiqueta>
+  backup (parado):     docker compose --profile staging run --rm --no-deps pz-staging backup <etiqueta>
+  rcon:                docker compose --profile staging exec -T pz-staging /docker/run.sh rcon <comando>
+  capturas:            ./scripts/capture-ini.sh pz-staging   (y capture-sandbox.sh)"
+}
+
 confirm() {
     local prompt="$1"
     printf '\n%s\n' "$prompt"

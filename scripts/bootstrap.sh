@@ -6,6 +6,7 @@
 # juego: el `git diff` de config/reference/ muestra exactamente que ajustes
 # nuevos ha traido la version, en vez de que aparezcan en silencio.
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+refuse_frozen_pz pz
 
 service_running pz && die "Para el servidor antes:  docker compose stop pz"
 

@@ -36,7 +36,15 @@ escribes una guarda, que aborte, no que continue con un aviso.
    entrar en bloque.
    **OJO — ya no hay entorno de ensayo**: desde el 13/08 staging ES el mundo de
    juego y produccion es una foto congelada. Lo que se instale va directo a la
-   partida buena. Antes de instalar, auditar el mod descargado con el
+   partida buena. Con los papeles asi, los scripts del host que trabajan sobre
+   `pz` (backup, rcon, restore, capture-*, install-local-mods, update-server,
+   bootstrap) operarian sobre el mundo de AGOSTO sin dar error, y `stage.sh`
+   borraria la partida buena: desde el 16/11 se niegan todos. Para el mundo de
+   juego, el backup etiquetado de esta regla es
+   `docker compose --profile staging exec -T pz-staging /docker/run.sh backup <etiqueta>`
+   (en marcha) o `... run --rm --no-deps pz-staging backup <etiqueta>` (parado).
+   Arreglo de fondo en docs/PLAN-CAMBIO-DE-PAPELES.md.
+   Antes de instalar, auditar el mod descargado con el
    procedimiento de docs/MODS.md ("Auditar un candidato"), y mirar sobre todo
    si declara `entity`: es lo unico que puede impedir que un mundo cargue al
    quitarlo.

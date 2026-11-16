@@ -19,6 +19,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 SRC="${1:-}"
 SVC="${2:-pz}"
+refuse_frozen_pz "$SVC"
 
 if [[ -z "$SRC" ]]; then
     cat <<'EOF'

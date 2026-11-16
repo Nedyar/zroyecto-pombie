@@ -14,6 +14,20 @@
 # haber un segundo mundo, se anade su caso al `case` de abajo.
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
+# ------------------------------------------------- DESACTIVADO (16/11/2026) ---
+#
+# Desde el 13/08 `pz-staging` NO es un ensayo: es el mundo en el que se juega,
+# y `pz` es la foto congelada del 16/08. Con los papeles asi, este script
+# destruye la partida buena en sus dos modos: `--down` borra el volumen
+# `pz-data-staging`, y el modo normal hace lo mismo (lineas de "Limpiando datos
+# previos") y ademas carga encima el mundo de agosto. Se bloquea entero hasta
+# que se invierta el reparto: docs/PLAN-CAMBIO-DE-PAPELES.md.
+die "stage.sh esta DESACTIVADO: hoy pz-staging es el mundo en el que se juega
+y este script lo borraria. Ver docs/PLAN-CAMBIO-DE-PAPELES.md.
+Para arrancar o parar el mundo de juego:
+    docker compose --profile staging up -d pz-staging
+    docker compose stop pz-staging"
+
 # ------------------------------------------------------------- argumentos ---
 MODE="fresh"
 SRC_SVC="pz"

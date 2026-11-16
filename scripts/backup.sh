@@ -6,6 +6,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 LABEL="${1:-manual}"
+refuse_frozen_pz pz
 
 if service_running pz; then
     say "Servidor en marcha: fuerzo guardado y respaldo en caliente."

@@ -6,6 +6,7 @@
 # puede cambiar el motor por debajo de un mundo vivo, que es de las formas mas
 # habituales (y mas silenciosas) de acabar con un guardado corrupto.
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+refuse_frozen_pz pz
 
 cat <<'EOF'
 
