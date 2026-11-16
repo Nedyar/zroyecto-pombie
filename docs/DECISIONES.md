@@ -319,6 +319,56 @@ Diseno completo, con las tres decisiones y su resolucion, en
 
 ---
 
+## 11. `ip_nonlocal_bind` en el host para que el orden de arranque no importe (16/11/2026)
+
+**El problema**: el juego publica sus puertos UDP solo en la IP de Tailscale
+(`HOST_BIND_IP`), a proposito, para que fuera del tailnet no exista. Pero esa
+IP la crea `tailscaled` al arrancar, y el daemon rootless de Docker arranca
+a la vez. Medido en los 15 arranques con journal: Tailscale gano 14 (por ~1
+o ~6 s) y perdio uno, el 04/10, por ~0,5 s. Si Docker hace el bind
+antes, Linux lo rechaza (`cannot assign requested address`), el contenedor
+no arranca, y Docker lo deja ademas desconectado de su red para siempre. Esa
+unica vez costo seis semanas de caida (HANDOFF, "Caida de seis semanas").
+
+**Lo que se hizo**: `net.ipv4.ip_nonlocal_bind = 1` en
+`/etc/sysctl.d/60-pz-tailscale.conf`. Con ese parametro Linux acepta el bind
+a una IP que la maquina todavia no tiene; los paquetes empiezan a entregarse
+en cuanto `tailscale0` recibe la IP. Probado aislado en un contenedor
+desechable: con 0, `Errno 99`, el mismo error del 04/10; con 1, el bind
+funciona y un paquete enviado a la IP anadida despues llega. **Sin probar
+todavia el arranque real completo**, y un reinicio normal no lo probara: si
+Tailscale vuelve a ganar, todo sale bien con o sin el ajuste. Solo cuenta un
+arranque en el que Docker llegue primero (como distinguirlo, en el HANDOFF).
+
+**Por que esto y no otra cosa**:
+
+- *Hacer que Docker espere a Tailscale* (drop-in en el servicio de usuario):
+  descartado. Ata TODO el daemon —las demas apps que corren en el— a
+  Tailscale, cuando el unico que lo necesita es el juego. Si Tailscale tarda o falla,
+  caen todas las apps por un problema de una.
+- *Un vigilante que recree el contenedor tras el fallo*: arregla despues en
+  vez de evitar, deja el servidor caido unos minutos en cada arranque con
+  mala suerte, y mete algo que recrea contenedores por su cuenta.
+- *Con el parametro* nadie espera a nadie: Docker y Tailscale arrancan cada
+  uno a su ritmo, y el unico vinculo con Tailscale sigue siendo el que ya
+  habia, el del juego por su `HOST_BIND_IP`.
+
+**El precio**: es de todo el sistema y vive fuera del repo. Un programa que
+haga bind a una IP que la maquina no tiene ya no recibe error: se queda
+escuchando sin recibir nada. Una IP mal escrita en cualquier configuracion
+de la maquina pasa a fallar en silencio. Los binds a `127.0.0.1`, `0.0.0.0` o a
+IPs existentes no cambian. No abre puertos ni expone nada.
+
+**Al migrar de maquina**: este fichero NO viaja con el repo. Sin el, la
+carrera vuelve. Deshacerlo: borrar el fichero y
+`sudo sysctl -w net.ipv4.ip_nonlocal_bind=0`.
+
+**Red de seguridad**: si aun asi el contenedor arranca sin red, `guard_network`
+(docker/ops.sh) lo para con un mensaje que dice que es esto y como se recrea.
+Activa desde el 17/11, al reconstruir la imagen.
+
+---
+
 ## Cosas que costaron una tarde y conviene no redescubrir
 
 **SteamCMD: `validate` sobre un directorio vacio falla.** Da el error

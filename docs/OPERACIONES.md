@@ -340,6 +340,11 @@ docker compose run --rm --no-deps pz bash -c 'rm -rf /home/steam/Zomboid/.pre-re
 
 ## Staging: probar sin arriesgar
 
+> **DESACTIVADO desde el 16/11/2026.** Con los papeles invertidos (se juega en
+> `pz-staging`), `stage.sh` borraria la partida buena en cualquiera de sus
+> modos, asi que aborta nada mas arrancar. Todo lo de esta seccion vuelve a
+> valer cuando se aplique [PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md).
+
 ```bash
 ./scripts/stage.sh                     # copia el mundo de PRODUCCION y lo levanta aparte
 ./scripts/stage.sh --from pz         # explicito, mismo efecto
@@ -397,8 +402,10 @@ Produccion no es un backup: es un mundo que **arranca**. Si algun dia hay que
 volver atras, `docker compose up -d` y ya. Lo que cuesta volver es todo lo
 jugado en staging desde el 16/08, y eso crece cada dia.
 
-**La trampa que hay que tener presente**: `./scripts/stage.sh --down` borra el
-mundo de staging, que es donde se juega. Antes de lanzarlo, backup.
+**La trampa que hay que tener presente**: `./scripts/stage.sh` borraba el
+mundo de staging, que es donde se juega, en su modo normal tanto como con
+`--down`. **Desactivado desde el 16/11** hasta aplicar
+[PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md).
 
 Para levantar produccion habria que decidir antes que pasa con staging: los dos
 pueden correr a la vez (puertos y volumenes distintos), pero son mundos que ya
@@ -710,6 +717,19 @@ docker compose stop            # apagado seguro, importante
    `TariqsBeardsB42.zip`. La lista actual esta en
    [MODS-LISTA.md](MODS-LISTA.md), seccion 1.
 
+**Y una pieza que no es una carpeta sino un ajuste del sistema**, que hay que
+volver a crear a mano en la maquina destino (necesita sudo):
+
+```bash
+printf '# Zomboid: ver docs/DECISIONES.md decision 11 del repo del servidor\nnet.ipv4.ip_nonlocal_bind = 1\n' \
+  | sudo tee /etc/sysctl.d/60-pz-tailscale.conf
+sudo sysctl -w net.ipv4.ip_nonlocal_bind=1
+```
+
+Sin el, el juego vuelve a depender de que Tailscale arranque antes que
+Docker, y perder esa carrera deja el contenedor sin red (seis semanas de
+caida en octubre). El porque, en [DECISIONES.md](DECISIONES.md) decision 11.
+
 Si se pierde el `.env`, se reconstruye desde `.env.example` mas los bloques
 `WorkshopItems` y `Mods` de [MODS-LISTA.md](MODS-LISTA.md), que si estan
 versionados.
@@ -858,7 +878,7 @@ que la maquina puede dar sin empezar a usar swap.
 | --- | --- |
 | `docker compose kill` / `docker kill` | Salta el guardado. Es el camino directo a un mundo corrupto. |
 | `docker compose down -v` | La `-v` borra los volumenes. Ahi estan los guardados. |
-| `docker compose --profile staging down` | `down` derriba el proyecto ENTERO, produccion incluida. Para parar solo staging: `./scripts/stage.sh --down` |
+| `docker compose --profile staging down` | `down` derriba el proyecto ENTERO, produccion incluida. Para parar solo staging: `docker compose stop pz-staging` (`stage.sh --down` ademas BORRA sus datos, y mientras los papeles esten invertidos esos datos son el mundo de juego) |
 | Poner `UPDATE_ON_START=true` | Cualquier reinicio podria cambiar el motor bajo un mundo vivo. |
 | Editar `config/reference/` | Se regenera y pierdes los cambios. Edita `config/server.ini.tmpl`. |
 | Cambiar `PZ_SERVER_NAME` con el mundo en marcha | Da nombre a la carpeta de guardado: equivale a empezar de cero. |

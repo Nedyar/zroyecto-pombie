@@ -25,9 +25,12 @@ irreversibles — y **no como tarball sino como mundo que arranca**: si algun di
 hay que volver, se levanta y ya. El precio es que volver cuesta todo lo jugado
 en staging desde el 16/08, y ese coste crece cada dia.
 
-**OJO, la trampa mas grave de este montaje**: `./scripts/stage.sh --down`
-**borra el mundo de staging**, y staging es donde se juega. No lo lances sin
-haber hecho backup.
+**OJO, la trampa mas grave de este montaje**: `./scripts/stage.sh` **borraba
+el mundo de staging**, y staging es donde se juega — y no solo con `--down`:
+el modo normal tambien borra el volumen y encima carga el mundo de agosto
+(descubierto el 16/11 leyendo el script). **Desde el 16/11 esta desactivado**:
+aborta en sus tres modos hasta que se inviertan los papeles, ver
+[PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md).
 
 **Novedad 16/08/2026 (I)**: el servidor detecta solo cuando Steam ha
 actualizado un mod y el suyo se quedo atras (pasaba casi a diario), avisa por
@@ -177,6 +180,131 @@ hay que crear una instancia aparte.
 
 Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
 
+## Caida de seis semanas (03/10 - 16/11/2026): un contenedor sin red
+
+**Sintoma**: `pombie-staging` en bucle de reinicios, uno por minuto, cada uno
+con `Failed to connect to Steam servers` -> `Server exited` ->
+`NullPointerException` en `ServerMap.SaveAll`. El contador de Docker marcaba
+10.807 al pararlo, pero se reinicia con cada arranque de la maquina: sumando
+los del journal fueron ~52.000 en seis semanas. Nadie se entero: es la falta
+de alerta de servidor caido otra vez (ver Pendiente).
+
+**Cadena, reconstruida del journal y de los logs del juego:**
+
+```
+03/10 10:03   ultimo guardado del mundo (y ultima copia periodic)
+03/10 12:56   el portatil entra en HIBERNACION HIBRIDA (logind: "The system
+              will enter hybrid sleep now!") y no se reanuda: el JVM queda
+              congelado sin apagado seguro, y luego la maquina se apaga
+04/10 05:49   Docker rootless arranca ANTES que Tailscale:
+              "listen udp4 <HOST_BIND_IP>:16461: bind: cannot assign
+              requested address" -> "failed to start container"
+              Al deshacer el intento, Docker DESCONECTA el contenedor de su
+              red y no lo vuelve a conectar (Networks={} en inspect).
+04/10-10/10   el contenedor ni se intenta arrancar (no hay logs del juego)
+10/10 04:02   reinicio por kernel: arranca... sin red. Solo loopback, sin IP,
+              sin DNS (resolv.conf con 127.0.0.53 copiado del host), sin
+              puertos. Steam falla en 0,1 s (cuando iba bien tardaba ~10 s).
+10/10-16/11   bucle: unless-stopped lo relanza sin fin
+```
+
+**Es la carrera que "NO verificado nº1" temia**, ya probada en real: no
+solo impide arrancar, sino que deja el contenedor roto para siempre de forma
+silenciosa — los arranques posteriores, con Tailscale ya arriba, "funcionan"
+para Docker pero el contenedor no tiene red.
+
+**Pistas falsas descartadas con pruebas**: la red del Docker rootless
+(slirp4netns) y el UDP de salida — un contenedor nuevo de la misma imagen en
+la misma red resuelve Steam sin problema —; y la actualizacion de Docker del
+09/10 (29.8.1 -> 29.9.0), que coincide en fecha pero no tiene nada que ver.
+
+**Lo que mas rapido delata este estado**: el fichero `hosts` del contenedor
+sin linea con IP propia, o `docker inspect -f '{{json .NetworkSettings.Networks}}'`
+devolviendo `{}`.
+
+**Por que hiberno** no lo dice el journal. La sospecha, sin probar: UPower
+tiene `CriticalPowerAction=HybridSleep`, que salta con la bateria critica (un
+corte de luz o el cargador suelto bastarian). `HandleLidSwitch=ignore` esta
+puesto, pero `sleep.target` y compania no estan enmascarados. **Importa mas
+que la caida**: hibernar no avisa al contenedor, asi que el servidor se queda
+congelado sin `save` ni `quit`, y si la maquina muere asi en mitad de un
+guardado, es el mundo corrupto que todo este montaje evita. Esta vez el
+ultimo guardado era de tres horas antes. Ver Pendiente.
+
+**Arreglo (16/11)**: `docker compose stop pz-staging`, copia en frio
+`antes-recrear-red`, y `docker compose --profile staging up -d
+--force-recreate --no-deps pz-staging`. Imagen y compose identicos a los del
+contenedor viejo (creado el 30/08, justo tras el ultimo cambio del `.env`),
+asi que la recreacion solo reconecta la red. Verificado: IP en la red del
+proyecto, `SERVER STARTED`, UDP 16461/16462 en la IP de Tailscale, RCON
+responde, `healthy`, 0 reinicios. `required mod "Tariq's Beards" not found`
+aparece, pero ya estaba el 02/10: no es de este incidente (ver la decision
+D6 en PLAN-CAMBIO-DE-PAPELES.md: el mod no esta instalado en este mundo).
+
+**El mundo no sufrio**: el bucle nunca llego a cargar el mapa (de ahi el NPE
+al guardar), y no hay un solo fichero de `Saves/` ni `db/` posterior al
+03/10 10:03. Entre las 10:03 y el apagon de las 12:56 probablemente no se
+perdio nada: el log del juego no registra ninguna conexion ese dia. Las
+copias `periodic` y `pre-mods` buenas (20 de cada) no corrian peligro: la
+rotacion va por prefijo y etiqueta, y el bucle solo producia `prestart`
+(una por hora como maximo, gracias a la guarda de bucle de reinicios). Las
+`prestart` anteriores al incidente si se rotaron: todas las que quedan son
+del 16/11 o posteriores.
+
+**Trampas operativas que aparecieron**:
+
+- Los scripts que trabajan sobre `pz` (backup, rcon, restore, capture-*,
+  install-local-mods, update-server, bootstrap) operan sobre el mundo de
+  AGOSTO, sin error. `capture-*` es la peor: trae al repo los ajustes de
+  agosto y el render se los aplica a la partida buena. **Desde el 16/11 se
+  niegan** (`refuse_frozen_pz` en `scripts/_common.sh`, provisional hasta
+  el cambio de papeles). Equivalentes para el mundo de juego:
+  - backup con el servidor en marcha (fuerza `save` antes):
+    `docker compose --profile staging exec -T pz-staging /docker/run.sh backup <etiqueta>`
+  - backup con el servidor parado:
+    `docker compose --profile staging run --rm --no-deps pz-staging backup <etiqueta>`
+    — con el servidor en marcha esta forma levanta un SEGUNDO contenedor
+    que no puede forzar el `save` y empaqueta un mundo a medio escribir.
+  - rcon: `docker compose --profile staging exec -T pz-staging /docker/run.sh rcon players`
+- El lanzador imprime la contrasena de admin en `docker logs` (argumentos de
+  `pzexe`): la ve cualquiera que pueda leer los logs del contenedor, tambien
+  desde un panel web de Docker.
+
+**Guarda nueva (`guard_network`)**: si el contenedor arranca sin ruta de
+salida, el servidor ni se lanza y el log dice que es esto, que interfaces hay
+y el comando exacto para recrearlo, en vez del enganoso `Failed to connect
+to Steam servers`. Va antes de instalar y del backup de arranque. Probada en
+contenedores desechables (sin red, con red, tabla ilegible, error de awk) y
+revisada por otro agente. **Activa desde el 17/11**: imagen reconstruida
+(con las tres baterias de selftest en verde dentro de ella) y `pz-staging`
+recreado con el servidor vacio, tras una copia `antes-imagen-nueva`.
+
+**La carrera Docker/Tailscale, resuelta en el host (16/11)**: en los 15
+arranques con journal (06/09 - 09/11), Tailscale gano 14 (por ~1 s en 9, por
+~6 s en 5) y perdio uno, el 04/10, por ~0,5 s. Poco frecuente, pero la unica vez
+que paso costo seis semanas. Se activo `net.ipv4.ip_nonlocal_bind = 1`
+en `/etc/sysctl.d/60-pz-tailscale.conf`: el bind a la IP de Tailscale se
+acepta aunque la IP aun no exista, y el orden deja de importar. Por que esto
+y no que Docker espere a Tailscale, en DECISIONES.md decision 11.
+
+**Pendiente de verificar en el proximo reinicio del portatil**, con un
+matiz: lo normal es que Tailscale vuelva a ganar, y entonces la comprobacion
+sale bien CON o SIN el ajuste. Solo prueba algo si Docker llego primero:
+
+```bash
+# quien llego antes (solo es una prueba real si Docker va primero)
+journalctl -b -u tailscaled -o short-precise | grep -m1 "Reconfig: configuring router"
+journalctl --user -b -u docker -o short-precise | grep -m1 "Loading containers: start"
+# y que el contenedor quedo bien
+docker inspect -f '{{json .NetworkSettings.Networks}}' pombie-staging   # no debe ser {}
+ss -ulpn | grep 1646                                                     # puertos en la IP de Tailscale
+journalctl --user -u docker -b | grep -E "AddPort|cannot assign"         # nada
+```
+
+Forzar la prueba parando `tailscaled` antes de arrancar Docker es posible,
+pero solo desde la consola del portatil: se pierde el acceso remoto por el
+tailnet.
+
 ## Oleada 3 del 29/08/2026: cuatro mods de contenido
 
 Entraron **Bandits NPC** (bandidos con IA), **LG Extended Plumbing** (el barril
@@ -317,6 +445,11 @@ vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
    la politica es `unless-stopped`, el proximo reinicio del sistema sera la
    primera prueba real de esa carrera: **conviene mirar el log tras el
    siguiente parche de seguridad**.
+   **PROBADA EN REAL el 04/10 y FALLO, y peor de lo temido**: el bind falla y
+   ademas el contenedor se queda desconectado de su red para siempre. Seis
+   semanas de caida; ver "Caida de seis semanas" arriba. Corregido el
+   16/11 con `ip_nonlocal_bind` (DECISIONES.md decision 11); la verificacion
+   real sigue pendiente del proximo reinicio.
 2. **Que los mods hagan lo que prometen en juego.** Para eso esta
    [CHECKLIST-MODS.md](CHECKLIST-MODS.md), que ya lleva buena parte marcada.
 3. ~~Cual es la linea base de errores de un B42.20 multijugador sano.~~
@@ -338,7 +471,18 @@ vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
   cerrado.
 - **ALERTA DE SERVIDOR CAIDO — lo mas rentable que queda por hacer.** El 20/08
   el servidor estuvo 14 horas muerto y nadie se entero hasta que lo dijeron los
-  jugadores. El vigilante de mods NO puede cubrirlo: vive dentro del contenedor
+  jugadores; entre el 03/10 y el 16/11, **seis semanas**. Desde el 16/11 hay
+  un monitor de disponibilidad en la maquina, montado fuera de este repo:
+  falta saber si vigila este servidor y como avisa.
+- **Que la maquina no pueda hibernar con el servidor dentro.** El 03/10
+  entro en hibernacion hibrida (causa sin confirmar; sospecha: accion de
+  bateria critica de UPower) y el JVM se quedo congelado sin apagado seguro.
+  Opciones, fuera del repo y con sudo: enmascarar `sleep.target`,
+  `suspend.target`, `hibernate.target` e `hybrid-sleep.target`, o cambiar
+  `CriticalPowerAction` a `PowerOff`, que hace un apagado ordenado (el del
+  20/08 demostro que asi el contenedor guarda bien), siempre que la bateria
+  aguante los hasta 180 s del apagado seguro. Lo segundo conserva la
+  proteccion de la bateria. El vigilante de mods NO puede cubrirlo: vive dentro del contenedor
   y muere con el. Hace falta algo FUERA (un timer de systemd de usuario), la
   unica pieza que por naturaleza no cabe en el repo autocontenido.
 - **Aviso de hotfix del juego.** Dos veces seguidas (42.20.3 el 17/08, 42.20.4
@@ -348,8 +492,11 @@ vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
   decision humana. Detalle en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
 - **Repasar el servicio de staging entero contra produccion**, ajuste por
   ajuste. El `restart: "no"` que costo la caida de 14 horas era un resto de su
-  vida como entorno desechable, y **puede haber mas**. La trampa conocida que
-  sigue viva: `stage.sh --down` borra el mundo de staging, que hoy es el bueno.
+  vida como entorno desechable, y **habia mas**: el 16/11 aparecio
+  `ALLOW_BUILD_CHANGE: "true"` (la guarda de version, desactivada en el mundo
+  bueno). El repaso completo y el arreglo de fondo estan en
+  [PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md); `stage.sh`, que
+  borraba el mundo bueno, queda desactivado mientras tanto.
 - **DECIDIR sobre Horse Mod.** Obligo a retirar Run and Reload (incompatibilidad
   declarada por su autor) y ademas arrastra dos defectos conocidos suyos: las
   animaciones exigen que cada jugador arranque el juego con el mod ya activado
@@ -410,12 +557,15 @@ Aparecen en cada arranque y **no son fallos**:
 
 ## Lo que git NO puede devolverte
 
-El repositorio reconstruye el montaje entero en otra maquina, pero hay dos cosas
+El repositorio reconstruye el montaje entero en otra maquina, pero hay tres cosas
 que no cubre y que solo existen en el disco del servidor:
 
 - **`.env`**, con las contrasenas y los valores de la instancia. Esta ignorado a
   proposito.
 - **El mundo**, en volumenes de Docker. Ni siquiera esta dentro del repositorio.
+- **El ajuste `ip_nonlocal_bind` del host** (`/etc/sysctl.d/60-pz-tailscale.conf`,
+  desde el 16/11). No es un dato sino configuracion del sistema: se recrea
+  con dos comandos que estan en OPERACIONES.md, *Migrar a otra maquina*.
 
 Si la maquina se pierde, con el repositorio se levanta el servidor en un rato,
 pero el mundo jugado y las credenciales no vuelven. Las dos piezas viajan por
