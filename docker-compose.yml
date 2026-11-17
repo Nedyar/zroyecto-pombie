@@ -30,6 +30,12 @@ x-pz-common: &pz-common
     context: .
     dockerfile: Dockerfile
   image: zroyecto-pombie:latest
+  # El vigilante de versiones de la maquina (WUD) compara cada imagen con su
+  # registro. Esta es local y no esta en ninguno: sin la etiqueta solo deja un
+  # aviso inutil en sus logs. La version que importa aqui, la del juego, vive
+  # en el volumen y la controla scripts/update-server.sh, no WUD.
+  labels:
+    wud.watch: "false"
   env_file:
     - .env
 

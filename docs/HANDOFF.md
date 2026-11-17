@@ -76,12 +76,12 @@ completo en [MODS-LISTA.md](MODS-LISTA.md) seccion 0.
 | Anfitrion | Linux (Ubuntu 24.04), portatil usado como servidor, lid ignorado |
 | Docker | **rootless**, daemon de usuario, sin grupo `docker` |
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
-| Juego | **42.20.4** (`buildid 24909836`), actualizado el 27/08. Disco y mundo coinciden |
+| Juego | `buildid 26486687` (rama `public` de Steam, posterior a 42.21), actualizado el 17/11. Disco y mundo coinciden. La instalacion anterior (42.20.4, `24909836`) queda copiada en el volumen `pz-game-ensayo` como via de vuelta: Steam ya no ofrece la 42.20 |
 | Mundos | **uno** de juego, en produccion (`pz`), **687 MB**. Al lado, el ensayo (`pz-staging`), que se rehace desde el de juego cada vez. El de agosto, archivado (42.20.3) |
 | Mods | **36 Mod ID / 34 WorkshopItems** en produccion: 25 reversibles + 5 irreversibles (16/08) + 4 de contenido (29/08), **menos Run and Reload**, retirado por incompatibilidad con Horse Mod. Tariq's Beards esta en la lista pero **no instalado** en este mundo: el servidor lo pide (`required mod not found`) y no lo carga. Se queda asi por decision del administrador |
 | Puertos | juego **16461/16462** UDP, publicados 1:1; RCON del host 27015, solo loopback. Ensayo: 16361/16362 y RCON 27115 |
-| Memoria | heap 6g, `mem_limit` 10g (los dos servicios) |
-| Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods. Prefijo `pz-pombie-vanilla-`; el ensayo firma `ensayo-` |
+| Memoria | produccion: heap 6g, `mem_limit` 10g. Ensayo: heap 3g (`STAGING_MEMORY`), `mem_limit` 4g |
+| Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods. Prefijo `produccion-`; el ensayo firma `ensayo-` |
 | Mods desfasados | deteccion cada 30 min, reinicio solo si el mundo esta vacio |
 | Reinicio del sistema | produccion vuelve sola (`unless-stopped`); staging no (`restart: "no"`, es desechable) |
 
@@ -304,9 +304,12 @@ del 16/11 o posteriores.
   `run` (en frio). Un `run --rm` escrito a mano con el servidor en marcha
   levanta un SEGUNDO contenedor que no puede forzar el `save` y empaqueta un
   mundo a medio escribir.
-- El lanzador imprime la contrasena de admin en `docker logs` (argumentos de
-  `pzexe`): la ve cualquiera que pueda leer los logs del contenedor, tambien
-  desde un panel web de Docker.
+- ~~El lanzador imprime la contrasena de admin en `docker logs`~~. Resuelto
+  el 17/11: la salida del servidor pasa por `redact_admin_password`
+  (lifecycle.sh), que la sustituye por `<REDACTADO>`, y la contrasena se
+  cambio ese dia porque ya se habia visto en un panel web. Sigue en claro en
+  la linea de comandos del juego (`ps` dentro del contenedor) y en los logs
+  que el juego escribe en su volumen; ninguno de los dos sale de la maquina.
 
 **Guarda nueva (`guard_network`)**: si el contenedor arranca sin ruta de
 salida, el servidor ni se lanza y el log dice que es esto, que interfaces hay
@@ -474,6 +477,20 @@ estado y avise. Es la unica pieza del montaje que, por naturaleza, no puede
 vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
 
 ## NO verificado
+
+0. **Que el mundo este entero tras pasar de 42.20.4 a 42.22.2 (17/11/2026).**
+   Arranca, carga los mods (solo falta Tariq's Beards, como antes) y responde.
+   Pero al leer `map_meta.bin` salen **513 `invalid room metaID`** (con
+   42.20.4 eran 4), 462 de ellos en la celda 29,45 y el resto repartidos en
+   18 celdas. `map_meta.bin` guarda datos por habitacion de los edificios; lo
+   probable es que el mapa nuevo haya cambiado los identificadores de esas
+   habitaciones y el juego descarte los datos guardados que ya no casan. No
+   esta confirmado ni se sabe que se pierde (posiblemente que esas
+   habitaciones ya estaban saqueadas). Volver atras es posible
+   (`produccion-20261117-210940-pre-update` + el motor 42.20.4 copiado en
+   `pz-game-ensayo`), pero los clientes de Steam ya no pueden elegir 42.20,
+   asi que nadie podria entrar. Hasta que alguien juegue y mire su base,
+   esto queda abierto.
 
 1. **Que el servidor vuelva solo tras un reinicio.** ~~El daemon rootless y el
    linger estan habilitados... `restart: unless-stopped` deberia recuperarlo.~~

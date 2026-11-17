@@ -11,6 +11,32 @@
 PZ_STDIN_FIFO="${PZ_STDIN_FIFO:-/tmp/pz-stdin}"
 SERVER_LAUNCHER_PID=""
 
+# Copia stdin en stdout cambiando la contrasena de admin por <REDACTADO>.
+# - La lee de ENVIRON y no de `awk -v`. No es por ocultarla de `ps` (ya sale
+#   ahi: va en la linea de comandos del juego), sino para no anadir otro
+#   sitio mas donde aparezca.
+# - Busca con index() y no con gsub(): gsub la trataria como expresion
+#   regular, y una contrasena con `.` o `*` taparia de mas o de menos.
+# - `mawk -W interactive`, no `awk` con fflush(): fflush solo vacia la SALIDA,
+#   y mawk leyendo de una tuberia acumula tambien la ENTRADA. Comprobado: con
+#   una linea por segundo, salian todas juntas al cerrarse la tuberia. Con un
+#   servidor tranquilo, `docker logs` iria horas por detras. -W interactive es
+#   de mawk (gawk lo ignoraria), por eso se le llama por su nombre.
+redact_admin_password() {
+    mawk -W interactive 'BEGIN { pw = ENVIRON["PZ_ADMIN_PASSWORD"]; n = length(pw) }
+        {
+            if (n) {
+                out = ""; s = $0
+                while ((i = index(s, pw)) > 0) {
+                    out = out substr(s, 1, i - 1) "<REDACTADO>"
+                    s = substr(s, i + n)
+                }
+                $0 = out s
+            }
+            print
+        }'
+}
+
 # ================================================================ ARRANQUE ===
 
 launch_server() {
@@ -60,13 +86,27 @@ launch_server() {
 
     log "Arrancando servidor '${servername}' (RAM maxima ${PZ_MEMORY})"
 
+    # Sin contrasena en el entorno, el filtro de abajo no tapa nada y la
+    # dejaria pasar en claro sin avisar. validate_env ya lo impide, pero el
+    # filtro depende de que este EXPORTADA (la lee de ENVIRON), asi que se
+    # asegura aqui, junto a quien lo necesita.
+    [[ -n "${PZ_ADMIN_PASSWORD:-}" ]] \
+        || die_loud "PZ_ADMIN_PASSWORD vacia: no arranco para no escribirla en claro en los logs."
+    export PZ_ADMIN_PASSWORD
+
     cd "$PZ_DIR"
+    # La salida del servidor pasa por redact_admin_password antes de llegar a
+    # `docker logs`: el juego escribe la contrasena de admin en claro dos veces
+    # por arranque (su eco de argumentos `pzexe: arg:` y "admin password
+    # changed via -adminpassword ..."), y esos logs se ven en Portainer y se
+    # mandan a Loki. Con la sustitucion de procesos, $! sigue siendo el
+    # lanzador, no el filtro: el `wait` de run.sh recibe su codigo de salida.
     ./start-server.sh \
         -servername "$servername" \
         -adminusername "$PZ_ADMIN_USERNAME" \
         -adminpassword "$PZ_ADMIN_PASSWORD" \
         -cachedir="$DATA_DIR" \
-        <&3 &
+        <&3 > >(redact_admin_password) 2>&1 &
 
     SERVER_LAUNCHER_PID=$!
     log "Lanzador arrancado (pid ${SERVER_LAUNCHER_PID})"

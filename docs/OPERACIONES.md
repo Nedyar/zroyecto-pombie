@@ -642,6 +642,26 @@ arranca. En cuanto arranque, devuelve el `.env` a `false` y recrea otra vez.
 **Sin probar**: comprueba en el log `Cambio de version aceptado
 explicitamente` y que el `.env` queda en `false`.
 
+**Lo que se hizo el 17/11/2026, con una sola recreacion** (probado): la copia
+en frio la hizo `update-server.sh` (su `pre-update`) antes de atascarse; tras
+el arreglo de arriba, se registro la version a mano, que es exactamente lo que
+`cmd_update` habria hecho si la descarga hubiera ido bien:
+
+```bash
+docker compose run --rm --no-deps --entrypoint bash pz -c \
+  'printf "%s\n" <buildid-nuevo> > /home/steam/Zomboid/.pz-buildid'
+docker compose up -d pz     # arranca con "Version verificada: buildid ..."
+```
+
+Solo tras comprobar que el manifiesto dice el buildid nuevo y que los Lua
+tienen fecha de hoy (abajo): si se registra una version que no entro entera,
+la guarda deja de proteger justo cuando hace falta.
+
+**Ojo, `update-server.sh` miente cuando se atasca**: tras el `state is 0x6`
+dice `No habia actualizacion pendiente`, porque compara el buildid de antes y
+de despues y no mira si SteamCMD fallo. Busca el `Error!` o el `AVISO:
+SteamCMD salio con error` justo encima antes de creerlo.
+
 **Verificacion imprescindible tras actualizar**, que en el hotfix del 17/08 se
 omitio y costo diez dias de un jugador sin poder jugar:
 
