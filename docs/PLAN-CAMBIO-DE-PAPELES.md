@@ -3,9 +3,9 @@
 Redactado el 16/11/2026 y corregido el 17/11 tras dos revisiones
 adversariales. Cada paso que cambia algo espera el sí del administrador.
 
-**Estado:** pasos 0 y 2 hechos. Paso 1 en la rama
-`refactor/produccion-es-el-mundo-de-juego`, todavía fuera del directorio vivo
-del proyecto. Pasos 3 a 6 pendientes.
+**Estado (17/11/2026, 01:08): APLICADO.** Pasos 0 a 4 hechos; el mundo de
+juego corre como `pz` (`pombie-pz`). Quedan el 2b, el 5 y el 6, ninguno
+urgente.
 
 ## Objetivo
 
@@ -68,7 +68,7 @@ expresa del administrador el 17/11.
   `pz` se niegan, y explican el comando equivalente para el mundo de juego.
 - Los dos bloqueos son provisionales y se quitan en el paso 4.
 
-## Paso 1 — EN BORRADOR: preparar el cambio
+## Paso 1 — HECHO (17/11): preparar el cambio (commit d9fc5f8)
 
 **Dónde:** los borradores viven fuera del directorio del proyecto, en el
 espacio temporal de la sesión. **El compose nuevo NO entra en el directorio
@@ -186,7 +186,29 @@ queda. Antes de borrarla hay dos opciones:
 El administrador decidió que el mundo de juego pasa a producción y que no
 hace falta conservar el de agosto listo para arrancar.
 
-## Paso 4 — la parada (con el servidor vacío)
+## Paso 4 — HECHO (17/11, 01:05-01:08): la parada
+
+Resultado, comprobado:
+
+- **b:** apagado limpio, código 0 y "Adios.".
+- **c:** copia `staging-20261117-000522-antes-cambio-de-papeles` (106 MB).
+- **e:** 34/36 elementos.
+- **f:** fast-forward a d9fc5f8.
+- **g:** volúmenes los esperados.
+- **i:** vacío.
+- **j:** las tres comprobaciones pasan.
+- **Verificación:**
+  - `pombie-pz` monta `pz-*-staging`, con red, `SERVER STARTED`, buildid
+    24909836 con la guarda activa, `healthy` y 0 reinicios;
+  - INI 36/34 y puertos 16461/16462 en la IP de Tailscale;
+  - un solo mundo, con escritura posterior a la parada;
+  - `rcon.sh players` responde;
+  - `backup.sh` produce `produccion-*-verificacion-cambio` de 106 MB;
+  - los mismos 1996 `ERROR` de log que los tres arranques anteriores del
+    mismo mundo (ruido conocido de mods: esqueletos y animaciones);
+  - `stage.sh --down` pasa sus comprobaciones y se para en la confirmación.
+
+El procedimiento, tal como se siguió:
 
 Unos 15 minutos. Antes, D3 hecho en otra parada. Desde la carpeta del
 proyecto. Cada comprobación **aborta** el procedimiento si no da lo esperado.
