@@ -109,9 +109,14 @@ vigilante de mods reinicia solo, puede pasar a diario. Para que un ajuste hecho
 en la partida se quede:
 
 ```bash
-./scripts/capture-ini.sh pz-staging     # o pz
+./scripts/capture-ini.sh                # el mundo de juego (pz)
 git diff config/server.ini.tmpl         # revisa antes de commitear
 ```
+
+`pz-staging` es el ensayo: capturar de ahi traeria al repo lo que se toco en
+una copia desechable, y el render se lo aplicaria a la partida buena en el
+siguiente arranque. Hasta el cambio de papeles (17/11/2026) era al reves, y
+por eso las notas de esas fechas capturan de `pz-staging`.
 
 Trae a la plantilla los valores que difieran, y **deja fuera dos categorias a
 proposito**:
@@ -174,14 +179,32 @@ los ultimos `BACKUP_KEEP` **de cada tipo** — con el valor por defecto son 20
 historial. Todo lo demas **no se borra nunca**: son justo los que quieres tener
 cuando algo ha salido mal.
 
-Ademas la rotacion es **por instancia**: produccion, staging y vanilla usan
-prefijos distintos y ninguna puede borrar los backups de otra.
+Ademas la rotacion es **por instancia**: cada servicio firma con su prefijo y
+ninguno puede borrar los backups de otro. Los generan los dos, produccion y
+el ensayo, este solo mientras esta levantado.
 
-Los generan **produccion y vanilla**. Staging no: lleva
-`BACKUP_INTERVAL_HOURS=0` y `BACKUP_ON_START=false` porque su mundo es
-literalmente una copia que `stage.sh` rehace cuando quiere. Vanilla tenia esa
-misma exencion y se le quito en cuanto dejo de ser cierto que fuera desechable:
-se juega en el.
+### De que mundo es cada copia
+
+El mismo mundo ha pasado por varios servicios. Desde el cambio de papeles
+(17/11/2026) cada servicio firma con un prefijo propio que no comparte con
+nadie (`BACKUP_NAME_PREFIX` en el compose), asi que el prefijo basta. Para
+las copias anteriores, la ultima del mundo de juego con el reparto viejo es
+`staging-*-antes-cambio-de-papeles`.
+
+| Prefijo | Fecha | De que mundo es |
+| --- | --- | --- |
+| `produccion-` | desde el cambio | **El mundo de juego** (produccion, `pz`) |
+| `staging-` | hasta el cambio | **El mundo de juego**, cuando se jugaba en `pz-staging` |
+| `pz-pombie-vanilla-` | hasta el cambio | El mundo de agosto, congelado el 16/08 sin los mods irreversibles. Incluye el archivo `...-archivo-mundo-16-08` |
+| `ensayo-` | siempre | El ensayo. **Nunca** para el mundo de juego |
+| `vanilla-` | hasta el 13/08 | El mundo de juego cuando aun era la referencia sin mods |
+| `pz-pombie-` sin `-vanilla` | hasta el 13/08 | El mundo original de 33 mods, retirado |
+
+Consecuencia: **nadie rota ya las `staging-*` ni las `pz-pombie-vanilla-*`**
+(la rotacion va por prefijo y ningun servicio los usa). No crecen, pero
+tampoco menguan: las `staging-*` ocupan ~7,4 GB. Cuando haya copias
+`produccion-*` de sobra, se pueden podar a mano dejando las etiquetadas. Y
+ojo con los globs: `pz-pombie-*` casa tambien con `pz-pombie-vanilla-*`.
 
 ### Lo que se acumula sin limite
 
@@ -199,9 +222,9 @@ arriba, si rota (ver seccion siguiente), asi que no se acumula sin limite.
 
 Y hay uno **mas grande que todos, que no esta en `backups/`**: cada
 restauracion aparta el mundo entero a una carpeta `.pre-restore-<fecha>`
-**dentro del volumen de datos**. No son ~14 MB comprimidos, son los ~110 MB del
-mundo sin comprimir, en el mismo disco, y nadie los borra. Una restauracion
-cuesta unas ocho veces mas espacio que un backup.
+**dentro del volumen de datos**. No es el tarball comprimido, es el mundo
+entero sin comprimir (687 MB en noviembre de 2026), en el mismo disco, y nadie
+lo borra. Una restauracion cuesta varias veces mas espacio que un backup.
 
 Revision periodica, que son dos comandos:
 
@@ -210,9 +233,10 @@ du -sh backups/
 docker compose run --rm --no-deps pz bash -c 'du -sh /home/steam/Zomboid/.pre-restore-* 2>/dev/null'
 ```
 
-La parte acotada, en cambio, no preocupa. Con los tamanos de hoy —produccion
-~14 MB comprimidos, vanilla ~26 MB— el techo son 40 ficheros por instancia:
-~550 MB de produccion mas ~1 GB de vanilla, y ahi se queda.
+La parte acotada tiene techo: 20 ficheros por etiqueta rotativa (`prestart`,
+`periodic`, `pre-mods`) y por instancia. Con el mundo de juego en ~106 MB
+comprimidos (noviembre de 2026), son unos 6 GB de produccion como mucho, mas
+lo que deje el ensayo con su prefijo, y ahi se queda.
 
 ### Que pasa si no hay espacio
 
@@ -267,7 +291,7 @@ el doble del intervalo configurado.
 ### Detalles de funcionamiento
 
 - **Solo un backup a la vez.** Hay un cerrojo (`backups/.backup.lock`) que
-  serializa incluso entre contenedores distintos, porque los tres comparten
+  serializa incluso entre contenedores distintos, porque todos comparten
   `./backups`. Si el bucle periodico salta mientras haces uno a mano, el segundo
   espera y se salta si tarda demasiado.
 - **El `prestart` se salta si ya hay uno reciente** (por defecto 60 min,
@@ -294,9 +318,15 @@ docker compose run --rm --no-deps --entrypoint bash pz /docker/selftest-backups.
 
 ```bash
 ./scripts/restore.sh                 # lista lo disponible
-./scripts/restore.sh pz-pombie-20260809-171751-manual.tar.zst
+./scripts/restore.sh produccion-<fecha>-manual.tar.zst
 docker compose up -d
 ```
+
+Restaura siempre sobre `pz`, el mundo de juego, y **acepta cualquier fichero
+de `backups/` sin mirar el prefijo**. Elige con la tabla de *De que mundo es
+cada copia*: una `ensayo-*` lleva lo que se probo en el ensayo, y una
+`pz-pombie-vanilla-*`, el mundo de agosto, que ademas es de un motor anterior
+al instalado.
 
 Pide confirmacion escribiendo `SI`, para el servidor si hacia falta, y por este
 orden:
@@ -340,11 +370,6 @@ docker compose run --rm --no-deps pz bash -c 'rm -rf /home/steam/Zomboid/.pre-re
 
 ## Staging: probar sin arriesgar
 
-> **DESACTIVADO desde el 16/11/2026.** Con los papeles invertidos (se juega en
-> `pz-staging`), `stage.sh` borraria la partida buena en cualquiera de sus
-> modos, asi que aborta nada mas arrancar. Todo lo de esta seccion vuelve a
-> valer cuando se aplique [PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md).
-
 ```bash
 ./scripts/stage.sh                     # copia el mundo de PRODUCCION y lo levanta aparte
 ./scripts/stage.sh --from pz         # explicito, mismo efecto
@@ -352,22 +377,51 @@ docker compose run --rm --no-deps pz bash -c 'rm -rf /home/steam/Zomboid/.pre-re
 ./scripts/stage.sh --down              # para y borra los datos de staging
 ```
 
-Staging usa **volumenes propios**, incluido el del juego. Comparte la carpeta
-`config/`, asi que un cambio en la plantilla afecta a los dos al reiniciar; lo
-que no comparte son los datos, que es lo que importa.
+Staging usa **volumenes propios**, incluido el del juego (`pz-game-ensayo` y
+`pz-data-ensayo`). Comparte la carpeta `config/`, asi que un cambio en la
+plantilla afecta a los dos al reiniciar; lo que no comparte son los datos, que
+es lo que importa.
 
-Se conecta en el puerto `STAGING_GAME_PORT` del `.env` (hoy **16461**, el que los jugadores ya tenian configurado). El mundo original sigue sin enterarse.
+Se conecta en los puertos `STAGING_GAME_PORT` / `STAGING_GAME_PORT_2` del
+`.env` (**16361/16362**), con RCON del host en `STAGING_RCON_PORT` (27115). El
+mundo de juego sigue en 16461 sin enterarse.
+
+**Es desechable, y esta configurado como tal**: `restart: "no"` (tras un
+reinicio de la maquina no vuelve solo), acepta cambios de version
+(`ALLOW_BUILD_CHANGE`, para poder ensayarlos) y firma sus copias `ensayo-*`.
+**No se juega en el.** Del 13/08 al 17/11/2026 si se jugo aqui, y costo una
+caida de 14 horas y varias trampas silenciosas (DECISIONES.md 6ter).
+
+**Antes de borrar nada, `stage.sh` se asegura de que borra el ensayo**: saca
+el volumen de datos del compose —el mismo donde escribira la restauracion— y
+aborta sin tocar nada si `pz` y `pz-staging` montan el mismo, si lo monta
+cualquier contenedor que no sea `pombie-staging` (tambien parado), si
+`pombie-staging` monta otro, o si no se llama `*_pz-data-ensayo`. Si alguna
+vez se niega, no lo fuerces: el compose esta mal o alguien ha vuelto a jugar
+en staging.
+
+**Pendiente antes de estrenarlo** (paso 5 de
+[PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md)):
+
+- **El motor.** Con `pz-game-ensayo` vacio, el primer arranque descarga el
+  juego mas reciente, y el ensayo ya no probaria sobre el mismo motor que
+  produccion. Mejor sembrarlo antes copiando `pz-game-staging` (el motor de
+  produccion), con el origen en solo lectura.
+- **La memoria.** Los dos servicios llevan el mismo heap y `mem_limit` 10g, y
+  la maquina no da para los dos holgados: o se le baja la memoria al ensayo, o
+  se usa solo con el mundo de juego vacio.
 
 `--from` existe porque staging comparte el **nombre de mundo** con su origen
 —el nombre da nombre a la carpeta de guardado— y con mas de un mundo ya no
 siempre es produccion. stage.sh averigua el nombre del origen y lo exporta;
 sin `--from`, todo funciona como siempre.
 
-### Ensayar un mod de via unica sobre el vanilla (procedimiento oleada 2)
+### Ensayar un mod de via unica (procedimiento de la oleada 2)
 
-1. En `.env`, poner en `STAGING_WORKSHOP_ITEMS` / `STAGING_MODS` la lista del
-   vanilla **mas el candidato**, respetando su posicion de insercion
-   ([MODS-LISTA.md](MODS-LISTA.md) seccion 0).
+1. En `.env`, poner en `STAGING_WORKSHOP_ITEMS` / `STAGING_MODS` la lista de
+   produccion (`PZ_WORKSHOP_ITEMS` / `PZ_MODS`) **mas el candidato**,
+   respetando su posicion de insercion ([MODS-LISTA.md](MODS-LISTA.md)
+   seccion 0). Con `STAGING_*` vacios, staging replica produccion tal cual.
 2. `./scripts/stage.sh`
 3. Probar en el puerto de staging con la checklist de abajo, mas lo especifico
    del candidato.
@@ -388,36 +442,40 @@ Que mirar antes de dar por bueno un cambio:
 
 ---
 
-## Como esta repartido hoy: dos copias, dos papeles (16/08/2026)
+## Como esta repartido hoy: produccion y ensayo (17/11/2026)
 
-El mismo mundo vive en dos sitios con volumenes separados, y **no es un
-descuido**: es la red que hizo asumible meter mods irreversibles.
+| | Servicio | Puertos | Volumenes | Que es |
+| --- | --- | --- | --- | --- |
+| **Produccion** | `pz` (`pombie-pz`) | 16461/16462 | `pz-*-staging` | **El mundo de juego.** `unless-stopped`, guarda de version activa |
+| **Staging** | `pz-staging` (`pombie-staging`) | 16361/16362 | `pz-*-ensayo` | Copia desechable para ensayar. `restart: "no"` |
+| Archivo | — | — | `pz-*-vanilla`, sin servicio | El mundo congelado el 16/08 |
 
-| | Puerto | Estado | Que lleva |
-| --- | --- | --- | --- |
-| **Produccion** (`pz`) | 16261 | parado a proposito | El mundo **sin** los 5 irreversibles |
-| **Staging** (`pz-staging`) | 16461 | **desplegado, se juega aqui** | El mismo mundo **con** ellos |
+**Del 13/08 al 17/11/2026 fue al reves**: se jugaba en `pz-staging`, y `pz`
+guardaba, parado, el mundo de antes de los 5 irreversibles como punto de
+retorno que arrancaba. Nadie volvio, y el cambio de papeles lo deshizo
+reasignando volumenes en el compose, sin mover un byte (DECISIONES.md 6ter).
+Lo que queda de aquella epoca:
 
-Produccion no es un backup: es un mundo que **arranca**. Si algun dia hay que
-volver atras, `docker compose up -d` y ya. Lo que cuesta volver es todo lo
-jugado en staging desde el 16/08, y eso crece cada dia.
-
-**La trampa que hay que tener presente**: `./scripts/stage.sh` borraba el
-mundo de staging, que es donde se juega, en su modo normal tanto como con
-`--down`. **Desactivado desde el 16/11** hasta aplicar
-[PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md).
-
-Para levantar produccion habria que decidir antes que pasa con staging: los dos
-pueden correr a la vez (puertos y volumenes distintos), pero son mundos que ya
-han divergido, y jugar en los dos multiplica el lio.
+- **Los nombres de volumen mienten.** El mundo de juego vive en
+  `pz-data-staging`. Un `docker volume rm` o un `docker run -v` escrito a mano
+  con "staging" en el nombre va a la partida buena. Para tocar los datos de un
+  servicio, pasa por el compose (`docker compose run ... pz`): el volumen sale
+  de ahi y no se equivoca.
+- **Las copias de esas fechas** cambian de mundo segun el prefijo y la fecha:
+  ver *De que mundo es cada copia*, en Backups.
+- **El mundo de agosto ya no es un punto de retorno que arranque.** Queda el
+  archivo `backups/pz-pombie-vanilla-20261116-225421-archivo-mundo-16-08.tar.zst`,
+  que solo abre con un motor 42.20.3 (DECISIONES.md 6ter), y sus volumenes,
+  que nadie monta, hasta decidir si se borran. Volver a el costaria todo lo
+  jugado desde el 16/08.
 
 ---
 
 ## El mundo unico, y por que se llama "vanilla"
 
-Desde el 13/08/2026 **hay un solo mundo**: `pombie-vanilla`. Desde el 16/08
-existe en las dos copias de arriba; el original lo sirve produccion en el
-puerto **16261**.
+Desde el 13/08/2026 **hay un solo mundo de juego**: `pombie-vanilla`. Hoy lo
+sirve produccion en el puerto **16461**. Del 16/08 al 17/11 existio ademas su
+foto congelada de agosto, que hoy solo queda archivada.
 
 El nombre es herencia. Ese mundo nacio como referencia SIN mods para distinguir
 "esto lo rompe un mod" de "esto es asi en Build 42" —y cumplio: respondio
@@ -428,8 +486,10 @@ resulto ser mejor mundo que el original de 33. Asi que paso a ser produccion.
 **Produccion lo adopto tal cual, sin moverlo**: se reasignaron los volumenes
 `pz-data-vanilla` y `pz-game-vanilla` al servicio `pz` en el compose. Reasignar
 un volumen no toca ni un byte; copiar o restaurar 285 MB de partida jugada, si.
-Por eso los volumenes y el mundo conservan el sufijo `-vanilla` aunque ya no
-describa nada. El porque completo, en [DECISIONES.md](DECISIONES.md).
+Por eso el mundo conserva el sufijo `-vanilla` aunque ya no describa nada. El
+porque completo, en [DECISIONES.md](DECISIONES.md) 6bis. En el cambio de
+papeles de noviembre se repitio el truco con los volumenes de staging (6ter),
+y por eso hoy produccion monta `pz-*-staging` y no `pz-*-vanilla`.
 
 El servicio `pz-vanilla` se elimino a la vez. **Dos servicios sobre el mismo
 volumen es la forma mas directa de corromper un mundo**, y despues de la
@@ -437,26 +497,23 @@ adopcion habrian apuntado los dos a `pz-data-vanilla`.
 
 ### Su lista de mods
 
-**Produccion** (`PZ_WORKSHOP_ITEMS` / `PZ_MODS` del `.env`): **25 mods**, todos
-reversibles. Es la foto que se congelo el 16/08, antes de la oleada 2.
+**Produccion, que es donde se juega** (`PZ_WORKSHOP_ITEMS` / `PZ_MODS` del
+`.env`): **36 Mod ID / 34 WorkshopItems**. Los 25 con los que se congelo el
+mundo de agosto, mas los 5 irreversibles del 16/08 con sus dependencias, mas
+los 4 de contenido del 29/08 (Bandits NPC, LG Extended Plumbing, ClassicBows y
+Horse Mod), menos Run and Reload, retirado por incompatibilidad con Horse Mod.
+Hasta el cambio de papeles esta lista vivia en `STAGING_*`. Tariq's Beards
+esta en ella pero no instalado en este mundo, por decision del administrador.
 
-**Staging, que es donde se juega** (`STAGING_WORKSHOP_ITEMS` / `STAGING_MODS`):
-**37 Mod ID / 35 WorkshopItems**. Los 25 de arriba, mas los 5 irreversibles del
-16/08 con sus dependencias, mas los 4 de contenido del 29/08 (Bandits NPC,
-LG Extended Plumbing, ClassicBows y Horse Mod).
-
-Las dos listas divergen a proposito: produccion es el punto de retorno.
+**Staging** (`STAGING_WORKSHOP_ITEMS` / `STAGING_MODS`): vacios, asi que
+replica la lista de produccion. Solo se rellenan para ensayar un candidato.
 
 El criterio, con su medicion y las oleadas siguientes, esta en
-[MODS-LISTA.md](MODS-LISTA.md) seccion 0. El resumen: sobre un mundo empezado
-solo entra lo que **no declara nada persistente** —ni items, ni recetas, ni
-vehiculos, ni entidades— porque eso es lo que se puede quitar sin dejar
-referencias rotas. Verificado fichero a fichero sobre lo descargado.
-
-**Regla vigente desde el 15/08: nada irreversible.** Congela la oleada 2
-(Common Sense, Take A Bath, Manage Containers, Realistic Temperature) y
-descarta Trailers!. Si algun dia se descongela, se ensayan en staging con
-`./scripts/stage.sh`.
+[MODS-LISTA.md](MODS-LISTA.md) seccion 0. Empezo siendo que sobre un mundo
+empezado solo entrara lo que **no declara nada persistente** —ni items, ni
+recetas, ni vehiculos, ni entidades—; se levanto el 16/08 para la oleada 2 y
+Trailers!, y desde el 29/08 la reversibilidad es un dato mas, no un veto. Ya
+no todo lo que hay se puede quitar sin danos: Horse Mod declara `entity`.
 
 ### Ya no hay mundo de referencia limpio
 
@@ -471,17 +528,25 @@ otra vez, hay que crear una instancia nueva.
 Con el servicio parado:
 
 ```bash
-docker run --rm -v zroyecto-pombie_pz-data-vanilla:/data \
-  --entrypoint bash zroyecto-pombie:latest \
-  -c 'rm -rf /data/Saves/* /data/db/* /data/Server/*'
+docker compose run --rm --no-deps --entrypoint bash pz \
+  -c 'rm -rf /home/steam/Zomboid/Saves/* /home/steam/Zomboid/db/* /home/steam/Zomboid/Server/*'
 ```
 
-**Ese comando borra personajes y bases.** Haz antes `./scripts/backup.sh`, o
-asegurate de que el ultimo backup automatico te sirve:
+Por el compose y no con `docker run -v <volumen>`: los nombres de volumen
+mienten (el mundo de juego vive en `pz-data-staging`), y este comando estuvo
+escrito contra `pz-data-vanilla`, que hoy es el mundo de agosto y no lo monta
+nadie. Asi el volumen lo elige el compose, el mismo que monta el servidor.
+
+**Ese comando borra personajes y bases.** Haz antes una copia ETIQUETADA:
 
 ```bash
-docker compose run --rm --no-deps pz status | grep 'Ultimo backup'
+./scripts/backup.sh antes-de-regenerar
 ```
+
+No vale fiarse del ultimo backup automatico: los automaticos rotan (20
+`periodic` a una cada 6 h son unos cinco dias), y en cuanto el mundo nuevo
+lleve unos dias, la rotacion se habra llevado todas las copias del viejo. Las
+etiquetadas no rotan.
 
 ---
 
@@ -528,7 +593,7 @@ la del servidor, y entran sin problema. **El que falla es el que esta bien.**
 Diagnostico en un comando — comparar lo instalado con lo que Steam publica:
 
 ```bash
-docker compose exec pz-staging sh -c 'grep -oP "\"buildid\"\s+\"\K[0-9]+" \
+docker compose exec pz sh -c 'grep -oP "\"buildid\"\s+\"\K[0-9]+" \
   /opt/pz-server/steamapps/appmanifest_380870.acf | head -1'
 curl -fsS 'https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=108600&count=3&maxlength=100' \
   | jq -r '.appnews.newsitems[] | "\(.date|strftime("%Y-%m-%d")) \(.title)"'
@@ -551,8 +616,9 @@ editar `StateFlags` a mano.
 Lo que SI funciona, las dos veces — retirar el manifiesto y reinstalar encima:
 
 ```bash
-docker compose stop pz-staging            # apagado seguro primero
-docker compose --profile staging run --rm --no-deps --entrypoint bash pz-staging -c '
+docker compose stop pz                    # apagado seguro primero
+./scripts/backup.sh antes-de-actualizar   # este camino no hace la pre-update
+docker compose run --rm --no-deps --entrypoint bash pz -c '
   mv /opt/pz-server/steamapps/appmanifest_380870.acf{,.atascado}
   rm -rf /opt/pz-server/steamapps/downloading /opt/pz-server/steamapps/temp
   steamcmd +force_install_dir /opt/pz-server +login anonymous \
@@ -563,13 +629,26 @@ El `+app_info_print` no es decorativo: sin el, SteamCMD falla con un
 `Missing configuration` que no significa lo que parece. Y no re-descarga los
 7,5 GB: verifica lo que ya hay y baja solo lo que cambia.
 
+**Ojo desde el cambio de papeles (17/11/2026)**: este arreglo se escribio
+para `pz-staging`, que entonces era el mundo de juego y tenia la guarda de
+version desactivada. En `pz` esta activa, y este camino no pasa por
+`update-server.sh`, asi que no registra la version nueva: el siguiente
+arranque se parara con "CAMBIO DE VERSION DETECTADO". Lanzar despues
+`update-server.sh` no lo arregla, porque no encuentra nada que bajar y
+entonces no registra nada. La via que la guarda deja abierta es arrancar UNA
+vez con `ALLOW_BUILD_CHANGE=true` en el `.env` (`docker compose up -d
+--force-recreate pz`): hace otra copia `pre-update`, registra la version y
+arranca. En cuanto arranque, devuelve el `.env` a `false` y recrea otra vez.
+**Sin probar**: comprueba en el log `Cambio de version aceptado
+explicitamente` y que el `.env` queda en `false`.
+
 **Verificacion imprescindible tras actualizar**, que en el hotfix del 17/08 se
 omitio y costo diez dias de un jugador sin poder jugar:
 
 ```bash
 # 1. el buildid del manifiesto es el que anuncia Steam
 # 2. y los ficheros del juego se han reescrito de verdad:
-docker compose exec pz-staging sh -c \
+docker compose exec pz sh -c \
   'find /opt/pz-server/media/lua -name "*.lua" -newermt "AAAA-MM-DD" | wc -l'
 ```
 
@@ -673,13 +752,22 @@ del mod que se acaba de actualizar:
    mal en el mundo), restaura el backup **`pre-mods`** mas reciente: es el
    punto justo antes de que el mod actualizado tocara el mundo.
    ```bash
-   ls -t backups/*-pre-mods.tar.zst | head -1
+   ls -lt backups/produccion-*-pre-mods.tar.zst | head -1
    docker compose stop pz
    ./scripts/restore.sh <ese-fichero>
    ```
-3. Quita el mod de `PZ_WORKSHOP_ITEMS` / `PZ_MODS` en `.env` (es reversible
-   por diseno, ver [MODS-LISTA.md](MODS-LISTA.md) seccion 0) y
+   **El prefijo no es opcional.** Un `*-pre-mods` a secas tambien coge las
+   `ensayo-*`, que son del ensayo, y las `pz-pombie-vanilla-*`, del mundo de
+   agosto: ninguna vale para el mundo de juego. Si no sale ninguna
+   `produccion-*` (o es demasiado reciente), las anteriores al cambio de
+   papeles (17/11/2026) estan en `ls -lt backups/staging-*-pre-mods.tar.zst`.
+   Tabla completa en *Backups*, "De que mundo es cada copia".
+3. Quita el mod de `PZ_WORKSHOP_ITEMS` / `PZ_MODS` en `.env` y
    `docker compose up -d`. Los clientes se adaptan solos a la lista nueva.
+   **Antes, mira si el mod es de via unica** ([MODS-LISTA.md](MODS-LISTA.md)
+   seccion 0): desde el 16/08 los hay, y Horse Mod declara `entity`, que al
+   quitarlo puede impedir que el mundo cargue. Si lo es, ensaya la retirada
+   en staging antes de hacerla en produccion.
 
 No hace falta avisar a los jugadores de que un mod se quito: el Workshop se
 distribuye solo, igual que al anadirlo.
@@ -704,8 +792,14 @@ de migracion es el tarball, que funciona igual entre Windows y Linux.
 
 ```bash
 docker compose stop            # apagado seguro, importante
-./scripts/backup.sh migracion
+./scripts/backup.sh migracion  # copia en frio del mundo de juego (pz)
 ```
+
+Deja `backups/produccion-<fecha>-migracion.tar.zst`. Del 16/08 al
+17/11/2026 este mismo comando se habria llevado el mundo de agosto, porque
+`pz` era la foto congelada; desde el cambio de papeles vuelve a ser el bueno.
+Comprueba el tamano: el mundo de juego comprimido ronda los 106 MB
+(noviembre de 2026), el de agosto 57 MB.
 
 **Copia a la maquina destino** tres cosas:
 
@@ -715,7 +809,9 @@ docker compose stop            # apagado seguro, importante
 3. **Los mods locales**, si los hay. Tampoco estan en git: viven en
    `workbench/` y se distribuyen por el canal privado del grupo. Ahora mismo es
    `TariqsBeardsB42.zip`. La lista actual esta en
-   [MODS-LISTA.md](MODS-LISTA.md), seccion 1.
+   [MODS-LISTA.md](MODS-LISTA.md), seccion 1. Ojo: hoy no esta instalado en
+   el mundo de juego, por decision del administrador; instalarlo en la
+   maquina nueva seria un cambio, no parte de la migracion.
 
 **Y una pieza que no es una carpeta sino un ajuste del sistema**, que hay que
 volver a crear a mano en la maquina destino (necesita sudo):
@@ -732,7 +828,9 @@ caida en octubre). El porque, en [DECISIONES.md](DECISIONES.md) decision 11.
 
 Si se pierde el `.env`, se reconstruye desde `.env.example` mas los bloques
 `WorkshopItems` y `Mods` de [MODS-LISTA.md](MODS-LISTA.md), que si estan
-versionados.
+versionados (la lista del mundo de juego, copiada del `.env` el 17/11; el
+resto de aquella seccion 1 es de un mundo anterior). Aun asi, que el `.env`
+viaje: es la copia que manda.
 
 **En la maquina destino:**
 
@@ -741,7 +839,7 @@ versionados.
 id -u && id -g
 
 docker compose build
-docker compose run --rm --no-deps pz restore pz-pombie-<fecha>-migracion.tar.zst
+docker compose run --rm --no-deps pz restore produccion-<fecha>-migracion.tar.zst
 
 # Mods locales, ANTES de arrancar. Uno por cada .zip que traigas:
 ./scripts/install-local-mods.sh <ruta>/TariqsBeardsB42.zip
@@ -755,10 +853,13 @@ mundo restaurado ya esta en su sitio antes de que el servidor arranque.
 
 **Comprueba que no falta ningun mod local:** si el log dice
 `required mod "X" not found`, es que ese mod no esta en `Zomboid/mods` de la
-maquina nueva.
+maquina nueva. Tariq's Beards ya sale asi en la maquina actual, mientras siga
+sin instalar.
 
-Abre **16261 y 16262 en UDP** en el router y el cortafuegos de la maquina
-destino. UDP, no TCP.
+Abre en el router y el cortafuegos de la maquina destino los puertos
+`PZ_PORT` y `PZ_UDP_PORT` del `.env` (**16461 y 16462** en este despliegue),
+en **UDP**, no TCP. Por Tailscale no se abre nada, pero la regla de la ACL
+tiene que nombrar esos dos ([TAILSCALE.md](TAILSCALE.md)).
 
 ---
 
@@ -783,14 +884,15 @@ distinta. Empieza por ahi y vuelve aqui solo si los paquetes llegan.
 1. `docker compose ps` — el contenedor debe estar `healthy`.
 2. `./scripts/rcon.sh players` — si responde, el servidor esta vivo y el
    problema es de red.
-3. `ss -ulpn | grep 1626` — comprueba **en que interfaz** escucha. Lo fija
+3. `ss -ulpn | grep 1646` — comprueba **en que interfaz** escucha. Lo fija
    `HOST_BIND_IP`: si esta en la IP de Tailscale, desde la LAN no se entra, y es
    a proposito.
 4. Comprueba que las reglas del router son **UDP**. Una regla TCP se ve
    perfecta y no sirve de nada.
-4. **Conectate al 16261, nunca al 16262.** El 16262 tiene que estar abierto
-   pero no se teclea: lo usa el motor por su cuenta.
-5. `PZ_PUBLIC=false` significa que no sale en la lista de servidores; hay que
+5. **Conectate al 16461, nunca al 16462** (los `PZ_PORT` / `PZ_UDP_PORT` del
+   `.env`). El 16462 tiene que estar abierto pero no se teclea: lo usa el
+   motor por su cuenta. El ensayo va en 16361/16362.
+6. `PZ_PUBLIC=false` significa que no sale en la lista de servidores; hay que
    entrar por IP directa.
 
 **La conexion completa y se pierde al minuto o dos**
@@ -878,7 +980,8 @@ que la maquina puede dar sin empezar a usar swap.
 | --- | --- |
 | `docker compose kill` / `docker kill` | Salta el guardado. Es el camino directo a un mundo corrupto. |
 | `docker compose down -v` | La `-v` borra los volumenes. Ahi estan los guardados. |
-| `docker compose --profile staging down` | `down` derriba el proyecto ENTERO, produccion incluida. Para parar solo staging: `docker compose stop pz-staging` (`stage.sh --down` ademas BORRA sus datos, y mientras los papeles esten invertidos esos datos son el mundo de juego) |
+| `docker compose --profile staging down` | `down` derriba el proyecto ENTERO, produccion incluida. Para parar solo staging: `docker compose stop pz-staging` (`stage.sh --down` ademas BORRA sus datos, los del ensayo y solo esos) |
+| Escribir a mano un nombre de volumen | Mienten: el mundo de juego vive en `pz-data-staging`. Pasa por el compose (`docker compose run ... pz`), que elige el volumen bien |
 | Poner `UPDATE_ON_START=true` | Cualquier reinicio podria cambiar el motor bajo un mundo vivo. |
 | Editar `config/reference/` | Se regenera y pierdes los cambios. Edita `config/server.ini.tmpl`. |
 | Cambiar `PZ_SERVER_NAME` con el mundo en marcha | Da nombre a la carpeta de guardado: equivale a empezar de cero. |

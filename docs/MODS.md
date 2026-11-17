@@ -100,10 +100,11 @@ sintoma solo existe en el cliente.
 ### Auditar incompatibilidades de TODA la lista activa
 
 Merece la pena pasarlo tras cada instalacion. Cruza lo que cada mod declara
-contra lo que hay realmente activo en el INI:
+contra lo que hay realmente activo en el INI del mundo de juego (`pz`; con
+`pz-staging`, el del ensayo con el candidato dentro):
 
 ```bash
-docker compose exec pz-staging bash -c '
+docker compose exec pz bash -c '
 INI=/home/steam/Zomboid/Server/<mundo>.ini
 WS=/opt/pz-server/steamapps/workshop/content/108600
 mapfile -t ACT < <(grep "^Mods=" "$INI" | cut -d= -f2- | tr ";" "\n" | tr -d "\r" | sed "s/^\\\\//")
@@ -136,6 +137,12 @@ en la MISMA sesion.
 
 **Regla: de uno en uno, y siempre primero en staging.** Añadir cinco mods a la
 vez y que el mundo falle no te dice cuál fue.
+
+Staging es el ensayo: una copia desechable del mundo de juego en 16361/16362.
+Entre el 13/08 y el cambio de papeles del 17/11/2026 no lo hubo —se jugaba en
+`pz-staging`— y la oleada 3 entró sin ensayar; desde entonces vuelve a
+haberlo, y el mundo de juego es `pz` (ver
+[DECISIONES.md](DECISIONES.md) 6ter).
 
 ### 1. Investigación previa — antes de descargar nada
 
@@ -200,15 +207,16 @@ Para el resto, hay que entrar y mirarlo.
 ### 2. Probar en staging
 
 ```bash
-# En .env, solo la lista de staging (produccion no se toca):
-STAGING_WORKSHOP_ITEMS=2875848298
-STAGING_MODS=
+# En .env, la lista de staging = la de PRODUCCION MAS el candidato
+# (produccion no se toca). Solo el candidato ensayaria un mundo sin sus mods.
+STAGING_WORKSHOP_ITEMS=<los de PZ_WORKSHOP_ITEMS>;2875848298
+STAGING_MODS=<los de PZ_MODS>
 
 ./scripts/stage.sh                      # copia el mundo real y arranca
 ```
 
-Con `STAGING_MODS` vacío, Steam descarga el mod pero el servidor no lo carga.
-Eso permite sacar el ID real:
+Sin el Mod ID del candidato en `STAGING_MODS`, Steam descarga el mod pero el
+servidor no lo carga. Eso permite sacar el ID real:
 
 ```bash
 docker compose --profile staging exec pz-staging /docker/run.sh mods

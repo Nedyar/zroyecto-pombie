@@ -62,13 +62,17 @@
 
       // UDP, no TCP: una regla TCP se ve perfecta y no sirve de nada.
       //
-      // 16261  produccion, el puerto al que se conecta el jugador
-      // 16262  produccion, NO se teclea nunca: lo usa el motor por su
+      // 16461  produccion, el puerto al que se conecta el jugador
+      // 16462  produccion, NO se teclea nunca: lo usa el motor por su
       //        cuenta, pero sin permiso la conexion se queda a medias sin
       //        dar ningun error claro
       //
+      // Son los de PZ_PORT / PZ_UDP_PORT del .env. Fueron 16261/16262 hasta
+      // agosto de 2026; el mundo de juego vive en 16461 desde entonces y ahi
+      // se quedo al volver a produccion (DECISIONES.md 6ter), para no tener
+      // que tocar la ACL ni la lista de servidores de cada jugador.
       // Si cambias los puertos en el .env, cambialos tambien aqui.
-      "ip": ["udp:16261", "udp:16262"],
+      "ip": ["udp:16461", "udp:16462"],
 
       // Si se invita a alguien a jugar en staging, se anaden sus puertos
       // igual. Son los de STAGING_GAME_PORT / STAGING_GAME_PORT_2 del .env

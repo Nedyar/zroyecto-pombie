@@ -198,6 +198,75 @@ de corromperlo, y bastaba con que alguien levantase el perfil por costumbre.
 
 ---
 
+## 6ter. Devolver el mundo de juego a `pz` (noviembre de 2026)
+
+Entre el 13/08 y noviembre de 2026 se jugo en `pz-staging`, y `pz` quedo como
+foto congelada del 16/08 (sin los mods irreversibles), por si habia que volver.
+Nadie volvio, y la inversion fue dejando trampas que no daban ningun error:
+
+- `stage.sh` borraba el mundo de juego en sus dos modos: su `volume rm` iba a
+  un nombre escrito a mano (`pz-data-staging`) que habia pasado a ser el de la
+  partida buena.
+- Todos los scripts del host que trabajan sobre `pz` —backup, rcon, restore,
+  capture-*, install-local-mods, update-server, bootstrap— operaban sobre el
+  mundo de agosto. `capture-*` traia sus ajustes al repo y el render se los
+  aplicaba a la partida buena.
+- El mundo de juego heredo de su vida como ensayo `restart: "no"` (14 horas
+  caido el 20/08) y `ALLOW_BUILD_CHANGE: "true"`, es decir, la guarda de
+  version de la decision 4 desactivada.
+- Ya no habia donde probar un mod antes de meterlo en la partida.
+
+**Como se hizo**: igual que en 6bis, reasignando volumenes en el compose sin
+mover un byte. `pz` adopto `pz-game-staging` y `pz-data-staging`; staging
+estreno `pz-game-ensayo` y `pz-data-ensayo`. Los nombres de volumen vuelven a
+mentir —el mundo de juego vive en un volumen "-staging"— y se acepta por lo
+mismo que en 6bis: es mejor un nombre que miente que un guardado movido sin
+necesidad.
+
+**Las salvaguardas que nacieron de esto**:
+
+- **Staging firma sus copias como `ensayo-*`, no `staging-*`.** Las
+  `staging-*` anteriores al cambio son la historia del mundo de juego, y la
+  rotacion va por prefijo y etiqueta: un ensayo firmando `staging-*` las iria
+  borrando de 20 en 20, y un "restaura el ultimo `*-pre-mods`" podria elegir
+  una copia del ensayo para el mundo bueno.
+- **`stage.sh` ya no borra un nombre escrito a mano.** Saca del compose el
+  volumen de datos de staging —el mismo donde escribira la restauracion— y
+  antes de tocar nada aborta si `pz` y `pz-staging` montan el mismo, si lo
+  monta cualquier contenedor que no sea `pombie-staging`, si `pombie-staging`
+  monta otro, o si no se llama `*_pz-data-ensayo`. Ese ultimo control es el
+  unico que sabe cual de los dos mundos es el bueno: los demas, con los papeles
+  invertidos, habrian dado por bueno borrar la partida.
+- **Produccion firma sus copias como `produccion-*`.** Sin prefijo propio
+  saldria `pz-pombie-vanilla-*`, el mismo que las copias del mundo de agosto.
+  Desde el cambio, cada servicio tiene un prefijo que no comparte con nadie, y
+  el prefijo basta para saber de que mundo es una copia.
+- **El ensayo tiene la memoria acotada** (`mem_limit: 4g`, heap 3g). Convive
+  con produccion (techo 10g) en una maquina de ~15 GB; con los dos al maximo,
+  el OOM del host mataria probablemente al JVM de produccion, a lo mejor en
+  mitad de un guardado.
+- **Los puertos de `pz` se publican 1:1** (`PZ_PORT`/`PZ_UDP_PORT`), como ya
+  hacia staging. El mapeo anterior (`HOST_GAME_PORT:16261`) solo funcionaba si
+  el puerto de fuera era 16261, y el mundo de juego vive en 16461 desde agosto,
+  que es donde siguen jugadores y ACL.
+
+**El mundo de agosto** queda archivado en
+`backups/pz-pombie-vanilla-20261116-225421-archivo-mundo-16-08.tar.zst`,
+verificado fichero a fichero contra su volumen. Ojo: sin un motor 42.20.3 no
+se puede abrir (la guarda de version lo impide), y la unica instalacion 42.20.3
+que queda es `pz-game-vanilla`, sin servicio que la monte. Los datos para pedirsela a Steam estan en
+PLAN-CAMBIO-DE-PAPELES.md, paso 2b, sin probar.
+
+**Si algun dia se vuelve a jugar en staging**, la leccion de las dos veces
+(agosto y noviembre) es la misma: el papel se hereda, las salvaguardas no.
+Hay que repasar el servicio entero contra `pz`, ajuste por ajuste —restart,
+`ALLOW_BUILD_CHANGE`, prefijo de backup, memoria, a donde apuntan los
+scripts—. `stage.sh` solo borra `*_pz-data-ensayo`: si para jugar en staging
+se le cambian los volumenes, se negara; si se juega en staging SIN
+cambiarselos, no lo sabra, y ese es justo el caso de agosto.
+
+---
+
 ## 7. Backups: que se rota y que no
 
 Automaticos antes de arrancar, cada 6 horas, y antes de actualizar o restaurar.
@@ -394,8 +463,9 @@ apagado sin que se notara en ningun sitio.
 como `C:/Program Files/Git/docker/run.sh`. Se resuelve con `MSYS_NO_PATHCONV=1`
 en `scripts/_common.sh`; en Linux es inocuo.
 
-**Los puertos de juego son UDP.** 16261 y 16262. Una regla TCP en el router se
-ve perfecta y no hace absolutamente nada.
+**Los puertos de juego son UDP.** Los de `PZ_PORT`/`PZ_UDP_PORT`: 16261 y
+16262 por defecto, 16461 y 16462 en este despliegue. Una regla TCP en el
+router se ve perfecta y no hace absolutamente nada.
 
 **Los scripts venian de git sin bit de ejecucion.** Estaban como `100644`
 porque el proyecto nacio en Windows, donde da igual. En Linux fallan todos los

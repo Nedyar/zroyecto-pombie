@@ -196,6 +196,12 @@ copia de staging, quitar el mod y mirar si el mundo carga. Sin arriesgar nada.
 **El precio, dicho claro**: cuanto más se juegue en staging, más cuesta volver
 a producción, porque volver significa perder lo jugado desde el 16/08.
 
+**Ese montaje terminó con el cambio de papeles (17/11/2026).** Nadie volvió:
+el mundo con los mods pasó a producción (`pz`, puerto 16461) y el de antes de
+meterlos quedó solo como archivo, que ya no arranca tal cual (DECISIONES.md
+6ter). El experimento de Trailers! sigue saliendo gratis, ahora sobre el
+ensayo: `./scripts/stage.sh`, puerto 16361.
+
 ### La regla que estuvo vigente del 15 al 16/08
 
 Se deja escrita porque explica por qué la lista fue lo que fue durante la
@@ -260,6 +266,13 @@ como bloque; lo que entre sin ese historial sigue yendo de uno en uno.
 
 # 1. Lo que está activo ahora
 
+> **Ojo (17/11/2026): el texto y las cifras de esta sección son del mundo
+> original de 33 mods**, retirado el 13/08: al de juego le sobran de aquí Run
+> and Reload, StarvingZombies y BicycleMod, y le faltan los cuatro de la
+> oleada 3. **Los bloques de "Copia de seguridad de la configuración", más
+> abajo, sí son la lista del mundo de juego** (36 Mod ID / 34 WorkshopItems,
+> copiados del `.env` el 17/11).
+
 **Corriendo en producción**, sobre un mundo creado ya con esta lista. Verificado
 contra el INI que el servidor tiene renderizado: 33 elementos del Workshop, 35
 Mod ID, 0 `required mod not found`.
@@ -279,14 +292,18 @@ sino de una carpeta local.
 ## Copia de seguridad de la configuración
 
 `.env` está fuera de git. Si se pierde, o al migrar de máquina, esto es lo que
-hay que restaurar.
+hay que restaurar en `PZ_WORKSHOP_ITEMS` y `PZ_MODS`.
+
+**Lista del mundo de juego, copiada del `.env` el 17/11/2026**: 34
+WorkshopItems y 36 Mod ID, los mismos que el INI renderizado. Si se cambia un
+mod, hay que actualizar también estos dos bloques.
 
 ```
-WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782;3461415167;3600401184;3397207461;2650547917;3589548354;3396867685;2463184726;3641697417;3330403100;2944344655;3402513620;3410947298;3446510982;3399645148;3171167894;2447729538;3676456221;3717968421
+WorkshopItems=3508537032;3437629766;3536052310;3502080466;3490188370;3451167732;2847184718;2998737588;3394044313;3592172476;3147428398;2313387159;2734705913;2544353492;3041733782;3600401184;2650547917;3589548354;2463184726;3641697417;3330403100;2944344655;3402513620;3410947298;3446510982;3399645148;3171167894;2447729538;3676456221;3717968421;3268487204;3779561845;3776949545;3661336777
 ```
 
 ```
-Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;BB_CommonSenseFix;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;BicycleMod;RC_RealisticColdMod;Run and Reload;StarvingZombies;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand
+Mods=ATakeABathAndShowerDepthMap;NeatUI_Framework;damnlib;FH;LuaDigitalWatchUI;SpnHair;Tariq's Beards;nm_nested_containers;ProximityInventory;BB_CommonSenseFix;CleanUI;manageContainers;BetterSortCC;Neat_Crafting;Neat_Building_UIOnly;Project_Cook;ModernStatus;KI5trailers;RC_RealisticColdMod;TakeABathAndShowerNew;ComfySleeping;Buttstroke;ReplaceBandage;CatseyeInTheDark;EquipClothingWhileMoving;Reading+;SplitItems;P4HasBeenRead;improvedhairmenubuild42;SpnHairAPI;MapSymbolSizeSlider;MapSymbolsPlusDeonHand;Bandits2;LGExtendedPlumbing;SVRPClassicBows;Horse
 ```
 
 El orden **es** el orden de carga. Los ID van sin prefijo `\` y respetando los
@@ -296,6 +313,14 @@ espacios cuando los llevan dentro (`Run and Reload`, `Tariq's Beards`).
 
 No sale del Workshop. Vive en `Zomboid/mods/` dentro del volumen del servidor, y
 cada jugador necesita una copia en su propia carpeta `Zomboid/mods`.
+
+**Ojo (17/11/2026): en el mundo de juego no está instalado.** Sus ficheros
+solo están en `pz-data-vanilla/mods`, el volumen del mundo de agosto; el
+servidor de juego lo pide (`required mod not found`) y no lo carga,
+seguramente desde el 16/08. Se queda así por decisión del administrador
+(decisión D6 de [PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md)). Antes
+de borrar los volúmenes `pz-*-vanilla` hay que sacarlo de ahí: según el plan,
+es la única copia del mod en la máquina.
 
 **No está en el repositorio, y es deliberado.** Son assets de un tercero sin
 licencia declarada ni respuesta del autor, y el historial de git es permanente:

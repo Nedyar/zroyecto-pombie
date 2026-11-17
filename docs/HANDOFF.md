@@ -11,26 +11,52 @@ forma del despliegue, no sus valores.
 
 ## Estado en una linea
 
-**Hay UN mundo, en DOS copias con papeles distintos (reorganizado el 16/08):**
+**Hay UN mundo de juego, en produccion, y un ensayo desechable al lado
+(reparto del cambio de papeles, 17/11/2026):**
 
 | | Puerto | Estado | Que lleva |
 | --- | --- | --- | --- |
-| **Produccion** (`pz`) | 16261 | **parado, a proposito** | El mundo **sin** los 5 mods irreversibles. Punto de retorno vivo |
-| **Staging** (`pz-staging`) | 16461 | **desplegado, se juega aqui** | El mismo mundo **con** los mods. 36 en total |
+| **Produccion** (`pz`, contenedor `pombie-pz`) | 16461 | **desplegado, se juega aqui** | El mundo de juego, 36 Mod ID. Volumenes `pz-*-staging`, por herencia |
+| **Staging** (`pz-staging`, contenedor `pombie-staging`) | 16361 | parado; se levanta con `./scripts/stage.sh` | Copia desechable del mundo de juego para ensayar. Volumenes `pz-*-ensayo` |
+| Archivo | — | sin servicio | El mundo congelado el 16/08 (42.20.3, sin los mods irreversibles) |
 
-Los dos salen del mismo mundo (`pombie-vanilla`) y tienen volumenes separados.
-Ya han divergido mucho: staging va por **687 MB** de partida jugada, produccion
-sigue con la foto de 392 MB del 16/08, tomada justo antes de meter los mods
-irreversibles — y **no como tarball sino como mundo que arranca**: si algun dia
-hay que volver, se levanta y ya. El precio es que volver cuesta todo lo jugado
-en staging desde el 16/08, y ese coste crece cada dia.
-
-**OJO, la trampa mas grave de este montaje**: `./scripts/stage.sh` **borraba
-el mundo de staging**, y staging es donde se juega — y no solo con `--down`:
-el modo normal tambien borra el volumen y encima carga el mundo de agosto
-(descubierto el 16/11 leyendo el script). **Desde el 16/11 esta desactivado**:
-aborta en sus tres modos hasta que se inviertan los papeles, ver
+Entre el 13/08 y el 17/11 los papeles estuvieron **invertidos**: se jugaba en
+`pz-staging` y `pz` guardaba la foto del 16/08, tomada justo antes de meter
+los mods irreversibles, como punto de retorno que arrancaba. Nadie volvio, y
+la inversion fue dejando trampas que no daban ningun error. El cambio de
+papeles devolvio el mundo de juego a `pz` reasignando volumenes en el compose,
+sin mover un byte, y archivo el de agosto en
+`backups/pz-pombie-vanilla-20261116-225421-archivo-mundo-16-08.tar.zst`. Sus
+volumenes `pz-*-vanilla` siguen existiendo, sin servicio que los monte, hasta
+decidir si se borran. El porque, en [DECISIONES.md](DECISIONES.md) seccion
+6ter; los pasos y la verificacion, en
 [PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md).
+
+**OJO, la trampa mas grave de este montaje: los nombres mienten.** El mundo de
+juego vive en `pz-data-staging` (y su motor en `pz-game-staging`); el ensayo,
+en `pz-*-ensayo`. Un `docker volume rm` o un `docker run -v` escrito a mano
+con "staging" en el nombre va a la partida buena. `stage.sh` ya no borra un
+nombre escrito a mano: saca el volumen del compose y aborta si no es
+`*_pz-data-ensayo` o si lo monta cualquier otro contenedor. Hasta el cambio
+el peligro estaba en el propio `stage.sh`, que borraba el mundo de juego en
+sus dos modos; estuvo desactivado desde el 16/11 hasta el cambio.
+
+Con las copias, cada servicio firma ahora con un prefijo propio:
+`produccion-*` (mundo de juego), `ensayo-*` (staging). Las `staging-*` hasta
+el cambio (la ultima, `staging-*-antes-cambio-de-papeles`) son del mundo de
+juego, y las `pz-pombie-vanilla-*`, de la foto de agosto. Tabla de
+prefijos en [OPERACIONES.md](OPERACIONES.md), *Backups*.
+
+**Novedad cambio de papeles (17/11/2026)**: el mundo de juego vuelve a `pz`, y
+con el vuelven la guarda de version (`ALLOW_BUILD_CHANGE` desactivado) y
+`unless-stopped`. Los scripts del host (`backup`, `rcon`, `restore`,
+`capture-*`, `install-local-mods`, `update-server`, `bootstrap`) vuelven a
+apuntar al mundo de juego, y los bloqueos provisionales del 16/11
+(`refuse_frozen_pz` y `stage.sh` desactivado) desaparecen. El RCON del host
+del mundo de juego pasa de 27115 a 27015: lo que lo usara desde fuera, o
+vigilara `pombie-staging` por nombre, hay que cambiarlo. Tariq's Beards sigue
+sin estar instalado en este mundo, por decision del administrador (D6 del
+plan).
 
 **Novedad 16/08/2026 (I)**: el servidor detecta solo cuando Steam ha
 actualizado un mod y el suyo se quedo atras (pasaba casi a diario), avisa por
@@ -51,21 +77,26 @@ completo en [MODS-LISTA.md](MODS-LISTA.md) seccion 0.
 | Docker | **rootless**, daemon de usuario, sin grupo `docker` |
 | Exposicion | **Tailscale**, sin puertos abiertos en el router |
 | Juego | **42.20.4** (`buildid 24909836`), actualizado el 27/08. Disco y mundo coinciden |
-| Mundos | **uno**, en dos copias: produccion (resguardo, 42.20.3) y staging (en juego), **687 MB** |
-| Mods | **36 Mod ID / 34 WorkshopItems** en staging: 25 reversibles + 5 irreversibles (16/08) + 4 de contenido (29/08), **menos Run and Reload**, retirado por incompatibilidad con Horse Mod. Produccion se queda en 25 |
-| Memoria | heap 6g, `mem_limit` 10g |
-| Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods |
+| Mundos | **uno** de juego, en produccion (`pz`), **687 MB**. Al lado, el ensayo (`pz-staging`), que se rehace desde el de juego cada vez. El de agosto, archivado (42.20.3) |
+| Mods | **36 Mod ID / 34 WorkshopItems** en produccion: 25 reversibles + 5 irreversibles (16/08) + 4 de contenido (29/08), **menos Run and Reload**, retirado por incompatibilidad con Horse Mod. Tariq's Beards esta en la lista pero **no instalado** en este mundo: el servidor lo pide (`required mod not found`) y no lo carga. Se queda asi por decision del administrador |
+| Puertos | juego **16461/16462** UDP, publicados 1:1; RCON del host 27015, solo loopback. Ensayo: 16361/16362 y RCON 27115 |
+| Memoria | heap 6g, `mem_limit` 10g (los dos servicios) |
+| Backups | automatico al arrancar + cada 6 h + antes de un reinicio por mods. Prefijo `pz-pombie-vanilla-`; el ensayo firma `ensayo-` |
 | Mods desfasados | deteccion cada 30 min, reinicio solo si el mundo esta vacio |
-| Reinicio del sistema | staging vuelve solo (`unless-stopped` desde el 20/08) |
+| Reinicio del sistema | produccion vuelve sola (`unless-stopped`); staging no (`restart: "no"`, es desechable) |
 
-**OJO al actualizar el juego**: produccion se quedo en 42.20.3 y staging esta
-en 42.20.4. Si algun dia se levanta produccion, hay que actualizarla primero o
-nadie podra entrar — sus clientes ya estaran en la version nueva.
+**OJO al actualizar el juego**: el mundo de juego vuelve a tener la guarda de
+version, que entre agosto y noviembre estuvo desactivada. Un motor que cambie
+sin pasar por `./scripts/update-server.sh` detiene el arranque, que es lo que
+se quiere. Cuidado con el arreglo manual del atasco de SteamCMD, que no pasa
+por ahi (ver OPERACIONES.md, *Actualizar el juego*). El ensayo si acepta cambios
+de version: es el sitio para probarlos.
 
-**El nombre `pombie-vanilla` y los volumenes `*-vanilla` son herencia, no
-descripcion**: ese mundo lleva 36 mods. Se conservaron a proposito — renombrar
-exigiria mover 285 MB de guardados, y mover guardados es justo lo que este
-montaje evita cuando no hace falta.
+**El nombre `pombie-vanilla` y los volumenes `pz-*-staging` de produccion son
+herencia, no descripcion**: el mundo lleva 36 mods y es el de juego. Se
+conservaron a proposito — renombrar exigiria mover guardados, y mover
+guardados es justo lo que este montaje evita cuando no hace falta
+(DECISIONES.md 6bis y 6ter).
 
 ## Verificado en la maquina
 
@@ -178,6 +209,14 @@ archivada del 11/08 (~16 `ERROR`/h en cliente, ~2 causas distintas — detalle e
 la incidencia 004). Si algun dia hiciera falta una referencia limpia de nuevo,
 hay que crear una instancia aparte.
 
+**Despues, y hasta el 17/11**, ese mundo se jugo en `pz-staging` —desde el
+16/08, con los mods irreversibles—, mientras `pz` guardaba la foto de antes de
+meterlos. El
+cambio de papeles lo devolvio a produccion con el mismo truco del 13/08:
+`pz` adopto los volumenes `pz-*-staging` tal cual. Por eso hoy produccion
+monta volumenes que se llaman "-staging", igual que antes monto unos
+"-vanilla" (DECISIONES.md 6ter).
+
 Detalle operativo en [OPERACIONES.md](OPERACIONES.md).
 
 ## Caida de seis semanas (03/10 - 16/11/2026): un contenedor sin red
@@ -231,8 +270,9 @@ congelado sin `save` ni `quit`, y si la maquina muere asi en mitad de un
 guardado, es el mundo corrupto que todo este montaje evita. Esta vez el
 ultimo guardado era de tres horas antes. Ver Pendiente.
 
-**Arreglo (16/11)**: `docker compose stop pz-staging`, copia en frio
-`antes-recrear-red`, y `docker compose --profile staging up -d
+**Arreglo (16/11)**, con el reparto de entonces (hoy el mundo de juego es
+`pz`; no copies estos comandos tal cual): `docker compose stop pz-staging`,
+copia en frio `antes-recrear-red`, y `docker compose --profile staging up -d
 --force-recreate --no-deps pz-staging`. Imagen y compose identicos a los del
 contenedor viejo (creado el 30/08, justo tras el ultimo cambio del `.env`),
 asi que la recreacion solo reconecta la red. Verificado: IP en la red del
@@ -254,18 +294,16 @@ del 16/11 o posteriores.
 **Trampas operativas que aparecieron**:
 
 - Los scripts que trabajan sobre `pz` (backup, rcon, restore, capture-*,
-  install-local-mods, update-server, bootstrap) operan sobre el mundo de
-  AGOSTO, sin error. `capture-*` es la peor: trae al repo los ajustes de
-  agosto y el render se los aplica a la partida buena. **Desde el 16/11 se
-  niegan** (`refuse_frozen_pz` en `scripts/_common.sh`, provisional hasta
-  el cambio de papeles). Equivalentes para el mundo de juego:
-  - backup con el servidor en marcha (fuerza `save` antes):
-    `docker compose --profile staging exec -T pz-staging /docker/run.sh backup <etiqueta>`
-  - backup con el servidor parado:
-    `docker compose --profile staging run --rm --no-deps pz-staging backup <etiqueta>`
-    — con el servidor en marcha esta forma levanta un SEGUNDO contenedor
-    que no puede forzar el `save` y empaqueta un mundo a medio escribir.
-  - rcon: `docker compose --profile staging exec -T pz-staging /docker/run.sh rcon players`
+  install-local-mods, update-server, bootstrap) operaban sobre el mundo de
+  AGOSTO, sin error. `capture-*` era la peor: traia al repo los ajustes de
+  agosto y el render se los aplicaba a la partida buena. Del 16/11 al cambio
+  de papeles se negaron (`refuse_frozen_pz`, provisional), y **desde el cambio
+  (17/11) vuelven a apuntar al mundo de juego**: el backup es otra vez
+  `./scripts/backup.sh <etiqueta>` y el rcon `./scripts/rcon.sh players`.
+  `backup.sh` elige solo entre `exec` (en caliente, fuerza `save` antes) y
+  `run` (en frio). Un `run --rm` escrito a mano con el servidor en marcha
+  levanta un SEGUNDO contenedor que no puede forzar el `save` y empaqueta un
+  mundo a medio escribir.
 - El lanzador imprime la contrasena de admin en `docker logs` (argumentos de
   `pzexe`): la ve cualquiera que pueda leer los logs del contenedor, tambien
   desde un panel web de Docker.
@@ -296,7 +334,7 @@ sale bien CON o SIN el ajuste. Solo prueba algo si Docker llego primero:
 journalctl -b -u tailscaled -o short-precise | grep -m1 "Reconfig: configuring router"
 journalctl --user -b -u docker -o short-precise | grep -m1 "Loading containers: start"
 # y que el contenedor quedo bien
-docker inspect -f '{{json .NetworkSettings.Networks}}' pombie-staging   # no debe ser {}
+docker inspect -f '{{json .NetworkSettings.Networks}}' pombie-pz        # no debe ser {}
 ss -ulpn | grep 1646                                                     # puertos en la IP de Tailscale
 journalctl --user -u docker -b | grep -E "AddPort|cannot assign"         # nada
 ```
@@ -330,7 +368,7 @@ compatible y que no rompa la partida". Detalle y metodo en
 - **No hubo ensayo previo.** Ya no existe un entorno de pruebas: staging ES el
   mundo de juego y produccion es la foto congelada. Es la primera vez que se
   instala algo sin ensayar, y fue una decision explicita ("nada de tercer
-  mundo").
+  mundo"). Desde el cambio de papeles (17/11) vuelve a haber ensayo.
 
 **Bicycle! deja de estar vetado**: el autor publico el 15/08 una carpeta
 `42.20` completa que ya no llama a la API que 42.20 elimino. Verificado en el
@@ -419,6 +457,9 @@ cubierto por `restart: unless-stopped`... que staging no tenia.
 **Arreglado**: `pz-staging` pasa a `unless-stopped`, con el porque al lado en
 el compose. No estorba a `stage.sh --down` ni a `docker compose stop`: una
 parada explicita deja el contenedor "stopped" y `unless-stopped` la respeta.
+Desde el cambio de papeles (17/11) el mundo de juego vuelve a ser `pz`, que
+siempre tuvo `unless-stopped`, y `pz-staging` vuelve a `"no"` porque vuelve a
+ser desechable.
 
 **Lo que funciono y conviene reconocer**: el apagado seguro hizo su trabajo
 con un reinicio del sistema por medio. El mundo cruzo la caida sin un
@@ -473,7 +514,10 @@ vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
   el servidor estuvo 14 horas muerto y nadie se entero hasta que lo dijeron los
   jugadores; entre el 03/10 y el 16/11, **seis semanas**. Desde el 16/11 hay
   un monitor de disponibilidad en la maquina, montado fuera de este repo:
-  falta saber si vigila este servidor y como avisa.
+  falta saber si vigila este servidor y como avisa. Y desde el 17/11 el
+  mundo de juego corre en `pombie-pz`, con el RCON del host en 27015: si el
+  monitor vigila `pombie-staging` o el 27115, avisara de caidas falsas y
+  callara las de verdad.
 - **Que la maquina no pueda hibernar con el servidor dentro.** El 03/10
   entro en hibernacion hibrida (causa sin confirmar; sospecha: accion de
   bateria critica de UPower) y el JVM se quedo congelado sin apagado seguro.
@@ -490,13 +534,24 @@ vivir dentro del repo autocontenido, y por eso se ha ido posponiendo.
   el `buildid` publico de Steam contra el instalado dentro del chequeo que ya
   corre cada 30 min, y **solo avisar** — actualizar el motor seguiria siendo
   decision humana. Detalle en [MODS-DESFASADOS.md](MODS-DESFASADOS.md).
-- **Repasar el servicio de staging entero contra produccion**, ajuste por
-  ajuste. El `restart: "no"` que costo la caida de 14 horas era un resto de su
-  vida como entorno desechable, y **habia mas**: el 16/11 aparecio
-  `ALLOW_BUILD_CHANGE: "true"` (la guarda de version, desactivada en el mundo
-  bueno). El repaso completo y el arreglo de fondo estan en
-  [PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md); `stage.sh`, que
-  borraba el mundo bueno, queda desactivado mientras tanto.
+- ~~Repasar el servicio de staging entero contra produccion.~~ **Resuelto con
+  el cambio de papeles (17/11)**: en vez de copiarle a staging las
+  salvaguardas de produccion, el mundo de juego volvio a `pz`, que ya las
+  tenia (DECISIONES.md 6ter).
+- **Estrenar el ensayo** (paso 5 de
+  [PLAN-CAMBIO-DE-PAPELES.md](PLAN-CAMBIO-DE-PAPELES.md)). Tres cosas antes
+  del primer `./scripts/stage.sh`: sembrar `pz-game-ensayo` con el motor de
+  produccion, porque vacio descargaria el juego mas reciente y el ensayo no
+  probaria sobre el mismo motor; la memoria, porque dos servidores con heap
+  6g y `mem_limit` 10g no caben holgados en esta maquina; y si probarlo desde
+  otro dispositivo necesita una regla de ACL para 16361/16362. Despues,
+  comprobar que `stage.sh --down` borra solo `pz-data-ensayo`.
+- **Los volumenes del mundo de agosto** (`pz-*-vanilla`, ~8 GB): borrarlos o
+  no se decide aparte, y antes hay que sacar de `pz-data-vanilla` el mod
+  local, que solo esta ahi. Pasos 2b y 6 del plan.
+- **Rehacer la tabla de MODS-LISTA.md seccion 1**, que describe el mundo
+  original de 33 mods. Los bloques `WorkshopItems`/`Mods` de respaldo del
+  `.env` ya estan al dia (17/11).
 - **DECIDIR sobre Horse Mod.** Obligo a retirar Run and Reload (incompatibilidad
   declarada por su autor) y ademas arrastra dos defectos conocidos suyos: las
   animaciones exigen que cada jugador arranque el juego con el mod ya activado

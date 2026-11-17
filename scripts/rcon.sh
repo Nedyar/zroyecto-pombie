@@ -11,7 +11,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 [[ $# -gt 0 ]] || die "Uso: ./scripts/rcon.sh <comando> [args]"
 
-refuse_frozen_pz pz
 service_running pz || die "El servidor no esta corriendo."
 
 "${DC[@]}" exec -T pz /docker/run.sh rcon "$@"

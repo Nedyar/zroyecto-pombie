@@ -13,9 +13,11 @@ Trailers!—. Son los que dejan huella permanente en el mundo (objetos, recetas,
 vehículos), así que entran sabiendo que **ya no salen**: si algún día se
 quitaran, lo que hayan creado se perdería. Se decidió con ese coste delante.
 
-Por si acaso, el mundo tal como estaba **antes** de meterlos queda guardado
-aparte y entero, no solo como copia de seguridad. Cuanto más juguemos, más
-caro sería volver ahí, pero existe.
+Por si acaso, el mundo tal como estaba **antes** de meterlos se guardó aparte
+y entero, listo para volver a él. No hizo falta volver nunca, así que en
+noviembre quedó solo archivado, y el mundo en el que jugamos pasó a ser el
+principal del servidor. Para vosotros no cambia nada: mismo mundo, misma
+dirección y mismo puerto.
 
 ---
 

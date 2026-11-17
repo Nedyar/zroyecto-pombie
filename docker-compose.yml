@@ -7,7 +7,7 @@ name: zroyecto-pombie
 # Dos servicios con la MISMA imagen y configuracion, pero datos completamente
 # separados:
 #
-#   pz          produccion. El mundo de verdad.
+#   pz          produccion. El mundo de verdad, en el que se juega.
 #   pz-staging  ensayo. Se levanta con una copia del mundo real, en otros
 #               puertos, para probar mods y ajustes de riesgo antes de tocar
 #               produccion. Perfil `staging`, asi que no arranca por defecto.
@@ -18,6 +18,11 @@ name: zroyecto-pombie
 # Hubo un tercer servicio, `pz-vanilla`, retirado el 13/08/2026: su mundo paso
 # a ser el de produccion y dos servicios sobre el mismo volumen corrompen el
 # mundo. Historia completa en docs/DECISIONES.md seccion 6bis.
+#
+# Entre el 13/08 y el cambio de papeles de noviembre de 2026 se jugo en
+# `pz-staging` y `pz` fue una foto congelada. Produccion ADOPTO entonces los
+# volumenes de staging —mismo truco que en 6bis, sin mover un byte— y staging
+# estreno volumenes propios (`-ensayo`). Detalle en DECISIONES.md seccion 6ter.
 # ============================================================================
 
 x-pz-common: &pz-common
@@ -101,6 +106,22 @@ services:
     container_name: pombie-pz
     hostname: pombie
 
+    environment:
+      # Prefijo propio para las copias del mundo de juego. Sin esto saldria
+      # `pz-${PZ_SERVER_NAME}` = `pz-pombie-vanilla`, el MISMO que llevan las
+      # copias del mundo congelado de agosto: la rotacion se comeria las de
+      # agosto, los runbooks tendrian que distinguir por fecha, y stage.sh
+      # podria restaurar en el ensayo una instantanea de agosto. La historia
+      # del mundo de juego hasta noviembre de 2026 esta en `staging-*`.
+      BACKUP_NAME_PREFIX: "produccion"
+
+      # Los puertos del INI salen de aqui, de la MISMA interpolacion que los
+      # publicados abajo. Con solo el env_file, un PZ_PORT exportado en la
+      # shell cambiaria el publicado y no el del INI, y el cliente acabaria
+      # hablando al puerto equivocado.
+      PZ_PORT: "${PZ_PORT:-16261}"
+      PZ_UDP_PORT: "${PZ_UDP_PORT:-16262}"
+
     ports:
       # UDP, no TCP. Es el error de configuracion mas comun al abrir puertos:
       # una regla TCP se ve perfecta en el router y no sirve absolutamente de
@@ -112,18 +133,31 @@ services:
       # Dejarlo en 0.0.0.0 lo publica tambien en la WiFi de casa, y ahi no hay
       # ACL que valga: quien este en la misma red entra por la puerta de al lado.
       # La IP va en el .env, no aqui: es propia de cada maquina.
-      - "${HOST_BIND_IP:-0.0.0.0}:${HOST_GAME_PORT:-16261}:16261/udp"
-      - "${HOST_BIND_IP:-0.0.0.0}:${HOST_GAME_PORT_2:-16262}:16262/udp"
+      #
+      # Mapeo 1:1 con los puertos INTERNOS (PZ_PORT/PZ_UDP_PORT, que el
+      # contenedor escribe en su INI). Antes era `${HOST_GAME_PORT}:16261`, que
+      # solo funciona mientras el puerto de fuera sea 16261: el servidor le
+      # anuncia al cliente los puertos de su INI, y si fuera son otros, el
+      # cliente acaba hablando al puerto equivocado del host (la misma trampa
+      # que documenta pz-staging mas abajo). El mundo de juego vive en 16461
+      # desde agosto y ahi siguen jugadores y ACL.
+      - "${HOST_BIND_IP:-0.0.0.0}:${PZ_PORT:-16261}:${PZ_PORT:-16261}/udp"
+      - "${HOST_BIND_IP:-0.0.0.0}:${PZ_UDP_PORT:-16262}:${PZ_UDP_PORT:-16262}/udp"
       # RCON solo en loopback. Da control total del servidor: exponerlo a la
       # red seria regalar la administracion a cualquiera que pruebe la clave.
       - "127.0.0.1:${HOST_RCON_PORT:-27015}:27015/tcp"
 
     volumes:
-      # El sufijo "-vanilla" es herencia: produccion adopto este volumen tal
-      # cual el 13/08/2026 porque reasignar no toca los guardados y moverlos
-      # si. Ver docs/DECISIONES.md seccion 6bis.
-      - pz-game-vanilla:/opt/pz-server   # instalacion (~7 GB), desechable
-      - pz-data-vanilla:/home/steam/Zomboid  # SAVES, db: irremplazable
+      # El sufijo "-staging" es herencia, como antes lo fue "-vanilla":
+      # produccion adopto estos volumenes tal cual en el cambio de papeles de
+      # noviembre de 2026, porque reasignar no toca los guardados y moverlos
+      # si. Son el mundo en el que se juega. Ver DECISIONES.md 6bis y 6ter.
+      #
+      # NINGUN otro servicio puede montarlos. scripts/stage.sh lo comprueba
+      # antes de borrar nada, porque un `volume rm` sobre el nombre equivocado
+      # es la forma mas rapida de perder el mundo.
+      - pz-game-staging:/opt/pz-server   # instalacion (~7 GB), desechable
+      - pz-data-staging:/home/steam/Zomboid  # SAVES, db: irremplazable
       - ./config:/config              # fuente de verdad de la configuracion
       - ./backups:/backups            # tarballs, y vehiculo de migracion
 
@@ -133,23 +167,26 @@ services:
     hostname: pombie-staging
     profiles: ["staging"]
 
-    # `unless-stopped`, igual que produccion, y NO el `"no"` que tenia como
-    # entorno desechable. El 20/08/2026 costo 14 horas de servidor caido:
-    # unattended-upgrades reinicia esta maquina a las 04:00 cuando hay parche
-    # de seguridad (Automatic-Reboot "true"), el contenedor se apago limpio
-    # —el mundo se guardo bien— Docker volvio... y staging no, porque tenia
-    # prohibido resucitar. Nadie se entero hasta que los jugadores lo dijeron.
+    # `"no"`: staging vuelve a ser un banco de pruebas que se levanta y se
+    # tira, y no debe resucitar solo tras un reinicio de la maquina.
     #
-    # El "no" era correcto mientras staging fuera un banco de pruebas que se
-    # levanta y se tira. Desde el 13/08 es donde se juega, asi que hereda
-    # tambien la resistencia de produccion, no solo su papel.
-    #
-    # No estorba a `stage.sh --down` ni a `docker compose stop`: una parada
-    # explicita deja el contenedor en estado "stopped", y `unless-stopped`
-    # respeta justo eso.
-    restart: unless-stopped
+    # Entre el 13/08 y noviembre de 2026 llevo `unless-stopped` porque ERA el
+    # mundo de juego: el 20/08 el "no" costo 14 horas de servidor caido tras
+    # un reinicio por parche de seguridad. Si algun dia vuelve a jugarse aqui,
+    # esto tiene que volver a `unless-stopped`, y no es lo unico: repasa el
+    # servicio entero contra `pz` (DECISIONES.md 6ter).
+    restart: "no"
+
+    # Memoria acotada: el ensayo convive con produccion (heap 6g, techo 10g) en
+    # una maquina de ~15 GB. Con los dos al maximo, el OOM del host mataria al
+    # proceso con mas memoria, que suele ser el JVM de produccion, y un SIGKILL
+    # en mitad de un guardado es justo el mundo corrupto que el `mem_limit` de
+    # arriba existe para evitar. 10 + 4 cabe; 10 + 10 no.
+    mem_limit: 4g
 
     environment:
+      PZ_MEMORY: "${STAGING_MEMORY:-3g}"
+
       # OJO: staging usa EL MISMO PZ_SERVER_NAME que el mundo del que se copia.
       #
       # El nombre del servidor da nombre a la carpeta de guardado
@@ -188,9 +225,12 @@ services:
 
       # Los backups de staging llevan otro prefijo para que no se confundan
       # nunca con los de produccion en la carpeta compartida ./backups.
-      # Y estan ACTIVADOS desde que el grupo juega aqui (13/08/2026): un mundo
-      # con gente dentro no es desechable, y `stage.sh --down` borra los datos.
-      BACKUP_NAME_PREFIX: "staging"
+      #
+      # "ensayo" y NO "staging": las copias `staging-*` son la historia del
+      # mundo de juego entre agosto y noviembre de 2026 (las periodic y
+      # pre-mods buenas). La rotacion va por prefijo y etiqueta, asi que un
+      # staging nuevo firmando `staging-*` las iria borrando de 20 en 20.
+      BACKUP_NAME_PREFIX: "ensayo"
       BACKUP_INTERVAL_HOURS: "${BACKUP_INTERVAL_HOURS:-6}"
       BACKUP_ON_START: "true"
 
@@ -210,15 +250,25 @@ services:
       # produccion ahorraria 8 GB pero romperia el aislamiento justo donde mas
       # importa: al descargar mods, Steam actualizaria tambien los que
       # produccion esta usando ahora mismo. El disco es mas barato que eso.
-      - pz-game-staging:/opt/pz-server
-      - pz-data-staging:/home/steam/Zomboid
+      - pz-game-ensayo:/opt/pz-server
+      - pz-data-ensayo:/home/steam/Zomboid
       - ./config:/config
       - ./backups:/backups
 
 volumes:
-  pz-game:
-  pz-data:
+  # NO anadas `name:`, `labels` ni `driver_opts` a estas declaraciones: compose
+  # compara un hash de la declaracion con el que guardo al crear el volumen, y
+  # si no coincide ofrece BORRARLO y recrearlo (con -y, lo hace). Vacias, el
+  # hash coincide con el de los volumenes existentes (comprobado el 17/11).
+  #
+  # Mundo de juego (produccion desde noviembre de 2026).
   pz-game-staging:
   pz-data-staging:
+  # Staging, desechable.
+  pz-game-ensayo:
+  pz-data-ensayo:
+  # El mundo congelado del 16/08, ya archivado en
+  # backups/pz-pombie-vanilla-20261116-225421-archivo-mundo-16-08.tar.zst.
+  # Ningun servicio los monta. Se declaran solo hasta decidir si se borran.
   pz-game-vanilla:
   pz-data-vanilla:

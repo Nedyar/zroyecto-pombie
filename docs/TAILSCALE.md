@@ -42,10 +42,12 @@ Hacen falta las dos. Cada una sin la otra no protege nada:
 Comprobacion de la primera mitad, con el servidor levantado:
 
 ```bash
-ss -ulpn | grep 1626
+ss -ulpn | grep 1646
 ```
 
-Debe aparecer `IP-TAILSCALE:16261`, **no** `0.0.0.0:16261`.
+Debe aparecer `IP-TAILSCALE:16461`, **no** `0.0.0.0:16461`. Son los
+`PZ_PORT` / `PZ_UDP_PORT` del `.env`: 16261/16262 por defecto, y 16461/16462
+en este despliegue desde agosto de 2026.
 
 ## Dar acceso a un jugador nuevo
 
@@ -120,9 +122,10 @@ de hacer. Mientras firmas, que no toque nada.
 
 ## Como se conecta el jugador
 
-En el juego: **Join > Add server**, con puerto **16261**. El 16262 tiene que
-estar permitido en la ACL pero no se teclea nunca: lo usa el motor por su
-cuenta, y apuntar ahi produce una conexion que no llega a ningun sitio.
+En el juego: **Join > Add server**, con puerto **16461** (el `PZ_PORT`). El
+16462 tiene que estar permitido en la ACL pero no se teclea nunca: lo usa el
+motor por su cuenta, y apuntar ahi produce una conexion que no llega a ningun
+sitio.
 
 **La direccion NO es la que ves tu.** Un nodo compartido aparece en el tailnet
 del invitado con una direccion propia, distinta de la que tiene en el tuyo. Cada
@@ -190,7 +193,7 @@ lista.
 tailscale ping SERVIDOR
 
 # En el servidor: esta el juego escuchando donde debe?
-ss -ulpn | grep 1626
+ss -ulpn | grep 1646
 
 # En el servidor: el servidor de juego esta vivo?
 ./scripts/rcon.sh players

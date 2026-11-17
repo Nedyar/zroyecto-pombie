@@ -21,7 +21,6 @@
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 SVC="${1:-pz}"
-refuse_frozen_pz "$SVC"
 case "$SVC" in
     pz|pz-staging) ;;
     *) die "Servicio desconocido: '${SVC}'. Usa 'pz' o 'pz-staging'." ;;

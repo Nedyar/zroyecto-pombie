@@ -33,11 +33,16 @@ darle root sin contrasena— este montaje funciona tal cual con **Docker
 rootless**. Requiere poner `PUID=0` en el `.env`; el porque esta en
 [docs/OPERACIONES.md](docs/OPERACIONES.md).
 
-Conexion: `<ip-del-host>:16261`, siempre **UDP** (no TCP: es el error mas comun).
+Conexion: `<ip-del-host>:<PZ_PORT>`, siempre **UDP** (no TCP: es el error mas
+comun). `PZ_PORT` es 16261 por defecto; el despliegue actual usa 16461.
 
-Si se expone por Internet, hay que abrir 16261 y 16262 en el router. Si se
-expone por **Tailscale**, que es como esta desplegado ahora, no se abre nada:
-ver [docs/TAILSCALE.md](docs/TAILSCALE.md).
+Si se expone por Internet, hay que abrir `PZ_PORT` y `PZ_UDP_PORT` en el
+router. Si se expone por **Tailscale**, que es como esta desplegado ahora, no
+se abre nada: ver [docs/TAILSCALE.md](docs/TAILSCALE.md).
+
+`docker compose up -d` levanta solo produccion (`pz`), que es el mundo en el
+que se juega. Staging (`pz-staging`) es una copia desechable para ensayar, en
+otros puertos, y se levanta con `./scripts/stage.sh`.
 
 ## Comandos
 

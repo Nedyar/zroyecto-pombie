@@ -5,7 +5,6 @@
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 FILE="${1:-}"
-refuse_frozen_pz pz
 
 if [[ -z "$FILE" ]]; then
     say "Backups disponibles:"

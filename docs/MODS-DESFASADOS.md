@@ -415,7 +415,7 @@ bien que así sea. Lo que se puede mejorar es reconocerlo rápido.
 | --- | --- | --- |
 | `./scripts/check-mods.sh` | hay desfasados | mods del servidor atrás → esperar al reinicio automático |
 | check-mods 0 desfasados + el cliente cerró y abrió el juego | sigue fallando | seguir abajo |
-| Noticias de PZ (`ISteamNews`, appid 108600) o `steamcmd app_info_print 380870` vs `buildid disco` de `status` | hay build nuevo | **hotfix del juego** → `./scripts/update-server.sh` (o su equivalente sobre staging) |
+| Noticias de PZ (`ISteamNews`, appid 108600) o `steamcmd app_info_print 380870` vs `buildid disco` de `status` | hay build nuevo | **hotfix del juego** → `./scripts/update-server.sh` |
 
 Falsas pistas que se descartaron con datos, para no volver a perseguirlas: el
 WARN `No packet handler for type: Drink...` de `PacketsCache.<init>` aparece

@@ -3,8 +3,9 @@
 Redactado el 16/11/2026 y corregido el 17/11 tras dos revisiones
 adversariales. Cada paso que cambia algo espera el sí del administrador.
 
-**Estado:** pasos 0 y 2 hechos. Paso 1 en borrador, fuera del directorio del
-proyecto. Pasos 3 a 6 pendientes.
+**Estado:** pasos 0 y 2 hechos. Paso 1 en la rama
+`refactor/produccion-es-el-mundo-de-juego`, todavía fuera del directorio vivo
+del proyecto. Pasos 3 a 6 pendientes.
 
 ## Objetivo
 
@@ -93,6 +94,11 @@ Cambios, uno por uno:
     firmase `staging-*` las iría borrando, y un procedimiento como "restaurar
     el último `*-pre-mods`" podría coger una copia del ensayo y restaurarla
     sobre el mundo bueno.
+  - `pz` firma sus copias como **`produccion-*`** (`BACKUP_NAME_PREFIX`):
+    sin él saldría `pz-pombie-vanilla-*`, el mismo prefijo que las copias de
+    agosto.
+  - `pz-staging` con **`mem_limit: 4g` y heap 3g**, para que el ensayo quepa
+    junto a producción sin arriesgar un OOM en el JVM bueno.
   - Fuera los volúmenes `pz-game`/`pz-data`, que no existen desde el 13/08.
 - **`.env`** (script probado con un `.env` inventado; copia los valores clave
   a clave sin imprimirlos):
@@ -175,22 +181,23 @@ queda. Antes de borrarla hay dos opciones:
   que Steam siga sirviendo esos manifiestos.
 - **Archivar también la instalación** (~7 GB en disco).
 
-## Paso 3 — pendiente: preguntar al grupo (D5)
+## Paso 3 — HECHO (17/11): D5
 
-¿Alguien quiere volver al mundo del 16/08 tal cual? Volver costaría todo lo
-jugado entre el 16/08 y el 03/10 y los mods de la oleada 3.
+El administrador decidió que el mundo de juego pasa a producción y que no
+hace falta conservar el de agosto listo para arrancar.
 
-## Paso 4 — pendiente: la parada (con el servidor vacío)
+## Paso 4 — la parada (con el servidor vacío)
 
 Unos 15 minutos. Antes, D3 hecho en otra parada. Desde la carpeta del
-proyecto:
+proyecto. Cada comprobación **aborta** el procedimiento si no da lo esperado.
 
 ```bash
 # a. nadie dentro
 docker compose --profile staging exec -T pz-staging /docker/run.sh rcon players
 
-# b. apagado seguro
+# b. apagado seguro, y COMPROBAR que fue limpio (codigo 0, no un SIGKILL a los 180 s)
 docker compose stop pz-staging
+docker inspect pombie-staging -f '{{.State.ExitCode}}'          # 0
 
 # c. copia en frío del mundo de juego, con el compose VIEJO
 docker compose --profile staging run --rm --no-deps pz-staging backup antes-cambio-de-papeles
@@ -199,11 +206,15 @@ docker compose --profile staging run --rm --no-deps pz-staging backup antes-camb
 cp -p .env .env.antes-cambio-de-papeles
 
 # e. .env, con el script del paso 1 (no imprime valores; enseña los recuentos 34/36)
+python3 -I <ruta>/cambiar-env.py .env
 
-# f. traer el commit del paso 1 al directorio vivo y validar
+# f. traer el commit del paso 1 al directorio vivo (la rama está abierta en
+#    otro worktree, así que merge y no switch), y validar
+git merge --ff-only refactor/produccion-es-el-mundo-de-juego
 docker compose config -q
 
-# g. a qué volumen apunta cada servicio, SIN volcar secretos
+# g. a qué volumen apunta cada servicio, SIN volcar secretos. Esperado:
+#    pz -> pz-game-staging + pz-data-staging; pz-staging -> pz-*-ensayo
 docker compose --profile staging config | grep -E "^  [a-z-]+:$|source: pz-|target: /(opt|home)"
 
 # h. quitar SOLO el contenedor viejo (sin -v: los volúmenes no se tocan)
@@ -212,7 +223,15 @@ docker rm pombie-staging
 # i. COMPROBACIÓN: nadie monta ya el mundo de juego. Tiene que salir vacío
 docker ps -a --filter volume=zroyecto-pombie_pz-data-staging --format '{{.Names}}'
 
-# j. levantar producción sobre el mundo de juego
+# j. COMPROBACIÓN: el .env nuevo lleva la lista del mundo de juego y su puerto.
+#    Si el paso e falló o se saltó, pz abriría el mundo con la lista de agosto
+#    (23 mods en vez de 36): quitar los irreversibles al cargar es daño
+#    permanente, y la verificación de abajo llegaría tarde.
+cmp <(sed -n 's/^PZ_MODS=//p' .env) <(sed -n 's/^STAGING_MODS=//p' .env.antes-cambio-de-papeles)
+cmp <(sed -n 's/^PZ_WORKSHOP_ITEMS=//p' .env) <(sed -n 's/^STAGING_WORKSHOP_ITEMS=//p' .env.antes-cambio-de-papeles)
+[ "$(sed -n 's/^PZ_PORT=//p' .env)" = 16461 ]
+
+# k. levantar producción sobre el mundo de juego
 docker compose up -d pz
 ```
 
@@ -229,39 +248,39 @@ docker compose up -d pz
 - Un solo mundo en `Saves/Multiplayer`, con ficheros posteriores a la parada.
 - `ss -ulpn | grep 1646`: 16461/16462 en la IP de Tailscale.
 - `./scripts/rcon.sh players` responde. Ya apunta al mundo de juego.
-- `./scripts/backup.sh verificacion-cambio` produce un tarball de ~106 MB. El
-  mundo de agosto pesa 57 MB: el tamaño delata si se respalda el mundo
-  equivocado.
-- `healthy`, 0 reinicios, y que alguien entre y vea su personaje.
+- `./scripts/backup.sh verificacion-cambio` produce
+  `produccion-<fecha>-verificacion-cambio.tar.zst` de ~106 MB. El mundo de
+  agosto pesa 57 MB: el tamaño delata si se respalda el mundo equivocado.
+- `healthy`, 0 reinicios.
 
 ## Marcha atrás
 
 Los volúmenes no se tocan en ningún momento, así que volver es exacto. Se
-vuelve al **commit del paso 0**, que ya lleva los bloqueos. Un commit
-anterior volvería a armar `stage.sh`.
+vuelve con `git revert` del commit del paso 1, no con un checkout de ficheros:
+un checkout deja el árbol sucio, y un `git checkout .` o `git stash` posterior
+traería de vuelta el compose nuevo con el `.env` viejo, que es el caso del
+paso j.
 
 ```bash
 docker compose stop pz
 docker rm pombie-pz
-git checkout <commit del paso 0> -- docker-compose.yml scripts/
+git revert --no-edit <commit del paso 1>      # vuelve a 41ee74f en compose y scripts, bloqueos incluidos
 cp -p .env.antes-cambio-de-papeles .env
-# COMPROBACIÓN: tiene que salir vacío antes de levantar nada
-docker ps -a --filter volume=zroyecto-pombie_pz-data-staging --format '{{.Names}}'
+# COMPROBACIONES: nadie monta el mundo, y el .env es el de antes
+docker ps -a --filter volume=zroyecto-pombie_pz-data-staging --format '{{.Names}}'   # vacío
+cmp .env .env.antes-cambio-de-papeles
 docker compose --profile staging up -d pz-staging
 ```
 
 ## Paso 5 — pendiente: estrenar el staging nuevo
 
+- **La memoria, resuelta en el paso 1:** el ensayo lleva `mem_limit: 4g` y
+  heap 3g (`STAGING_MEMORY`), para que 10 + 4 quepa en la máquina.
 - **El motor.** `./scripts/stage.sh` copia el mundo de juego a `pz-*-ensayo`.
   Pero si `pz-game-ensayo` está vacío, el primer arranque descarga el juego más
   reciente, y entonces el ensayo no probaría los mods sobre el mismo motor que
   producción. Mejor **sembrar `pz-game-ensayo` copiando `pz-game-staging`**,
   con el origen en solo lectura.
-- **La memoria.** Dos servidores con `PZ_MEMORY=6g` y `mem_limit` de 10g en
-  una máquina de 14 GiB, con más servicios encima: el OOM del host podría
-  matar el JVM bueno en mitad de un guardado. Hay dos salidas: bajar
-  `PZ_MEMORY` y `mem_limit` del ensayo, o usarlo solo con el mundo de juego
-  vacío.
 - **La conexión.** Probar el ensayo en 16361/16362 desde otro dispositivo
   puede necesitar una regla en la ACL. La ACL real no la he visto. Sería una
   decisión aparte.

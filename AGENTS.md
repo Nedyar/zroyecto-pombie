@@ -34,16 +34,13 @@ escribes una guarda, que aborte, no que continue con un aviso.
    del siguiente.** Si el mundo falla con tres mods nuevos, no sabras cual fue.
    Excepcion acotada: un conjunto que ya corrio JUNTO en otra instancia puede
    entrar en bloque.
-   **OJO — ya no hay entorno de ensayo**: desde el 13/08 staging ES el mundo de
-   juego y produccion es una foto congelada. Lo que se instale va directo a la
-   partida buena. Con los papeles asi, los scripts del host que trabajan sobre
-   `pz` (backup, rcon, restore, capture-*, install-local-mods, update-server,
-   bootstrap) operarian sobre el mundo de AGOSTO sin dar error, y `stage.sh`
-   borraria la partida buena: desde el 16/11 se niegan todos. Para el mundo de
-   juego, el backup etiquetado de esta regla es
-   `docker compose --profile staging exec -T pz-staging /docker/run.sh backup <etiqueta>`
-   (en marcha) o `... run --rm --no-deps pz-staging backup <etiqueta>` (parado).
-   Arreglo de fondo en docs/PLAN-CAMBIO-DE-PAPELES.md.
+   El orden es: ensayo en staging (`./scripts/stage.sh`, una copia desechable
+   del mundo de juego en 16361/16362), backup etiquetado
+   (`./scripts/backup.sh <etiqueta>`) y paso a produccion (`pz`), que es el
+   mundo en el que se juega. Entre el 13/08 y el cambio de papeles de
+   noviembre de 2026 fue al reves —se jugaba en `pz-staging`, `pz` era una
+   foto congelada y no habia ensayo—, asi que en lo escrito en esas fechas
+   "staging" es el mundo de juego; detalle en docs/DECISIONES.md seccion 6ter.
    Antes de instalar, auditar el mod descargado con el
    procedimiento de docs/MODS.md ("Auditar un candidato"), y mirar sobre todo
    si declara `entity`: es lo unico que puede impedir que un mundo cargue al
@@ -111,7 +108,7 @@ docker compose config -q                       # valida sin volcar secretos
 docker compose run --rm --no-deps pz status    # ejercita entrypoint y permisos
 docker compose logs pz | grep "required mod"   # mods que faltan
 ./scripts/rcon.sh players                      # el servidor responde de verdad
-ss -ulpn | grep 1626                           # escucha donde crees que escucha
+ss -ulpn | grep 1646                           # escucha donde crees que escucha
 ./docker/selftest-backups.sh                   # salvaguardas de backup/restore
 ```
 

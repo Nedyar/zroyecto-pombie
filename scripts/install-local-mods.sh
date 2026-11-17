@@ -2,7 +2,7 @@
 # Instala en el servidor un mod que NO viene del Workshop.
 #
 # Uso:
-#   ./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging|pz-vanilla]
+#   ./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging]
 #
 # Ejemplos:
 #   ./scripts/install-local-mods.sh ~/Descargas/TariqsBeardsB42.zip
@@ -19,12 +19,11 @@ source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 SRC="${1:-}"
 SVC="${2:-pz}"
-refuse_frozen_pz "$SVC"
 
 if [[ -z "$SRC" ]]; then
     cat <<'EOF'
 
-Uso: ./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging|pz-vanilla]
+Uso: ./scripts/install-local-mods.sh <fichero.zip|carpeta> [pz|pz-staging]
 
 Instala un mod local en la carpeta Zomboid/mods del servidor indicado.
 Por defecto instala en produccion (pz).
@@ -35,12 +34,23 @@ fi
 
 [[ -e "$SRC" ]] || die "No encuentro: ${SRC}"
 
+# Los nombres de volumen NO coinciden con los servicios, por herencia: el mundo
+# de juego (produccion) vive en `pz-data-staging` desde el cambio de papeles
+# de noviembre de 2026, y staging en `pz-data-ensayo` (DECISIONES.md 6ter).
+# Hasta entonces `pz` apuntaba aqui a `pz-data`, un volumen que ya no existia
+# desde el 13/08: el mod habria ido a parar a un volumen nuevo y vacio.
 case "$SVC" in
-    pz)         VOL="zroyecto-pombie_pz-data" ;;
-    pz-staging) VOL="zroyecto-pombie_pz-data-staging" ;;
-    pz-vanilla) VOL="zroyecto-pombie_pz-data-vanilla" ;;
-    *)          die "Servicio desconocido: '${SVC}'. Usa 'pz', 'pz-staging' o 'pz-vanilla'." ;;
+    pz)         VOL="zroyecto-pombie_pz-data-staging" ;;
+    pz-staging) VOL="zroyecto-pombie_pz-data-ensayo" ;;
+    *)          die "Servicio desconocido: '${SVC}'. Usa 'pz' o 'pz-staging'." ;;
 esac
+
+# `docker run -v nombre:/ruta` con un volumen que no existe lo CREA vacio sin
+# decir nada: es lo que habria pasado con `pz` mientras apunto a `pz-data`, y
+# el mod no habria llegado nunca al mundo. Mejor fallar.
+docker volume inspect "$VOL" >/dev/null 2>&1 || die "No existe el volumen ${VOL}.
+Si es staging, levantalo antes con ./scripts/stage.sh; si es produccion, el
+compose y este script no coinciden: revisa los nombres de volumen."
 
 # Instalar por debajo de un servidor vivo es pedir problemas: el juego indexa los
 # mods al arrancar y no le sienta bien que aparezcan a media partida.
