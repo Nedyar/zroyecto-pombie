@@ -14,8 +14,7 @@ Referencia temporal: **Build 42 estable (42.20) salió el 29/07/2026.**
 # 0. El mundo vanilla y las oleadas (14/08/2026)
 
 El mundo activo pasó a ser **pombie-vanilla** y el grupo quiere ir añadiéndole
-mods. Las cuatro investigaciones de `docs/incidencias/` (rama
-`docs/incidencias-jugabilidad`) demostraron que los mods no causan los bugs
+mods. Las cuatro investigaciones de `docs/incidencias/` demostraron que los mods no causan los bugs
 abiertos, así que no hay motivo técnico para frenarse. Lo que sí hay es una
 asimetría que manda sobre todo lo demás: **sobre un mundo ya empezado, la
 pregunta no es "¿este mod es bueno?" sino "¿puedo deshacerlo?"**.

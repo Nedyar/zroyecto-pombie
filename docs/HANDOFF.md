@@ -153,8 +153,8 @@ concreto es que **los cadaveres no aparecen como contenedor** en la ventana de
 saqueo, asi que no se pueden registrar.
 
 La investigacion completa —sintoma, evidencia, causa y propuesta, **sin aplicar
-nada**— vive en la rama `docs/incidencias-jugabilidad`, carpeta
-`docs/incidencias/`. **Cinco incidencias**, cada una con su seccion de lo que NO
+nada**— esta en `docs/incidencias/` (empezo en la rama
+`docs/incidencias-jugabilidad`, ya integrada). **Cinco incidencias**, cada una con su seccion de lo que NO
 esta probado.
 
 **Lo que hay que saber antes de tocar nada:**
